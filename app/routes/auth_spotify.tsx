@@ -130,7 +130,7 @@ export default function Auth_Spotify() {
             <Title />
             {
                 text != "" ?
-                <Link to="/host" className="text-4xl">{text}</Link> :
+                <Link to="/host" className="text-4xl" data-cy="auth-text">{text}</Link> :
                 <div className="loader"></div>
             }
         </div>

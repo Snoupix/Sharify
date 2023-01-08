@@ -8,3 +8,9 @@ node_modules
 /app/compiled.css
 
 sharify-google-creds.json
+
+cypress/videos
+cypress/screenshots
+cypress/fixtures
+cypress/downloads
+cypress/support/env.ts

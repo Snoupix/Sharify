@@ -447,6 +447,8 @@ export default function Room() {
             }
         })
 
+        spotify.isOwner = loaderData.isHost
+
         if (currentDevice) return
 
         const spotifyDevice = GetStorageValue("SpotifyDevice") as string

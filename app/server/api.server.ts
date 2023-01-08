@@ -14,6 +14,7 @@ export interface Party {
     }
     currentDevice:      SpotifyApi.UserDevice | null
     tracksQueue:        Array<PartyTrack>
+    MAX_CLIENTS:        number
 }
 
 type PartyTrack = {
@@ -45,15 +46,15 @@ export interface GetPartyReturnType {
 
 
 export default class SharifyAPI {
-    private MAX_CLIENTS = 15
-    private ACTIVE_PARTIES: Map<number, Party>
-    private USERS: Set<string>
-    private INDEX = 1
-    private DEBUG_MODE = true
+    private static MAX_CLIENTS = 15;
+    private ACTIVE_PARTIES: Map<number, Party>;
+    private USERS: Set<string>;
+    private INDEX = 1;
+    private DEBUG_MODE = true;
   
     constructor() {
-        this.ACTIVE_PARTIES = new Map<number, Party>()
-        this.USERS = new Set<string>()
+        this.ACTIVE_PARTIES = new Map<number, Party>();
+        this.USERS = new Set<string>();
     }
   
     CreateParty(
@@ -74,87 +75,88 @@ export default class SharifyAPI {
             type,
             spotifyCreds,
             currentDevice: null,
-            tracksQueue: []
-        })
+            tracksQueue: [],
+            MAX_CLIENTS: SharifyAPI.MAX_CLIENTS,
+        });
   
-        this.LogDebug(`[${this.INDEX}]${isPrivate ? 'Private party' : 'Party'} '${name}' created.`)
+        this.LogDebug(`[${this.INDEX}]${isPrivate ? 'Private party' : 'Party'} '${name}' created.`);
         
-        this.INDEX ++
+        this.INDEX ++;
 
-        const party = this.ACTIVE_PARTIES.get(this.INDEX - 1)
+        const party = this.ACTIVE_PARTIES.get(this.INDEX - 1);
         
         if (!party) {
-            console.error(`Cannot create party (${party}) clients ${clients}, name ${name}, isprivate ${isPrivate}, type ${type}, password ${password}`)
-            return new PartyError(`An error has occured while creating this party, please, contact Snoupix`)
+            console.error(`Cannot create party (${party}) clients ${clients}, name ${name}, isprivate ${isPrivate}, type ${type}, password ${password}`);
+            return new PartyError(`An error has occured while creating this party, please, contact Snoupix`);
         }
 
-        this.USERS.add(party.clients[0].username)
+        this.USERS.add(party.clients[0].username);
 
-        return party
+        return party;
     }
   
     DeleteParty(id: Party['id'], username: string) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
 
-        if (!party) return this.LogDebug(`${username} tried to delete a non-existing party ${id}`)
+        if (!party) return this.LogDebug(`${username} tried to delete a non-existing party ${id}`);
 
         if (party.clients.find(client => client.isHost == true)?.username != username) {
-            this.LogDebug(`${username} tried to delete party id ${id} while not being the host`)
+            this.LogDebug(`${username} tried to delete party id ${id} while not being the host`);
         }
 
-        this.LogDebug(`${username} is deleting '${party.name}' party ${id}`)
+        this.LogDebug(`${username} is deleting '${party.name}' party ${id}`);
 
-        party.clients.map(client => this.USERS.delete(client.username))
+        party.clients.map(client => this.USERS.delete(client.username));
     
-        this.ACTIVE_PARTIES.delete(id)
+        this.ACTIVE_PARTIES.delete(id);
     }
   
     GetParty(id: Party['id']): Party | null {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return null
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return null;
         }
 
-        return party
+        return party;
     }
 
     GetUserParty(username: string): Party | null {
-        let party: Party | null = null
+        let party: Party | null = null;
 
         this.ACTIVE_PARTIES.forEach(p => {
             p.clients.forEach(client => {
                 if (client.username == username) {
-                    party = p
-                    return
+                    party = p;
+                    return;
                 }
             })
         })
 
-        return party
+        return party;
     }
 
     GetParties(privateFilter: boolean) {
-        const returning = new Array<Party>()
+        const returning = new Array<Party>();
 
         if (!privateFilter) {
-            this.ACTIVE_PARTIES.forEach(party => returning.push(party))
+            this.ACTIVE_PARTIES.forEach(party => returning.push(party));
 
-            this.LogDebug(`Returning every parties to the client (${returning.length})`)
+            this.LogDebug(`Returning every parties to the client (${returning.length})`);
 
-            return returning
+            return returning;
         }
 
         this.ACTIVE_PARTIES.forEach(party => {
             if (!party.isPrivate) {
-                returning.push(party)
+                returning.push(party);
             }
         })
 
-        this.LogDebug(`Returning ${returning.length} private parties to the client`)
+        this.LogDebug(`Returning ${returning.length} private parties to the client`);
 
-        return returning
+        return returning;
     }
 
     AddToTracksQueue(
@@ -163,156 +165,156 @@ export default class SharifyAPI {
         trackId: PartyTrack['trackId'],
         trackName: PartyTrack['trackName']
     ) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        party.tracksQueue.push({ trackId, username, trackName })
+        party.tracksQueue.push({ trackId, username, trackName });
 
-        this.ACTIVE_PARTIES.set(id, party)
+        this.ACTIVE_PARTIES.set(id, party);
 
-        this.LogDebug(`${username} added ${trackName} to party ${party.name} ${id}`)
+        this.LogDebug(`${username} added ${trackName} to party ${party.name} ${id}`);
     }
 
     RemoveFromTracksQueue(id: Party['id'], trackNAME: PartyTrack['trackName']) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        const trackFound = party.tracksQueue.find(({ trackName }) => trackName == trackNAME)
+        const trackFound = party.tracksQueue.find(({ trackName }) => trackName == trackNAME);
 
         if (trackFound) {
-            let avoidDuplicate = false
-            const newQueue: Party['tracksQueue'] = []
+            let avoidDuplicate = false;
+            const newQueue: Party['tracksQueue'] = [];
 
             party.tracksQueue.forEach(t => {
-                if (avoidDuplicate) return newQueue.push(t)
+                if (avoidDuplicate) return newQueue.push(t);
 
                 if (t.trackName == trackFound.trackName) {
-                    avoidDuplicate = true
-                    return
+                    avoidDuplicate = true;
+                    return;
                 }
 
-                newQueue.push(t)
+                newQueue.push(t);
             })
 
-            party.tracksQueue = newQueue
+            party.tracksQueue = newQueue;
     
-            this.ACTIVE_PARTIES.set(id, party)
+            this.ACTIVE_PARTIES.set(id, party);
     
-            this.LogDebug(`Removed ${trackNAME} from party ${party.name} ${id}`)
+            this.LogDebug(`Removed ${trackNAME} from party ${party.name} ${id}`);
         }
     }
 
     KickUser(id: Party['id'], username: string) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        const clients = party.clients.filter(client => client.username != username)
+        const clients = party.clients.filter(client => client.username != username);
 
-        party.clients = clients
+        party.clients = clients;
 
-        this.ACTIVE_PARTIES.set(id, party)
+        this.ACTIVE_PARTIES.set(id, party);
 
-        this.USERS.delete(username)
+        this.USERS.delete(username);
 
-        this.LogDebug(`Kicked ${username} from party ${party.name} ${id}`)
+        this.LogDebug(`Kicked ${username} from party ${party.name} ${id}`);
     }
 
     BanUser(id: Party['id'], username: string) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        this.KickUser(id, username)
+        this.KickUser(id, username);
 
-        party.bannedClients.push(username)
+        party.bannedClients.push(username);
 
-        this.ACTIVE_PARTIES.set(id, party)
+        this.ACTIVE_PARTIES.set(id, party);
 
-        this.LogDebug(`Banned ${username} from party ${party.name} ${id}`)
+        this.LogDebug(`Banned ${username} from party ${party.name} ${id}`);
     }
 
     JoinParty(id: Party['id'], username: string) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        if (party.clients.length + 1 > this.MAX_CLIENTS) {
-            return new PartyError(`[Party full] Max clients exceeded: ${this.MAX_CLIENTS}`)
+        if (party.clients.length + 1 > SharifyAPI.MAX_CLIENTS) {
+            return new PartyError(`[Party full] Max clients exceeded: ${SharifyAPI.MAX_CLIENTS}`);
         }
 
         if (this.UsernameExists(username)) {
-            return new PartyError(`Error: username "${username}" is already in use`)
+            return new PartyError(`Error: username "${username}" is already in use`);
         }
 
-        party.clients.push({ isHost: false, username })
+        party.clients.push({ isHost: false, username });
 
-        this.ACTIVE_PARTIES.set(id, party)
-        this.USERS.add(username)
+        this.ACTIVE_PARTIES.set(id, party);
+        this.USERS.add(username);
 
-        this.LogDebug(`Added ${username} to party ${party.name} ${id}`)
+        this.LogDebug(`Added ${username} to party ${party.name} ${id}`);
     }
 
     LeaveParty(id: Party['id'], username: string) {
-        const party = this.ACTIVE_PARTIES.get(id)
+        const party = this.ACTIVE_PARTIES.get(id);
         
         if (!party) {
-            this.LogDebug(`Cannot find party id: ${id}`)
-            return
+            this.LogDebug(`Cannot find party id: ${id}`);
+            return;
         }
 
-        party.clients = party.clients.filter(client => client.username != username)
+        party.clients = party.clients.filter(client => client.username != username);
 
-        this.ACTIVE_PARTIES.set(id, party)
-        this.USERS.delete(username)
+        this.ACTIVE_PARTIES.set(id, party);
+        this.USERS.delete(username);
 
-        this.LogDebug(`Removed ${username} from party ${party.name} ${id}`)
+        this.LogDebug(`Removed ${username} from party ${party.name} ${id}`);
     }
 
     RemoveFromParty(username: PartyClient['username']) {
         if (this.UsernameExists(username)) {
             this.ACTIVE_PARTIES.forEach((party, i) => {
-                const client = party.clients.find(client => client.username == username)
+                const client = party.clients.find(client => client.username == username);
 
                 if (client) {
                     if (client.isHost) {
-                        this.DeleteParty(i, username)
+                        this.DeleteParty(i, username);
                     } else {
-                        this.LeaveParty(i, username)
+                        this.LeaveParty(i, username);
                     }
 
-                    this.LogDebug(`${username} is deleting party ${i} by leaving`)
+                    this.LogDebug(`${username} is deleting party ${i} by leaving`);
 
-                    return
+                    return;
                 }
             })
         }
     }
 
     UsernameExists(username: string): boolean {
-        return this.USERS.has(username)
+        return this.USERS.has(username);
     }
 
     LogDebug(...args: any[]) {
         if (this.DEBUG_MODE) {
-            console.log(...args)
+            console.log(...args);
         }
     }
 }

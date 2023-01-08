@@ -7,7 +7,8 @@ import { Form, useActionData, useLoaderData, useOutletContext, useSubmit } from 
 import Title from "~/components/title"
 import type { Party } from "~/server/api.server"
 import { api } from "~/server/handlers.server"
-import { getSessionData, setSessionData } from "~/server/session.server"
+import Spotify from "~/app/utils/spotify"
+import { getSessionData, setSessionData, unsetSessionData } from "~/server/session.server"
 import type { OutletContext } from "~/root"
 
 type ActionData = {
@@ -22,6 +23,12 @@ export const action: ActionFunction = async ({
     request
 }) => {
     const formData = await request.formData()
+	const deleteSTokens = formData.get('DeleteSpotifyTokens') as string || false
+
+	if (deleteSTokens) {
+		await unsetSessionData(request, "SpotifyTokens", "/")
+	}
+
     const username = formData.get("username") as string
     const partyID = formData.get("partyID") as string
     const password = formData.get("partyPwd") as string
@@ -97,6 +104,10 @@ export default function Client() {
             ))
         }
 
+        if (Spotify.isReady && !Spotify.isOwner) {
+            submit({ DeleteSpotifyTokens: "true" }, { method: "post" })
+        }
+
         setUsername(context.username)
     }, [loaderData])
 
@@ -155,16 +166,17 @@ export default function Client() {
         <>
             <Title />
             <section className="h-screen">
-                <div className="relative m-auto mt-28 w-3/5 h-3/5 flex flex-col overflow-y-scroll border-[1px] border-main-color-hover rounded-lg shadow-around">
+                <div data-cy="div-rooms-array" className="relative m-auto mt-28 w-3/5 h-3/5 flex flex-col overflow-y-scroll border-[1px] border-main-color-hover rounded-lg shadow-around">
                     {parties && parties.length > 0 ? parties.map(party => (
                         <Form
+                            data-cy="client-form-room"
                             onClick={() => handleJoin(party.id, party.isPrivate)}
                             key={party.id}
                             className={"cursor-pointer flex flex-row justify-center text-2xl py-4 border-b-[1px] duration-300 hover:text-slate-400" + (
                                 party.id % 2 == 0 ? " text-indigo-600" : ""
                             )}
                         >
-                            {`[${party.id}] ${party.name} | ${party.clients.length}/25 | `}
+                            {`[${party.id}] ${party.name} | ${party.clients.length}/${party.MAX_CLIENTS} | `}
                             {party.type == "Spotify" ? <i className="fab fa-spotify pl-2.5 pr-1 mt-1 text-[currentColor]"></i> : <i className="fab fa-youtube pl-2.5 pr-1 mt-1 text-[currentColor]"></i>}
                             {party.isPrivate ? ' | ' : ''}
                             {party.isPrivate ? <i className="fas fa-lock pl-2.5 mt-[.15rem] text-[currentColor]"></i> : ''}
@@ -210,6 +222,7 @@ const UsernamePopup = (
         <div className={`absolute top-0 left-0 h-full w-[100%] flex-col justify-center items-center gap-5 backdrop-blur-sm duration-300 ${display ? "flex" : "hidden"}`}>
             <span className="text-center text-3xl">First of all, you need to register your username</span>
             <input
+                data-cy="client-username"
                 ref={inputRef}
                 type="text"
                 className="form-input"
@@ -217,7 +230,7 @@ const UsernamePopup = (
                 defaultValue={username}
                 onChange={e => setUsername(e.target.value)}
             />
-            <button className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
+            <button data-cy="client-username-submit" className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
         </div>
     )
 }
@@ -239,8 +252,15 @@ const PasswordPopup = (
     return (
         <div className={`absolute top-0 left-0 h-full w-[100%] flex-col justify-center items-center gap-5 backdrop-blur-sm duration-300 ${display ? "flex" : "hidden"}`}>
             <span className="text-center text-3xl">Type the correct Party password</span>
-            <input ref={inputRef} type="password" className="form-input w-full" placeholder="Party password" onChange={e => setPassword(e.currentTarget.value)} />
-            <button className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
+            <input
+                data-cy="client-party-password"
+                ref={inputRef}
+                type="password"
+                className="form-input w-full"
+                placeholder="Party password"
+                onChange={e => setPassword(e.currentTarget.value)}
+            />
+            <button data-cy="client-party-password-submit" className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
         </div>
     )
 }

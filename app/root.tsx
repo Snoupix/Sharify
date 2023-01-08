@@ -1,15 +1,13 @@
-import { useEffect } from "react"
-import { toast, ToastContainer } from "react-toastify"
+import { useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
 import type {
 	MetaFunction,
 	LinksFunction,
 	ActionFunction,
 	LoaderFunction,
-} from "@remix-run/node"
-import { json } from "@remix-run/node"
-import * as fs from "fs"
-import path from "path"
-import { AnimatePresence, motion } from "framer-motion"
+} from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { AnimatePresence, motion } from "framer-motion";
 import {
 	Links,
 	LiveReload,
@@ -21,13 +19,14 @@ import {
 	useFetcher,
 	useLoaderData,
 	useLocation,
-} from "@remix-run/react"
+} from "@remix-run/react";
 
-import styles from "~/compiled.css"
-import toastify from "react-toastify/dist/ReactToastify.min.css"
-import Spotify from "./utils/spotify"
-import { getSessionData } from "./server/session.server"
-import { api } from "./server/handlers.server"
+import styles from "~/compiled.css";
+import toastify from "react-toastify/dist/ReactToastify.min.css";
+import Spotify from "./utils/spotify";
+import { getSessionData } from "./server/session.server";
+import { api } from "./server/handlers.server";
+import { GetStorageValue } from "./utils/utils";
 
 export type OutletContext = {
 	username: 	string
@@ -69,23 +68,23 @@ export const meta: MetaFunction = () => ({
 })
 
 export const action: ActionFunction = async ({ request }) => {
-	const username = await getSessionData(request, "username")
+	const username = await getSessionData(request, "username");
 
 	if (username) {
-		api.RemoveFromParty(username)
+		api.RemoveFromParty(username);
 	}
 	
-	return null
+	return null;
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
-	const username = await getSessionData(request, "username") as string
+	const username = await getSessionData(request, "username") as string;
 
 	return json<LoaderData>({
 		id: process.env.SPOTIFY_CLIENT_ID as string,
 		secret: process.env.SPOTIFY_CLIENT_SECRET as string,
 		username,
-	})
+	});
 }
 
 function Document({
@@ -101,7 +100,7 @@ function Document({
 				<Links />
 			</head>
 			<body className="bg-bg-color overflow-x-hidden">
-				{children}
+				{ children }
 				<ScrollRestoration />
 				<Scripts />
 				<LiveReload />
@@ -111,21 +110,21 @@ function Document({
 }
 
 export default function App() {
-	const loaderData = useLoaderData<LoaderData>()
-	const fetcher = useFetcher()
-	const { pathname } = useLocation()
+	const loaderData = useLoaderData<LoaderData>();
+	const fetcher = useFetcher();
+	const { pathname } = useLocation();
 
 	const contextData: OutletContext = {
 		username: loaderData.username || "",
 		toast,
-	}
+	};
 
 	useEffect(() => {
-		Spotify.SetCredentials({ id: loaderData.id, secret: loaderData.secret })
-	}, [loaderData])
+		Spotify.SetCredentials({ id: loaderData.id, secret: loaderData.secret });
+	}, [])
 
 	useEffect(() => {
-		return () => fetcher.submit(null, { method: 'post' })
+		return () => fetcher.submit(null, { method: 'post' });
 	}, [])
 
 	return (
@@ -144,11 +143,11 @@ export default function App() {
 				</motion.main>
 			</AnimatePresence>
 		</Document>
-	)
+	);
 }
 
 export function CatchBoundary() {
-	const caught = useCatch()
+	const caught = useCatch();
   
 	return (
 		<Document>
@@ -158,11 +157,11 @@ export function CatchBoundary() {
 				</h1>
 			</div>
 		</Document>
-	)
+	);
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
-	console.error(error)
+	console.error(error);
 
 	return (
 		<Document>
@@ -171,5 +170,5 @@ export function ErrorBoundary({ error }: { error: Error }) {
 				<pre>{error.message}</pre>
 			</div>
 		</Document>
-	)
+	);
 }
