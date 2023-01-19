@@ -1,51 +1,20 @@
-# Welcome to Remix!
+# Sharify by Snoupix
 
-- [Remix Docs](https://remix.run/docs)
+Sharify is a Remix web app project that resolves the following problem: let's say you're at a party and someone you don't know manages the music with **Spotify**. You would like to put a particular song but you can't control his phone. Here comes Sharify. It's an app where you link your Spotify account to create a "room" with a password where people can join and add a song to your current playlist queue. So everyone with the app and the room's password can add songs to listen to!
 
-## Development
+At the moment, there are some features that allows the room's owner to kick or ban people from their room.
 
-Start the Remix development asset server and the Express server by running:
+## Technical details
 
-```sh
-npm run dev
-```
+This web app uses:
 
-This starts your app in development mode, which will purge the server require cache when Remix rebuilds assets so you don't need a process manager restarting the express server.
+- [Remix](https://remix.run/) (so, React)
+- [Typescript](https://www.typescriptlang.org/)
+- [Cypress](https://www.cypress.io/) (for End-to-End testing)
+- [Tailwind](https://tailwindcss.com/)
+- [Spotify API](https://developer.spotify.com/documentation/web-api/) but with [this package](https://www.npmjs.com/package/spotify-web-api-node)
 
-## Deployment
+## Potential ideas for the app
 
-First, build your app for production:
-
-```sh
-npm run build
-```
-
-Then run the app in production mode:
-
-```sh
-npm start
-```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying express applications you should be right at home just make sure to deploy the output of `remix build`
-
-- `build/`
-- `public/build/`
-
-### Using a Template
-
-When you ran `npx create-remix@latest` there were a few choices for hosting. You can run that again to create a new project, then copy over your `app/` folder to the new project that's pre-configured for your target server.
-
-```sh
-cd ..
-# create a new project, and pick a pre-configured host
-npx create-remix@latest
-cd my-new-remix-app
-# remove the new project's app (not the old one!)
-rm -rf app
-# copy your app over
-cp -R ../my-old-remix-app/app app
-```
+- Work with Twitch/Youtube streamers to make it available for them and their community -> the room owner can turn a client into a moderator. (Maybe make a twitch bot available for them to communicate easily)
+- Release the web app on Beta then make a Report page for any bug report or issue encountered
