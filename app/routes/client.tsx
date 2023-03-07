@@ -1,15 +1,15 @@
-import { toast, ToastContainer } from "react-toastify"
-import { useEffect, useRef, useState } from "react"
-import { json, redirect } from "@remix-run/node"
-import type { LoaderFunction, ActionFunction } from "@remix-run/node"
-import { Form, useActionData, useLoaderData, useOutletContext, useSubmit } from "@remix-run/react"
+import { toast, ToastContainer } from "react-toastify";
+import { useEffect, useRef, useState } from "react";
+import { json, redirect } from "@remix-run/node";
+import type { LoaderFunction, ActionFunction } from "@remix-run/node";
+import { Form, useActionData, useLoaderData, useOutletContext, useSubmit } from "@remix-run/react";
 
-import Title from "~/components/title"
-import type { Party } from "~/server/api.server"
-import { api } from "~/server/handlers.server"
-import Spotify from "~/app/utils/spotify"
-import { getSessionData, setSessionData, unsetSessionData } from "~/server/session.server"
-import type { OutletContext } from "~/root"
+import Title from "~/components/title";
+import type { Party } from "~/server/api.server";
+import { api } from "~/server/handlers.server";
+import Spotify from "~/app/utils/spotify";
+import { getSessionData, setSessionData, unsetSessionData } from "~/server/session.server";
+import type { OutletContext } from "~/root";
 
 type ActionData = {
     errorMessage: string
@@ -22,93 +22,93 @@ type LoaderData = {
 export const action: ActionFunction = async ({
     request
 }) => {
-    const formData = await request.formData()
-	const deleteSTokens = formData.get('DeleteSpotifyTokens') as string || false
+    const formData = await request.formData();
+	const deleteSTokens = formData.get('DeleteSpotifyTokens') as string || false;
 
 	if (deleteSTokens) {
-		await unsetSessionData(request, "SpotifyTokens", "/")
+		await unsetSessionData(request, "SpotifyTokens", "/");
 	}
 
-    const username = formData.get("username") as string
-    const partyID = formData.get("partyID") as string
-    const password = formData.get("partyPwd") as string
+    const username = formData.get("username") as string;
+    const partyID = formData.get("partyID") as string;
+    const password = formData.get("partyPwd") as string;
 
     if (!partyID) {
-        throw new Error("Party ID not found, please contact Snoupix")
+        throw new Error("Party ID not found, please contact Snoupix");
     }
 
-    const party = api.GetParty(parseInt(partyID))
+    const party = api.GetParty(parseInt(partyID));
 
     if (!username) {
-        throw new Error("Username not found, please contact Snoupix")
+        throw new Error("Username not found, please contact Snoupix");
     }
 
     if (!party) {
-        return json({ errorMessage: `Party id ${partyID} doesn't exist anymore.` })
+        return json({ errorMessage: `Party id ${partyID} doesn't exist anymore.` });
     }
 
     if (party.isPrivate && party.password != password) {
-        return json({ errorMessage: `Error: Party password incorrect` })
+        return json({ errorMessage: `Error: Party password incorrect` });
     }
 
     if (api.UsernameExists(username)) {
-        return json({ errorMessage: `Error: There is already a Sharify member called "${username}"` })
+        return json({ errorMessage: `Error: There is already a Sharify member called "${username}"` });
     }
 
-    const error = api.JoinParty(parseInt(partyID), username)
+    const error = api.JoinParty(parseInt(partyID), username);
 
     if (error) {
-        return json({ errorMessage: error.message })
+        return json({ errorMessage: error.message });
     }
     
-    return await setSessionData(request, "username", username, `/room/${partyID}`)
+    return await setSessionData(request, "username", username, `/room/${partyID}`);
 }
 
 export const loader: LoaderFunction = async ({
     request
 }) => {
-    const username = await getSessionData(request, "username")
+    const username = await getSessionData(request, "username");
 
 	if (username) {
-        const party = api.GetUserParty(username)
+        const party = api.GetUserParty(username);
     
         if (party != null) {
-            return redirect(`/room/${party.id}`)
+            return redirect(`/room/${party.id}`);
         }
 	}
 
-    const parties = api.GetParties(false)
+    const parties = api.GetParties(false);
 
-    return json({ parties })
+    return json({ parties });
 }
 
 export default function Client() {
-    const loaderData = useLoaderData<LoaderData>()
-    const actionData = useActionData<ActionData>()
-    const context = useOutletContext<OutletContext>()
-    const submit = useSubmit()
-    const [parties, setParties] = useState<Array<Party>>([])
-    const [showUP, setShowUP] = useState(false) // username popup
-    const [showPP, setShowPP] = useState(false) // password popup
-    const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("")
+    const loaderData = useLoaderData<LoaderData>();
+    const actionData = useActionData<ActionData>();
+    const context = useOutletContext<OutletContext>();
+    const submit = useSubmit();
+    const [parties, setParties] = useState<Array<Party>>([]);
+    const [showUP, setShowUP] = useState(false); // username popup
+    const [showPP, setShowPP] = useState(false); // password popup
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
     const [partyData, setPartyData] = useState<{
         id: number
         isPrivate: boolean
-    } | null>(null)
+    } | null>(null);
 
     useEffect(() => {
         if (loaderData.parties) {
             setParties(loaderData.parties.filter(
                 party => !party.bannedClients.includes(context.username)
-            ))
+            ));
         }
 
         if (Spotify.isReady && !Spotify.isOwner) {
-            submit({ DeleteSpotifyTokens: "true" }, { method: "post" })
+            submit({ DeleteSpotifyTokens: "true" }, { method: "post" });
         }
 
-        setUsername(context.username)
+        setUsername(context.username);
     }, [loaderData])
 
     useEffect(() => {
@@ -121,12 +121,12 @@ export default function Client() {
                 pauseOnHover: true,
                 draggable: true,
                 theme: "dark",
-            })
+            });
 
-            setUsername("")
-            setPassword("")
+            setUsername("");
+            setPassword("");
     
-            return () => toast.isActive(_toast) ? toast.dismiss(_toast) : undefined
+            return () => toast.isActive(_toast) ? toast.dismiss(_toast) : undefined;
         }
     }, [actionData])
 
@@ -135,20 +135,20 @@ export default function Client() {
             !showUP && !showPP && partyData != null &&
             (username.trim() != "" || password != "")
         ) {
-            handleJoin(partyData.id, partyData.isPrivate)
+            handleJoin(partyData.id, partyData.isPrivate);
         }
     }, [showUP, showPP])
 
     const handleJoin = (id: number, isPrivate: boolean) => {
-        setPartyData({ id, isPrivate })
+        setPartyData({ id, isPrivate });
 
         if (!username || username.trim() == "") {
-            setShowUP(true)
+            setShowUP(true);
             return
         }
 
         if (isPrivate && password == "") {
-            setShowPP(true)
+            setShowPP(true);
             return
         }
 
@@ -159,7 +159,7 @@ export default function Client() {
                 partyPwd: password
             },
             { method: "post" }
-        )
+        );
     }
 
     return (
@@ -200,7 +200,7 @@ export default function Client() {
             </section>
             <ToastContainer />
         </>
-    )
+    );
 }
 
 const UsernamePopup = (
@@ -211,11 +211,11 @@ const UsernamePopup = (
         setUsername: React.Dispatch<React.SetStateAction<string>>
     }
 ) => {
-    const { display, setDisplay, username, setUsername } = props
-    const inputRef = useRef<HTMLInputElement>(null)
+    const { display, setDisplay, username, setUsername } = props;
+    const inputRef = useRef<HTMLInputElement>(null);
 
     if (display) {
-        setTimeout(() => inputRef.current?.focus(), 500)
+        setTimeout(() => inputRef.current?.focus(), 500);
     }
 
     return (
@@ -232,7 +232,7 @@ const UsernamePopup = (
             />
             <button data-cy="client-username-submit" className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
         </div>
-    )
+    );
 }
 
 const PasswordPopup = (
@@ -242,11 +242,11 @@ const PasswordPopup = (
         setPassword: React.Dispatch<React.SetStateAction<string>>
     }
 ) => {
-    const { display, setDisplay, setPassword } = props
-    const inputRef = useRef<HTMLInputElement>(null)
+    const { display, setDisplay, setPassword } = props;
+    const inputRef = useRef<HTMLInputElement>(null);
 
     if (display) {
-        setTimeout(() => inputRef.current?.focus(), 500)
+        setTimeout(() => inputRef.current?.focus(), 500);
     }
 
     return (
@@ -262,5 +262,5 @@ const PasswordPopup = (
             />
             <button data-cy="client-party-password-submit" className="text-2xl" onClick={() => setDisplay(false)}>Close</button>
         </div>
-    )
+    );
 }

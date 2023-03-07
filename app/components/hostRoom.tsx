@@ -1,12 +1,12 @@
-import { useState } from "react"
-import { Form } from "@remix-run/react"
-import type { FetcherWithComponents } from "@remix-run/react"
+import { useState } from "react";
+import { Form } from "@remix-run/react";
+import type { FetcherWithComponents } from "@remix-run/react";
 
-import { Icon } from "~/routes/room.$roomID"
-import type { FetcherData, RoomData } from "~/routes/room.$roomID"
-import spotify from "~/utils/spotify"
-import { FormatTime, SetStorageValue } from "~/utils/utils"
-import type { Party } from "~/server/api.server"
+import { Icon } from "~/routes/room.$roomID";
+import type { FetcherData, RoomData } from "~/routes/room.$roomID";
+import spotify from "~/utils/spotify";
+import { FormatTime, SetStorageValue } from "~/utils/utils";
+import type { Party } from "~/server/api.server";
 
 export default function HostRoom(props: {
     fetcher: FetcherWithComponents<FetcherData>
@@ -45,40 +45,40 @@ export default function HostRoom(props: {
         devices,
         searchResults,
         addTrackToQueue
-    } = props
-    const [showVolume, setShowVolume] = useState(false)
+    } = props;
+    const [showVolume, setShowVolume] = useState(false);
 
-    const tracksQElements: Array<JSX.Element | null> = []
+    const tracksQElements: Array<JSX.Element | null> = [];
 
     tracksQueue.forEach((track, i) => {
-        const owner = partyTracksQ.find(trackOwner => trackOwner.trackId == track.id)
+        const owner = partyTracksQ.find(trackOwner => trackOwner.trackId == track.id);
 
         tracksQElements.push(track.type == "episode" ? null : (
             <div key={i} className="text-lg">
                 <span>{`[${i+1}]${owner ? ` (${owner.username})` : ""} ${track.name} - ${track.artists.map(a => a.name).join(', ')}`}</span>
             </div>
-        ))
-    })
+        ));
+    });
 
     const handlePlay = () => {
         spotify
             .Resume()
             .then(() => FetchData(250))
-            .catch(console.error)
+            .catch(console.error);
     }
 
     const handlePause = () => {
         spotify
             .Pause()
             .then(() => FetchData(250))
-            .catch(console.error)
+            .catch(console.error);
     }
 
     const handleNext = () => {
         spotify
             .SkipToNext()
             .then(() => FetchData(500))
-            .catch(console.error)
+            .catch(console.error);
     }
 
     const handlePrevious = () => {
@@ -86,29 +86,29 @@ export default function HostRoom(props: {
             return spotify
                 .Seek(0)
                 .then(() => FetchData(500))
-                .catch(console.error)
+                .catch(console.error);
         }
 
         spotify
             .SkipToPrevious()
             .then(() => FetchData(500))
-            .catch(console.error)
+            .catch(console.error);
     }
 
     const handleSeek: React.ChangeEventHandler<HTMLInputElement> = e => {
-        setRoomData({ seekPos: parseInt(e.target.value) })
-        FetchData(1000)
+        setRoomData({ seekPos: parseInt(e.target.value) });
+        FetchData(1000);
     }
 
     const setSpotifyDevice = (device: SpotifyApi.UserDevice) => {
-        spotify.SetDevice(device)
+        spotify.SetDevice(device);
     
-        SetStorageValue({ SpotifyDevice: JSON.stringify(device) })
+        SetStorageValue({ SpotifyDevice: JSON.stringify(device) });
     
         fetcher.submit(
             { type: "setSpotifyDevice", spotifyDevice: JSON.stringify(device) },
             { method: 'post' }
-        )
+        );
     }
 
     return (
@@ -250,5 +250,5 @@ export default function HostRoom(props: {
                 </div>
             </section>
         </>
-    )
+    );
 }

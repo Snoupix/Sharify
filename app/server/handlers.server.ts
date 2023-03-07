@@ -1,6 +1,6 @@
-import SharifyAPI from './api.server'
+import SharifyAPI from './api.server';
 
-let api: SharifyAPI
+let api: SharifyAPI;
 
 declare global {
     var __api: SharifyAPI | undefined
@@ -10,12 +10,13 @@ declare global {
 // the server with every change, but we want to make sure we don't
 // create a new connection to the DB with every change either.
 if (process.env.NODE_ENV === "production") {
-	api = new SharifyAPI()
+	api = new SharifyAPI();
 } else {
 	if (!global.__api) {
-        global.__api = new SharifyAPI()
+        global.__api = new SharifyAPI();
     }
-    api = global.__api
+
+    api = global.__api;
 }
 
 export { api }

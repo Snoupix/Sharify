@@ -54,12 +54,12 @@ export default function Index() {
 			pauseOnHover: true,
 			draggable: true,
 			theme: "light",
-		})
+		});
 		
-		submit({ DeleteSpotifyTokens: "true" }, { method: "post" })
+		submit({ DeleteSpotifyTokens: "true" }, { method: "post" });
 
-		Spotify.Disconnect()
-		setSpotifyUser(null)
+		Spotify.Disconnect();
+		setSpotifyUser(null);
 	}
 	
 	return (
@@ -98,5 +98,5 @@ export default function Index() {
 			</div>
 			<ToastContainer />
 		</>
-	)
+	);
 }

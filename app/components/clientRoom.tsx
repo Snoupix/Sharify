@@ -1,8 +1,8 @@
-import { Form } from "@remix-run/react"
+import { Form } from "@remix-run/react";
 
-import { FormatTime } from "~/utils/utils"
-import type { RoomData } from "~/routes/room.$roomID"
-import type { Party } from "~/server/api.server"
+import { FormatTime } from "~/utils/utils";
+import type { RoomData } from "~/routes/room.$roomID";
+import type { Party } from "~/server/api.server";
 
 export default function ClientRoom(props: {
     username: string
@@ -29,19 +29,19 @@ export default function ClientRoom(props: {
         setRoomData,
         searchResults,
         addTrackToQueue
-    } = props
+    } = props;
 
-    const tracksQElements: Array<JSX.Element | null> = []
+    const tracksQElements: Array<JSX.Element | null> = [];
 
     tracksQueue.forEach((track, i) => {
-        const owner = partyTracksQ.find(trackOwner => trackOwner.trackId == track.id)
+        const owner = partyTracksQ.find(trackOwner => trackOwner.trackId == track.id);
 
         tracksQElements.push(track.type == "episode" ? null : (
             <div key={i} className="text-lg">
                 <span>{`[${i+1}]${owner ? ` (${owner.username})` : ""} ${track.name} - ${track.artists.map(a => a.name).join(', ')}`}</span>
             </div>
-        ))
-    })
+        ));
+    });
 
     return (
         <>
@@ -113,5 +113,5 @@ export default function ClientRoom(props: {
                 </div>
             </section>
         </>
-    )
+    );
 }

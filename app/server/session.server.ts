@@ -1,14 +1,14 @@
-import dotenv from 'dotenv'
-import { createCookieSessionStorage, redirect } from "@remix-run/node"
+import dotenv from 'dotenv';
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
 
-dotenv.config()
+dotenv.config();
 
-type SessionProperty =  "username" | "SpotifyTokens"
+type SessionProperty =  "username" | "SpotifyTokens";
 
-const sessionSecret = process.env.SESSION_SECRET
+const sessionSecret = process.env.SESSION_SECRET;
 
 if (!sessionSecret) {
-    throw new Error("SESSION_SECRET must be set")
+    throw new Error("SESSION_SECRET must be set");
 }
 
 const storage = createCookieSessionStorage({
@@ -24,22 +24,22 @@ const storage = createCookieSessionStorage({
         maxAge: 60 * 60 * 24 * 30,
         httpOnly: true,
     },
-})
+});
 
 function getUserSession(request: Request) {
-    return storage.getSession(request.headers.get("Cookie"))
+    return storage.getSession(request.headers.get("Cookie"));
 }
 
 export async function getSessionData(
     request: Request,
     property: SessionProperty
 ) {
-    const session = await getUserSession(request)
-    const data = session.get(property)
+    const session = await getUserSession(request);
+    const data = session.get(property);
 
-    if (!data || typeof data != "string") return null
+    if (!data || typeof data != "string") return null;
 
-    return data
+    return data;
 }
 
 export async function setSessionData(
@@ -48,15 +48,15 @@ export async function setSessionData(
     data: string,
     redirectTo: string
 ) {
-    const session = await getUserSession(request)
+    const session = await getUserSession(request);
 
-    session.set(property, data)
+    session.set(property, data);
 
     return redirect(redirectTo, {
         headers: {
             "Set-Cookie": await storage.commitSession(session),
         },
-    })
+    });
 }
 
 export async function unsetSessionData(
@@ -64,25 +64,25 @@ export async function unsetSessionData(
     property: string,
     redirectTo: string
 ) {
-    const session = await getUserSession(request)
+    const session = await getUserSession(request);
 
-    session.unset(property)
+    session.unset(property);
 
     return redirect(redirectTo, {
         headers: {
             "Set-Cookie": await storage.commitSession(session),
         },
-    })
+    });
 }
 
 export async function createUserSession(redirectTo: string) {
-    const session = await storage.getSession()
+    const session = await storage.getSession();
 
     return redirect(redirectTo, {
         headers: {
             "Set-Cookie": await storage.commitSession(session),
         },
-    })
+    });
 }
 
 export async function destroyUserSession(request: Request, redirectTo: string) {
@@ -90,5 +90,5 @@ export async function destroyUserSession(request: Request, redirectTo: string) {
         headers: {
             "Set-Cookie": await storage.destroySession(await getUserSession(request)),
         },
-    })
+    });
 }

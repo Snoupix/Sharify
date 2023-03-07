@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react"
-import { useFetcher, useLoaderData, useNavigate, useOutletContext } from "@remix-run/react"
-import { toast, ToastContainer } from "react-toastify"
-import type { LoaderFunction, ActionFunction } from "@remix-run/node"
-import { redirect, json } from "@remix-run/node"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useFetcher, useLoaderData, useNavigate, useOutletContext } from "@remix-run/react";
+import { toast, ToastContainer } from "react-toastify";
+import type { LoaderFunction, ActionFunction } from "@remix-run/node";
+import { redirect, json } from "@remix-run/node";
 
-import { api } from "~/server/handlers.server"
-import Title from "~/components/title"
-import { GetStorageValue, SetStorageValue, useDebounce } from "~/utils/utils"
-import spotify from "~/utils/spotify"
-import { getSessionData } from "~/server/session.server"
-import HostRoom from "~/components/hostRoom"
-import ClientRoom from "~/components/clientRoom"
-import type { Party } from "~/server/api.server"
-import type { OutletContext } from "~/root"
+import { api } from "~/server/handlers.server";
+import Title from "~/components/title";
+import { GetStorageValue, SetStorageValue, useDebounce } from "~/utils/utils";
+import spotify from "~/utils/spotify";
+import { getSessionData } from "~/server/session.server";
+import HostRoom from "~/components/hostRoom";
+import ClientRoom from "~/components/clientRoom";
+import type { Party } from "~/server/api.server";
+import type { OutletContext } from "~/root";
 
 export type RoomData = {
     title:          string
@@ -48,103 +48,103 @@ export const action: ActionFunction = async ({
     request,
     params
 }) => {
-    const username = await getSessionData(request, "username")
-    const formData = await request.formData()
-	const fetchType = formData.get("type") as string
-    const id = params.roomID
+    const username = await getSessionData(request, "username");
+    const formData = await request.formData();
+	const fetchType = formData.get("type") as string;
+    const id = params.roomID;
 
     if (!id || !username) {
-        return redirect('/')
+        return redirect('/');
     }
 
     switch (fetchType) {
         case "fetchData":
-            const currentTrack = formData.get("currentTrack") as string
-            const party = api.GetParty(parseInt(id))
+            const currentTrack = formData.get("currentTrack") as string;
+            const party = api.GetParty(parseInt(id));
 
             if (!party) {
                 return json<FetcherData>({
                     tracksQueue: [],
                     clients: [],
                     isPartyDeleted: true
-                })
+                });
             }
 
-            api.RemoveFromTracksQueue(parseInt(id), currentTrack)
+            api.RemoveFromTracksQueue(parseInt(id), currentTrack);
 
             return json<FetcherData>({
                 tracksQueue: party.tracksQueue,
                 clients: party.clients,
                 isPartyDeleted: false
-            })
+            });
         case "deleteRoom":
-            api.DeleteParty(parseInt(id), username)
-            return redirect('/')
+            api.DeleteParty(parseInt(id), username);
+            return redirect('/');
         case "leaveRoom":
-            api.LeaveParty(parseInt(id), username)
-            return redirect('/')
+            api.LeaveParty(parseInt(id), username);
+            return redirect('/');
         case "addToQueue":
-            const trackId = formData.get("trackId") as string
-            const trackName = formData.get("trackName") as string
+            const trackId = formData.get("trackId") as string;
+            const trackName = formData.get("trackName") as string;
 
-            api.AddToTracksQueue(parseInt(id), username, trackId, trackName)
-            return null
+            api.AddToTracksQueue(parseInt(id), username, trackId, trackName);
+            return null;
         case "kick": {
-            const target = formData.get("username") as string
+            const target = formData.get("username") as string;
 
-            api.KickUser(parseInt(id), target)
-            return null
+            api.KickUser(parseInt(id), target);
+            return null;
         }
         case "ban": {
-            const target = formData.get("username") as string
+            const target = formData.get("username") as string;
 
-            api.BanUser(parseInt(id), target)
-            return null
+            api.BanUser(parseInt(id), target);
+            return null;
         }
     }
 
-    return null
+    return null;
 }
 
 export const loader: LoaderFunction = async ({
     request,
     params
 }) => {
-    const id = params.roomID
+    const id = params.roomID;
 
     if (!id) {
-        return redirect('/')
+        return redirect('/');
     }
 
-    const party = api.GetParty(parseInt(id))
+    const party = api.GetParty(parseInt(id));
 
     if (!party) {
-        return json({ errorMessage: "Error: Party not created or deleted", redirect: "/host" })
+        return json({ errorMessage: "Error: Party not created or deleted", redirect: "/host" });
     }
 
-    const username = await getSessionData(request, "username")
+    const username = await getSessionData(request, "username");
 
-    if (!username) return redirect('/')
+    if (!username) return redirect('/');
 
     if (!party.clients.find(client => client.username == username)) {
-        return json({ errorMessage: `Error: You are not a member of the Party ${party.name} anymore`, redirect: "/" })
+        return json({ errorMessage: `Error: You are not a member of the Party ${party.name} anymore`, redirect: "/" });
     }
 
     return json({
         party,
         isHost: party.clients.find(client => client.username == username)?.isHost
-    })
+    });
 }
 
 export default function Room() {
-    const loaderData = useLoaderData<LoaderData>()
-    const context = useOutletContext<OutletContext>()
-    const fetcher = useFetcher<FetcherData>()
-    const navigate = useNavigate()
-    const [isAllowed, setIsAllowed] = useState(true)
-    const fetchDataTimeout = useRef<NodeJS.Timer | null>(null)
-    const [fetchInterval, setFetchInterval] = useState<NodeJS.Timer>()
-    const [syncInterval, setSyncInterval] = useState<NodeJS.Timer>()
+    const loaderData = useLoaderData<LoaderData>();
+    const context = useOutletContext<OutletContext>();
+    const fetcher = useFetcher<FetcherData>();
+    const navigate = useNavigate();
+    const [isAllowed, setIsAllowed] = useState(true);
+    const fetchDataTimeout = useRef<NodeJS.Timer | null>(null);
+    const [fetchInterval, setFetchInterval] = useState<NodeJS.Timer>();
+    const [syncInterval, setSyncInterval] = useState<NodeJS.Timer>();
     const [{
         title,
         volume,
@@ -178,25 +178,25 @@ export default function Room() {
             seekPos: 0,
             tracksQueue: []
         }
-    )
+    );
 
-    const debounceVolume: number = useDebounce(volume, 600)
-    const debounceSearch: string = useDebounce(searchInput, 600)
-    const debounceSeek: number = useDebounce(seekPos, 500)
+    const debounceVolume: number = useDebounce(volume, 600);
+    const debounceSearch: string = useDebounce(searchInput, 600);
+    const debounceSeek: number = useDebounce(seekPos, 500);
 
     const FetchData = useCallback((delay?: number) => {
         if (fetchDataTimeout.current)
-            clearTimeout(fetchDataTimeout.current)
+            clearTimeout(fetchDataTimeout.current);
 
         fetchDataTimeout.current = setTimeout(() => {
             (async () => {
-                fetchDataTimeout.current = null
+                fetchDataTimeout.current = null;
                 const [playbackData, recentTracks, queueData] =
                     await Promise.all([
                         spotify.GetCurrentTrackData(),
                         spotify.GetRecentlyPlayedTracks(5),
                         spotify.GetCurrentQueueData()
-                    ])
+                    ]);
         
                 if (playbackData instanceof Error) {
                     toast.error(`Error: Failed to fetch current track (${playbackData.message})`, {
@@ -207,11 +207,11 @@ export default function Room() {
                         pauseOnHover: true,
                         draggable: true,
                         theme: "light",
-                    })
+                    });
 
-                    console.error(playbackData.message)
+                    console.error(playbackData.message);
 
-                    return
+                    return;
                 }
         
                 if (recentTracks instanceof Error) {
@@ -223,11 +223,11 @@ export default function Room() {
                         pauseOnHover: true,
                         draggable: true,
                         theme: "light",
-                    })
+                    });
 
-                    console.error(recentTracks.message)
+                    console.error(recentTracks.message);
 
-                    return
+                    return;
                 }
         
                 if (queueData instanceof Error) {
@@ -239,50 +239,50 @@ export default function Room() {
                         pauseOnHover: true,
                         draggable: true,
                         theme: "light",
-                    })
+                    });
 
-                    console.error(queueData.message)
+                    console.error(queueData.message);
 
-                    return
+                    return;
                 }
 
                 if (!playbackData || !playbackData.device.is_active) {
-                    const devices = await spotify.GetDevices()
+                    const devices = await spotify.GetDevices();
 
                     if (!(devices instanceof Error)) {
-                        setRoomData({ currentDevice: null, devices })
+                        setRoomData({ currentDevice: null, devices });
                     }
                 }
 
                 if (!playbackData) {
                     return setRoomData({
                         title: "Play a music on Spotify to start using Sharify"
-                    })
+                    });
                 }
 
-                const currentTrack = playbackData.item
-                const recentArr: Array<SpotifyApi.PlayHistoryObject> = []
-                const queueArr: Array<SpotifyApi.TrackObjectFull | SpotifyApi.EpisodeObjectFull> = []
+                const currentTrack = playbackData.item;
+                const recentArr: Array<SpotifyApi.PlayHistoryObject> = [];
+                const queueArr: Array<SpotifyApi.TrackObjectFull | SpotifyApi.EpisodeObjectFull> = [];
 
                 recentTracks.forEach(track => {
                     if (!(track instanceof Error)) {
-                        recentArr.push(track)
+                        recentArr.push(track);
                     }
                 })
 
                 queueData.queue.forEach((track, i) => {
-                    if (i >= 5) return
-                    queueArr.push(track)
+                    if (i >= 5) return;
+                    queueArr.push(track);
                 })
         
-                if (!currentTrack) return console.error("Couldn't fetch current track")
+                if (!currentTrack) return console.error("Couldn't fetch current track");
         
                 if (currentTrack.type == "episode") return setRoomData({
                     title: currentTrack.name,
                     recentTracks: recentArr,
                     tracksQueue: queueArr,
                     durationMS: currentTrack.duration_ms,
-                })
+                });
 
                 return setRoomData({
                     title: `${currentTrack.name} - ${currentTrack.artists.map(artist => artist.name).join(', ')}`,
@@ -292,33 +292,33 @@ export default function Room() {
                     progressMS: playbackData.progress_ms || 0,
                     isPlaying: playbackData.is_playing,
                     volume: playbackData.device.volume_percent || 50
-                })
+                });
             })()
-        }, delay || 500)
+        }, delay || 500);
     }, [fetchDataTimeout, setRoomData])
 
 
     useEffect(() => {
-        if (!isAllowed) return
+        if (!isAllowed) return;
 
         const interval = setInterval(() => fetcher.submit({
 			type: "fetchData",
 			username: context.username,
             currentTrack: title
-		}, { method: "post" }), 1000)
+		}, { method: "post" }), 1000);
 
-        setFetchInterval(interval)
+        setFetchInterval(interval);
 
-        const syncInterval = setInterval(() => FetchData(0), 10000)
+        const syncInterval = setInterval(() => FetchData(0), 10000);
 
-        setSyncInterval(syncInterval)
+        setSyncInterval(syncInterval);
 
-        const timeout = setTimeout(() => FetchData(0), 1000)
+        const timeout = setTimeout(() => FetchData(0), 1000);
 
         return () => {
-            clearTimeout(timeout)
-            clearInterval(interval)
-            clearInterval(syncInterval)
+            clearTimeout(timeout);
+            clearInterval(interval);
+            clearInterval(syncInterval);
         }
     }, [title])
 
@@ -333,23 +333,23 @@ export default function Room() {
                     pauseOnHover: true,
                     draggable: true,
                     theme: "light",
-                })
+                });
 
-                const timeout = setTimeout(() => navigate('/'), 3000)
+                const timeout = setTimeout(() => navigate('/'), 3000);
 
-                setIsAllowed(false)
+                setIsAllowed(false);
 
                 return () => {
-                    if (toast.isActive(_toast)) toast.dismiss(_toast)
-                    clearTimeout(timeout)
+                    if (toast.isActive(_toast)) toast.dismiss(_toast);
+                    clearTimeout(timeout);
                 }
             }
 
             if (!fetcher.data.clients.find(client => client.username == context.username)) {
-                clearInterval(fetchInterval)
-                clearInterval(syncInterval)
+                clearInterval(fetchInterval);
+                clearInterval(syncInterval);
 
-                setIsAllowed(false)
+                setIsAllowed(false);
 
                 const _toast = toast('You have been kicked of the room by the host!', {
                     position: "bottom-right",
@@ -359,46 +359,46 @@ export default function Room() {
                     pauseOnHover: true,
                     draggable: true,
                     theme: "light",
-                })
-                const timeout = setTimeout(() => navigate('/client'), 3000)
+                });
+                const timeout = setTimeout(() => navigate('/client'), 3000);
 
                 return () => {
-                    if (toast.isActive(_toast)) toast.dismiss(_toast)
-                    clearTimeout(timeout)
+                    if (toast.isActive(_toast)) toast.dismiss(_toast);
+                    clearTimeout(timeout);
                 }
             }
 
             setRoomData({
                 partyTracksQ: fetcher.data.tracksQueue,
                 clients: fetcher.data.clients
-            })
+            });
         }
     }, [fetcher.data])
 
     useEffect(() => {
-        if (!isPlaying) return
+        if (!isPlaying) return;
 
         const timeout = setTimeout(() => {
             if (durationMS > 0 && progressMS >= durationMS) {
-                clearTimeout(timeout)
-                FetchData()
-                return
+                clearTimeout(timeout);
+                FetchData();
+                return;
             }
 
-            setRoomData({ progressMS: progressMS + 1000 })
-        }, 1000)
+            setRoomData({ progressMS: progressMS + 1000 });
+        }, 1000);
 
-        return () => clearTimeout(timeout)
+        return () => clearTimeout(timeout);
     }, [progressMS, durationMS, setRoomData, isPlaying, FetchData])
 
     useEffect(() => {
-        if (debounceVolume == 99.9) return  // dodge initializer
+        if (debounceVolume == 99.9) return;  // dodge initializer
 
-        spotify.SetVolume(debounceVolume)
+        spotify.SetVolume(debounceVolume);
     }, [debounceVolume])
 
     useEffect(() => {
-        if (debounceSearch.trim() == "") return  // dodge initializer
+        if (debounceSearch.trim() == "") return;  // dodge initializer
 
         spotify
             .SearchTracks(debounceSearch)
@@ -407,13 +407,13 @@ export default function Room() {
 
                 setRoomData({ searchResults: resp.tracks?.items })
             })
-            .catch(console.error)
+            .catch(console.error);
     }, [debounceSearch])
 
     useEffect(() => {
-        if (debounceSeek == 0) return  // dodge initializer
+        if (debounceSeek == 0) return;  // dodge initializer
 
-        spotify.Seek(debounceSeek)
+        spotify.Seek(debounceSeek);
     }, [debounceSeek])
 
     useEffect(() => {
@@ -426,15 +426,15 @@ export default function Room() {
                 pauseOnHover: true,
                 draggable: true,
                 theme: "light",
-            })
+            });
 
-            const timeout = setTimeout(() => navigate(loaderData.redirect || '/'), 3000)
+            const timeout = setTimeout(() => navigate(loaderData.redirect || '/'), 3000);
 
-            setIsAllowed(false)
+            setIsAllowed(false);
     
             return () => {
-                if (toast.isActive(_toast)) toast.dismiss(_toast)
-                clearTimeout(timeout)
+                if (toast.isActive(_toast)) toast.dismiss(_toast);
+                clearTimeout(timeout);
             }
         }
 
@@ -445,22 +445,22 @@ export default function Room() {
                 ein: loaderData.party.spotifyCreds.expiresIn,
                 date: loaderData.party.spotifyCreds.date
             }
-        })
+        });
 
-        spotify.isOwner = loaderData.isHost
+        spotify.isOwner = loaderData.isHost;
 
-        if (currentDevice) return
+        if (currentDevice) return;
 
-        const spotifyDevice = GetStorageValue("SpotifyDevice") as string
+        const spotifyDevice = GetStorageValue("SpotifyDevice") as string;
 
         if (spotifyDevice) {
-            const device = JSON.parse(spotifyDevice) as SpotifyApi.UserDevice
-            setRoomData({ currentDevice: device })
+            const device = JSON.parse(spotifyDevice) as SpotifyApi.UserDevice;
+            setRoomData({ currentDevice: device });
         } else if (spotify.currentDevice) {
-            setRoomData({ currentDevice: spotify.currentDevice })
+            setRoomData({ currentDevice: spotify.currentDevice });
         } else {
             (async () => {
-                const devices = await spotify.GetDevices()
+                const devices = await spotify.GetDevices();
 
                 if (devices instanceof Error) {
                     toast.error(`Error: Failed to get devices (${devices.message})`, {
@@ -471,19 +471,19 @@ export default function Room() {
                         pauseOnHover: true,
                         draggable: true,
                         theme: "light",
-                    })
+                    });
         
-                    return
+                    return;
                 }
 
-                setRoomData({ currentDevice: spotify.currentDevice, devices })
+                setRoomData({ currentDevice: spotify.currentDevice, devices });
             })()
         }
     }, [loaderData, navigate])
 
     const addTrackToQueue = (track: SpotifyApi.TrackObjectFull) => {
         (async () => {
-            const res = await spotify.AddNextTrack(track.external_urls.spotify)
+            const res = await spotify.AddNextTrack(track.external_urls.spotify);
 
             if (!(res instanceof Error)) {
                 toast(`Added track ${track.name} - ${track.artists.map(a => a.name).join(', ')} to queue !`, {
@@ -494,16 +494,16 @@ export default function Room() {
                     pauseOnHover: true,
                     draggable: true,
                     theme: "light",
-                })
+                });
             }
     
             fetcher.submit({
                 type: "addToQueue",
                 trackId: track.id,
                 trackName: `${track.name} - ${track.artists.map(artist => artist.name).join(', ')}`,
-            }, { method: "post" })
+            }, { method: "post" });
 
-            setRoomData({ searchResults: [] })
+            setRoomData({ searchResults: [] });
         })()
     }
 
@@ -551,14 +551,14 @@ export default function Room() {
             : null}
             <ToastContainer />
         </>
-    )
+    );
 }
 
 export const Icon = (props: {
     classStr: string,
     onClick?: React.MouseEventHandler<HTMLDivElement> | undefined,
 }) => {
-    const { classStr, onClick } = props
+    const { classStr, onClick } = props;
 
     return (
         <div
@@ -567,5 +567,5 @@ export const Icon = (props: {
         >
             <i className={`${classStr} text-2xl`}></i>
         </div>
-    )
+    );
 }
