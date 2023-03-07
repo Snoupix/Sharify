@@ -1,4 +1,5 @@
 import { toast, ToastContainer } from "react-toastify";
+import type { Id } from "react-toastify";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, useCatch, useLoaderData, useNavigate, useOutletContext, useParams, useSubmit } from "@remix-run/react";
@@ -126,12 +127,14 @@ export default function Host() {
 
 
 	useEffect(() => {
+		let toast_id: Id;
+
 		if (Spotify.isReady) {
 			(async () => {
 				const profile = await Spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
-					toast(`[Spotify] Connected as ${profile.display_name}`, {
+					toast_id = toast(`[Spotify] Connected as ${profile.display_name}`, {
 						position: "bottom-right",
 						autoClose: 2500,
 						hideProgressBar: false,
@@ -158,7 +161,7 @@ export default function Host() {
 				const profile = await Spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
-					toast(`[Spotify] Connected as ${profile.display_name}`, {
+					toast_id = toast(`[Spotify] Connected as ${profile.display_name}`, {
 						position: "bottom-right",
 						autoClose: 2500,
 						hideProgressBar: false,
@@ -181,6 +184,8 @@ export default function Host() {
 				setConnectedTo(prev => ({ ...prev, spotify: true }));
 			})()
 		}
+
+		return () => toast.dismiss(toast_id);
 	}, [])
 
 	useEffect(() => {
