@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
+
+interface LocalStorage {
+    st: SpotifyTokensStorage | null
+    SpotifyDevice: string
+    code_verifier: string
+}
 
 export interface SpotifyTokensStorage {
     at: string
@@ -7,45 +13,44 @@ export interface SpotifyTokensStorage {
     date: number
 }
 
-interface LocalStorage {
-    st: SpotifyTokensStorage | null
-    SpotifyDevice: string
-}
+type StorageType<T> = T extends keyof LocalStorage ? LocalStorage[T] : never;
 
-type LocalStorageValues = "st" | "SpotifyDevice"
+/**
+ * Can throw if localStorage and window.localStorage are not available
+ */
+export const SetStorageValue = (value: Partial<LocalStorage>): void => {
+	if (!localStorage || !window.localStorage) throw new Error("Cannot access localStorage nor window.localStorage");
+    const store = localStorage ?? window.localStorage;
 
-type StorageType<T> =
-    T extends "st" ? SpotifyTokensStorage :
-    T extends "SpotifyDevice" ? string :
-    never;
+    const storage = store.getItem('Sharify');
 
-export const SetStorageValue = (value: Partial<LocalStorage>): Partial<LocalStorage> => {
-	if (!localStorage) return SetStorageValue(value);
-
-    const Storage = localStorage.getItem('Sharify');
-
-    if (Storage == null) {
-        localStorage.setItem('Sharify', JSON.stringify(value));
-        return value;
+    if (storage == null) {
+        store.setItem('Sharify', JSON.stringify(value));
+        return;
     }
 
-    const ParsedStorage = JSON.parse(Storage);
+    const parsed_storage = JSON.parse(storage);
 
-    localStorage.setItem('Sharify', JSON.stringify({ ...ParsedStorage, ...value }));
+    store.setItem('Sharify', JSON.stringify({ ...parsed_storage, ...value }));
 
-    return value;
+    return;
 }
 
-export function GetStorageValue<T extends LocalStorageValues>(value: T): StorageType<T> | null {
-	if (!localStorage) return null;
+/**
+ * Can throw if localStorage and window.localStorage are not available
+ */
+export function GetStorageValue<T extends keyof LocalStorage>(value: T): StorageType<T> | null {
+	if (!localStorage || !window.localStorage) return {} as StorageType<T>; //throw new Error("Cannot access localStorage nor window.localStorage");
+    const store = localStorage ?? window.localStorage;
 
-    const storageObject = JSON.parse(localStorage.getItem('Sharify') || '{}') as LocalStorage;
+	const store_object = JSON.parse(store.getItem('Sharify') || "{}") as LocalStorage;
 
-	return storageObject[value] as StorageType<T>;
+	const returns = store_object[value] as StorageType<T>;
+
+    return returns == {} as StorageType<T> ? null : returns;
 }
 
-
-export const useDebounce = (value: any, delay: number = 500) => {
+export function useDebounce(value: any, delay: number = 500) {
 	const [debouncedValue, setDebouncedValue] = useState(value);
 
 	useEffect(() => {
@@ -57,15 +62,11 @@ export const useDebounce = (value: any, delay: number = 500) => {
 	return debouncedValue;
 }
 
-export const FormatTime = (progress: number, duration: number) => {
+export function FormatTime(progress: number, duration: number) {
     const [p, m] = [new Date(progress), new Date(duration)];
 
     const FormatNumber = (int: number): string => {
-        if (int < 10) {
-            return `0${int}`;
-        }
-    
-        return `${int}`;
+        return int.toString().padStart(2, '0');
     }
 
     return `${FormatNumber(p.getMinutes())}:${FormatNumber(p.getSeconds())} / ${FormatNumber(m.getMinutes())}:${FormatNumber(m.getSeconds())}`;

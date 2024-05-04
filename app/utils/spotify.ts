@@ -1,17 +1,24 @@
-import { Buffer } from 'buffer';
-import SpotifyAPI from 'spotify-web-api-node';
+import { SpotifyApi } from "@spotify/web-api-ts-sdk";
+import type { PlayHistory,PlaybackState, UserProfile, Queue, SearchResults } from "@spotify/web-api-ts-sdk";
 
 import { GetStorageValue, SetStorageValue } from './utils';
-import type { SpotifyTokensStorage } from './utils';
 
-let SpotifyPlayer: SpotifyAPI;
+type MaxInt<T extends number> = number extends T ? number : _Range<T, []>;
+type _Range<T extends number, R extends unknown[]> = R['length'] extends T ? R[number] | T : _Range<T, [R['length'], ...R]>;
 
 type SpotifyTokens = {
-    access_token: string
-    refresh_token: string
-    expires_in?: number | undefined
-    createdAt?: number | undefined
+    access_token:   string
+    refresh_token:  string
+    expires_in:     number
+    created_at:     number
 }
+
+const tokens_default: SpotifyTokens = {
+    access_token: "",
+    refresh_token: "",
+    expires_in: 0,
+    created_at: 0,
+} as const;
 
 
 
@@ -28,167 +35,192 @@ type SpotifyTokens = {
 
 
 export default class SpotifyHandler {
-    private static accessToken = "";
-    private static refreshToken = "";
-    private static tokenExpiresIn = 0;
-    private static tokenCreatedAt = 0;
-    private static clientId = "";
-    private static clientSecret = "";
-    private static redirectURI = "http://localhost:3000/auth_spotify";
-    private static timeout: NodeJS.Timer | undefined;
+    public static readonly BACK_API = "http://localhost:3100/sharify";
+
+    private sdk: SpotifyApi | null = null;
+    private tokens = tokens_default;
+    private client_id = "";
+    private redirectURI = "http://localhost:3000/auth_spotify";
+    private scopes = "user-read-private user-read-email user-modify-playback-state user-read-playback-position user-library-read streaming user-read-playback-state user-read-recently-played playlist-read-private";
+    private timeout: ReturnType<typeof setTimeout> | null =  null;
+    private code_verifier = "";
+    private code_challenge = "";
     
-    public static currentDevice: SpotifyApi.UserDevice | undefined;
-    public static isOwner = true;
-    public static isReady = false;
+    public current_device: SpotifyApi.UserDevice | undefined;
+    public is_owner = true;
+    public is_ready = false;
 
-    public static SetCredentials(creds: { id: string, secret: string }) {
-        SpotifyPlayer = new SpotifyAPI({
-            clientId: creds.id,
-            clientSecret: creds.secret,
-            redirectUri: "http://localhost:3000/auth_spotify"
-        });
+    constructor(client_id: string) {
+        if (client_id == "") {
+            throw new Error("No client id provided");
+        }
 
-        this.clientId = creds.id;
-        this.clientSecret = creds.secret;
+        this.client_id = client_id;
     }
 
-    public static GetAuthLink() {
-        return "https://accounts.spotify.com/authorize"
-            + "?client_id=" + this.clientId
-            + "&response_type=code"
-            + "&redirect_uri=" + encodeURI(this.redirectURI)
-            + "&show_dialog=true"
-            + "&scope=user-read-private%20user-read-email%20user-modify-playback-state%20user-read-playback-position%20user-library-read%20streaming%20user-read-playback-state%20user-read-recently-played%20playlist-read-private";
+    public InitSdk() {
+        this.sdk = SpotifyApi.withAccessToken(this.client_id, {
+            ...this.tokens,
+            token_type: "code",
+        }, { afterRequest: this.HandleRequests });
     }
 
-    private static CallAuthorizationAPI(body: string) {
-        fetch("https://accounts.spotify.com/api/token", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')
-            },
-            body
-        })
-        .then(async resp => {
-            if (resp.status == 200) {
-                return resp.text();
-            } else {
-                console.error(`[CallAuthorizationAPI ${resp.status}] Error: ${resp.statusText}`);
+    public async GenerateAuthLink() {
+        try {
+            let res = await fetch(`${SpotifyHandler.BACK_API}/code_verifier`, { method: "GET" });
+            this.code_verifier = await res.text();
+
+            SetStorageValue({ code_verifier: this.code_verifier });
+
+            res = await fetch(`${SpotifyHandler.BACK_API}/code_challenge/${this.code_verifier}`, { method: "GET" });
+            this.code_challenge = await res.text();
+
+            const url = new URL("https://accounts.spotify.com/authorize");
+
+            url.search = new URLSearchParams({
+                "client_id": this.client_id,
+                "response_type": "code",
+                "redirect_uri": encodeURI(this.redirectURI),
+                "show_dialog": "true",
+                "scope": this.scopes,
+                "code_challenge_method": 'S256',
+                "code_challenge": this.code_challenge,
+            }).toString();
+
+            return url.toString();
+        } catch (error: any) {
+            console.error(error);
+            return new Error(error);
+        }
+    }
+
+    /**
+    * Can throw Error on failed request, bad status code or empty body
+    */
+    private async CallAuthorizationAPI(body: URLSearchParams) {
+        try {
+            const res = await fetch("https://accounts.spotify.com/api/token", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body
+            });
+
+            if (res.status != 200) {
+                const error = new Error(`[CallAuthorizationAPI ${res.status}] Error: ${res.statusText} Response text: ${await res.text()}; Body supplied: ${body}`);
+                console.error(error);
+                throw error;
             }
-        })
-        .then(body_text => {
-            if (!body_text) {
-                return console.error(`[CallAuthorization] Error: body empty`);
+
+            const json: SpotifyTokens = await res.json();
+
+            if (!json || !json.access_token) {
+                console.error(res);
+                throw new Error(`[CallAuthorizationAPI] Error: empty body. Response json: ${json}; Body supplied: ${body}`);
             }
 
-            this.ProcessTokens(JSON.parse(body_text) as SpotifyTokens);
-        })
-        .catch(this.HandleError);
+            this.ProcessTokens(json);
+        } catch (error: any) {
+            console.error(error);
+        }
     }
 
-    public static ProcessTokens(data: SpotifyTokens) {
+    public ProcessTokens(data: Partial<SpotifyTokens>) {
         if (this.timeout) {
             clearTimeout(this.timeout);
         }
 
-        if (data.access_token) {
-            this.accessToken = data.access_token;
-        }
+        this.tokens = { ...tokens_default, ...data };
+        this.tokens.created_at = data.created_at ?? Date.now();
 
-        if (data.refresh_token) {
-            this.refreshToken = data.refresh_token;
-        }
-
-        this.tokenCreatedAt = data.createdAt || Date.now();
-        // expires_in 3600 * 1000 in ms => 1h ; (1000 * 60 * 60) 60 min => 1h
-        const expires_in = data.expires_in && data.expires_in > 0 && data.expires_in <= 3600
-            ? (data.expires_in * 1000)
+        // expires_in (usually 3k6s, so) 3600 * 1000 in ms => 1h ; (1000 * 60 * 60) 60 min => 1h as default
+        const expires_in = this.tokens.expires_in && this.tokens.expires_in > 0
+            ? (this.tokens.expires_in * 1000)
             : (1000 * 60 * 60);
-        const msDiff = (this.tokenCreatedAt + expires_in) - Date.now();
 
+        const msDiff = (this.tokens.created_at + expires_in) - Date.now();
         if (msDiff <= 0) {
             return this.RefreshAccessToken();
         }
 
-        this.TokenFetchingEnded()
         this.timeout = setTimeout(
             this.RefreshAccessToken,
-            (this.tokenCreatedAt + expires_in) - Date.now()
+            msDiff
         );
+        this.TokenFetchingEnded()
     }
 
-    public static FetchAccessToken(code: string) {
-        let body = "grant_type=authorization_code"
-            + "&code=" + code 
-            + "&redirect_uri=" + encodeURI(this.redirectURI)
-            + "&client_id=" + this.clientId
-            + "&client_secret=" + this.clientSecret;
-        this.CallAuthorizationAPI(body);
+    public FetchAccessToken(code: string) {
+        const code_verifier = GetStorageValue("code_verifier");
+
+        if (code_verifier == null) {
+            throw new Error("No code verifier on local storage");
+        }
+
+        const params = new URLSearchParams({
+            "client_id": this.client_id,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": encodeURI(this.redirectURI),
+            "code_verifier": code_verifier,
+        });
+
+        this.CallAuthorizationAPI(params);
     }
 
-    private static RefreshAccessToken() {
-        let body = "grant_type=refresh_token"
-            + "&refresh_token=" + this.refreshToken
-            + "&client_id=" + this.clientId
-        this.CallAuthorizationAPI(body);
+    private RefreshAccessToken() {
+        const params = new URLSearchParams({
+            "client_id": this.client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": this.tokens.refresh_token,
+        });
+
+        this.CallAuthorizationAPI(params);
     }
 
-    public static async TokenFetchingEnded() {
-        SpotifyPlayer.setAccessToken(this.accessToken);
-        SpotifyPlayer.setRefreshToken(this.refreshToken);
-
+    public async TokenFetchingEnded() {
         SetStorageValue({
             st: {
-                at: this.accessToken,
-                rt: this.refreshToken,
-                ein: this.tokenExpiresIn,
-                date: this.tokenCreatedAt
+                at: this.tokens.access_token,
+                rt: this.tokens.refresh_token,
+                ein: this.tokens.expires_in,
+                date: this.tokens.created_at
             }
         });
 
         const deviceName = GetStorageValue("SpotifyDevice");
 
         try {
-            const resp = await SpotifyPlayer.getMyDevices();
-            this.currentDevice = deviceName
-                ? resp.body?.devices.find(device => device.name == deviceName)
-                : resp.body?.devices.find(device => device.is_active);
+            const { devices } = await this.sdk!.player.getAvailableDevices();
+            this.current_device = deviceName
+                ? devices.find(device => device.name == deviceName)
+                : devices.find(device => device.is_active);
 
-            if (this.currentDevice) {
-                SetStorageValue({ SpotifyDevice: JSON.stringify(this.currentDevice) });
+            if (this.current_device) {
+                SetStorageValue({ SpotifyDevice: JSON.stringify(this.current_device) });
             }
         } catch (error) {
             //location.replace(this.GetAuthLink());
-            this.HandleError(error as Error);
+            console.error(error);
             return;
         }
 
-        this.isReady = true;
+        this.InitSdk();
+        this.is_ready = true;
     }
 
-    private static HandleError(error: Error) {
-        if (error.message == "An error occurred while communicating with Spotify's Web API.\nDetails: No token provided.") return;
-
-        console.error(error);
-    }
-
-    private static LinkToURI(link: string) {
+    private LinkToURI(link: string) {
         return `spotify:track:${link.split('/').pop()}`.split('?').length > 1
             ? `spotify:track:${link.split('/').pop()?.split('?').shift()}`
             : `spotify:track:${link.split('/').pop()}`;
     }
     
-    public static GetTokens() {
-        return {
-            accessToken: this.accessToken,
-            refreshToken: this.refreshToken,
-            expires_in: this.tokenExpiresIn,
-            date: this.tokenCreatedAt
-        }
+    public GetTokens() {
+        return this.tokens;
     }
 
-    private static SetTokens() {
+    private SetTokens() {
         const tokens = GetStorageValue("st");
 
         if (tokens == null) {
@@ -199,160 +231,214 @@ export default class SpotifyHandler {
             access_token: tokens.at,
             refresh_token: tokens.rt,
             expires_in: tokens.ein,
-            createdAt: tokens.date
+            created_at: tokens.date
         });
     }
 
-    static Disconnect() {
-        this.isReady = false;
-        this.accessToken = "";
-        this.refreshToken = "";
-        this.tokenExpiresIn = 0;
-        this.tokenCreatedAt = 0;
+    private EnsureInitialized() {
+        if (this.is_ready) {
+            return;
+        }
+
+        this.SetTokens();
+    }
+
+    private ExceededQota<T extends { status: number }>(request: T): boolean {
+        // Handle retry-after HEADER
+
+        return request.status == 429;
+    }
+
+    private HandleRequests(_url: string, _options: RequestInit, response: Response) {
+        if (this.ExceededQota(response)) {
+            throw new Error("Spotify API Quota excedeed, be patient");
+        }
+    }
+
+
+    Disconnect() {
+        this.is_ready = false;
+        this.tokens = tokens_default;
 
         SetStorageValue({ st: null });
     }
 
-    static Pause() {
-        this.SetTokens();
-        return new Promise<SpotifyHandler>((resolve, reject) => {
-            SpotifyPlayer
-                .pause({ device_id: this.currentDevice?.id || undefined })
-                .then(() => resolve(this))
-                .catch((error: Error) => reject(new Error(`There was an error pausing track. (${error})`)));
+    Pause() {
+        this.EnsureInitialized();
+        return new Promise<SpotifyHandler>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.pausePlayback(this.current_device?.id ?? "");
+
+                resolve(this);
+            } catch (error: any) {
+                reject(new Error(`There was an error pausing track. (${error})`));
+            }
         });
     }
 
-    static Resume() {
-        this.SetTokens();
-        return new Promise<SpotifyHandler>((resolve, reject) => {
-            SpotifyPlayer
-                .play({ device_id: this.currentDevice?.id || undefined })
-                .then(() => resolve(this))
-                .catch((error: Error) => reject(new Error(`There was an error resuming track. (${error})`)));
+    Resume() {
+        this.EnsureInitialized();
+        return new Promise<SpotifyHandler>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.startResumePlayback(this.current_device?.id ?? "");
+
+                resolve(this);
+            } catch (error: any) {
+                reject(new Error(`There was an error resuming track. (${error})`));
+            }
         });
     }
 
-    static AddNextTrack(link: string) {
-        this.SetTokens();
-        return new Promise<void | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .addToQueue(this.LinkToURI(link))
-                .then(() => resolve())
-                .catch((error: Error) => reject(new Error(`There was an error adding track to the queue. (${error})`)));
+    AddNextTrack(link: string) {
+        this.EnsureInitialized();
+        return new Promise<void | Error>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.addItemToPlaybackQueue(this.LinkToURI(link), this.current_device?.id ?? "");
+
+                resolve();
+            } catch (error: any) {
+                reject(new Error(`There was an error adding track to the queue. (${error})`));
+            }
         });
     }
 
-    static SkipToPrevious() {
-        this.SetTokens();
-        return new Promise<SpotifyHandler>((resolve, reject) => {
-            SpotifyPlayer
-                .skipToPrevious({ device_id: this.currentDevice?.id || undefined })
-                .then(() => resolve(this))
-                .catch((error: Error) => reject(new Error(`There was an error skiping to previous track. (${error})`)));
+    SkipToPrevious() {
+        this.EnsureInitialized();
+        return new Promise<SpotifyHandler>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.skipToPrevious(this.current_device?.id ?? "");
+
+                resolve(this);
+            } catch (error: any) {
+                reject(new Error(`There was an error skiping to previous track. (${error})`));
+            }
         });
     }
 
-    static SkipToNext() {
-        this.SetTokens();
-        return new Promise<SpotifyHandler>((resolve, reject) => {
-            SpotifyPlayer
-                .skipToNext({ device_id: this.currentDevice?.id || undefined })
-                .then(() => resolve(this))
-                .catch((error: Error) => reject(new Error(`There was an error skiping to next track. (${error})`)));
+    SkipToNext() {
+        this.EnsureInitialized();
+        return new Promise<SpotifyHandler>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.skipToNext(this.current_device?.id ?? "");
+
+                resolve(this);
+            } catch (error: any) {
+                reject(new Error(`There was an error skiping to next track. (${error})`));
+            }
         });
     }
 
-    static GetRecentlyPlayedTracks(limit: number) {
-        this.SetTokens();
-        return new Promise<Array<SpotifyApi.PlayHistoryObject | Error>>((resolve, reject) => {
-            SpotifyPlayer
-                .getMyRecentlyPlayedTracks({ limit: limit })
-                .then((data: any) => resolve(data.body.items))
-                .catch((error: Error) => reject(new Error(`There was an error showing the ${limit} recently played tracks. (${error})`)));
+    GetRecentlyPlayedTracks(limit: MaxInt<50>) {
+        this.EnsureInitialized();
+        return new Promise<Array<PlayHistory> | Error>(async (resolve, reject) => {
+            try {
+                const { items } = await this.sdk!.player.getRecentlyPlayedTracks(limit);
+
+                resolve(items);
+            } catch (error: any) {
+                reject(new Error(`There was an error showing the ${limit} recently played tracks. (${error})`));
+            }
         });
     }
 
-    static SetVolume(value: number) {
-        this.SetTokens();
-        SpotifyPlayer.setVolume(value, { device_id: this.currentDevice?.id || undefined });
-    }
+    SetVolume(value: number) {
+        this.EnsureInitialized();
+        return new Promise<void | Error>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.setPlaybackVolume(value, this.current_device?.id ?? "");
 
-    static GetCurrentTrackData() {
-        this.SetTokens();
-        return new Promise<SpotifyApi.CurrentPlaybackResponse | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .getMyCurrentPlaybackState()
-                .then(val => resolve(val.body))
-                .catch((error: Error) => reject(new Error(`There was an error getting current playback response (${error})`)));
+                resolve();
+            } catch (error: any) {
+                reject(new Error(`There was an error setting volume to ${value}. (${error})`));
+            }
         });
     }
 
-    static SearchTracks(input: string) {
-        this.SetTokens();
-        return new Promise<SpotifyApi.SearchResponse | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .searchTracks(input, { limit: 10 })
-                .then(resp => resolve(resp.body))
-                .catch((error: Error) => reject(new Error(`There was an error searching for tracks with ${input} (${error})`)));
+    GetCurrentTrackData() {
+        this.EnsureInitialized();
+        return new Promise<PlaybackState | Error>(async (resolve, reject) => {
+            try {
+                const state = await this.sdk!.player.getPlaybackState();
+
+                resolve(state);
+            } catch (error: any) {
+                reject(new Error(`There was an error getting current playback response (${error})`));
+            }
         });
     }
 
-    static GetDevices() {
-        this.SetTokens();
-        return new Promise<Array<SpotifyApi.UserDevice> | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .getMyDevices()
-                .then(resp => resp.body)
-                .then(body => resolve(body.devices))
-                .catch((error: Error) => reject(new Error(`There was an error searching for devices (${error})`)));
+    SearchTracks(input: string) {
+        this.EnsureInitialized();
+        return new Promise<SearchResults<Array<"track">> | Error>(async (resolve, reject) => {
+            try {
+                // @ts-ignore
+                const res = await this.sdk!.search(input, ["tracks"], undefined, 10);
+
+                resolve(res);
+            } catch (error: any) {
+                reject(new Error(`There was an error searching for tracks with ${input} (${error})`));
+            }
         });
     }
 
-    static Seek(position: number) {
-        this.SetTokens();
-        return new Promise<void | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .seek(position, { device_id: this.currentDevice?.id || undefined })
-                .then(() => resolve())
-                .catch((error: Error) => reject(new Error(`There was an error seeking to ${position} (${error})`)));
+    GetDevices() {
+        this.EnsureInitialized();
+        return new Promise<Array<SpotifyApi.UserDevice> | Error>(async (resolve, reject) => {
+            try {
+                const { devices } = await this.sdk!.player.getAvailableDevices();
+
+                resolve(devices);
+            } catch (error: any) {
+                reject(new Error(`There was an error searching for devices (${error})`));
+            }
         });
     }
 
-    static GetProfile(): Promise<Error> | Promise<SpotifyApi.CurrentUsersProfileResponse | Error> {
-        if (!this.isOwner) {
+    Seek(position: number) {
+        this.EnsureInitialized();
+        return new Promise<void | Error>(async (resolve, reject) => {
+            try {
+                await this.sdk!.player.seekToPosition(position, this.current_device?.id ?? "");
+
+                resolve();
+            } catch (error: any) {
+                reject(new Error(`There was an error seeking to ${position} (${error})`))
+            }
+        });
+    }
+
+    GetProfile(): Promise<UserProfile | Error> {
+        if (!this.is_owner) {
             this.Disconnect();
             return new Promise<Error>((_, reject) => reject(new Error()));
         }
 
-        this.SetTokens();
-        return new Promise<SpotifyApi.CurrentUsersProfileResponse | Error>((resolve, reject) => {
-            SpotifyPlayer
-                .getMe()
-                .then(resp => resp.body)
-                .then(body => resolve(body))
-                .catch((error: Error) => reject(new Error(`There was an error getting profile (${error})`)));
+        this.EnsureInitialized();
+        return new Promise<UserProfile | Error>(async (resolve, reject) => {
+            try {
+                const profile = await this.sdk!.currentUser.profile();
+
+                resolve(profile);
+            } catch (error: any) {
+                reject(new Error(`There was an error getting profile (${error})`))
+            }
         });
     }
 
-    static GetCurrentQueueData() {
-        this.SetTokens();
-        return new Promise<SpotifyApi.UsersQueueResponse | Error>((resolve, reject) => {
-            fetch("https://api.spotify.com/v1/me/player/queue", {
-                headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${this.accessToken}`
-                },
-                method: "GET",
-            })
-            .then(resp => resp.json())
-            .then(body => resolve(body))
-            .catch((error: Error) => reject(error));
+    GetCurrentQueueData() {
+        this.EnsureInitialized();
+        return new Promise<Queue | Error>(async (resolve, reject) => {
+            try {
+                const queue = await this.sdk!.player.getUsersQueue();
+
+                resolve(queue);
+            } catch (error: any) {
+                reject(new Error(`There was an error getting current queue data (${error})`));
+            }
         });
     }
 
-    static SetDevice(device: SpotifyApi.UserDevice) {
-        this.currentDevice = device;
+    SetDevice(device: SpotifyApi.UserDevice) {
+        this.current_device = device;
     }
 }

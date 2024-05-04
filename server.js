@@ -3,6 +3,7 @@ const express = require("express");
 const compression = require("compression");
 const morgan = require("morgan");
 const { createRequestHandler } = require("@remix-run/express");
+const { broadcastDevReady } = require("@remix-run/node");
 
 const BUILD_DIR = path.join(process.cwd(), "build");
 
@@ -32,13 +33,6 @@ app.use(express.static("public", { maxAge: "1h" }));
 
 app.use(morgan("tiny"));
 
-app.get('/__credentials', (_, res) => {
-	res.json({
-        id: process.env.SPOTIFY_CLIENT_ID,
-        secret: process.env.SPOTIFY_CLIENT_SECRET,
-    })
-})
-
 app.all(
 	"*",
 	process.env.NODE_ENV === "development"
@@ -57,8 +51,9 @@ app.all(
 );
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
+app.listen(port, async () => {
 	console.log(`Express server listening on http://localhost:${port}`);
+    process.env.NODE_ENV === "development" && broadcastDevReady(await import(path.join(BUILD_DIR, "index.js")));
 });
 
 function purgeRequireCache() {

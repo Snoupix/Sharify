@@ -1,12 +1,11 @@
 import { json } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import { Link, useLoaderData, useSubmit } from "@remix-run/react";
+import { Link, useLoaderData, useOutletContext, useSubmit } from "@remix-run/react";
 
 import Title from "~/components/title";
 import { getSessionData, setSessionData } from "~/server/session.server";
-
-import Spotify from "~/utils/spotify";
+import type { OutletContext } from "~/root";
 
 type LoaderData = {
     SpotifyTokens: {
@@ -40,24 +39,27 @@ export const loader: LoaderFunction = async ({
 
 export default function Auth_Spotify() {
     const loaderData = useLoaderData<LoaderData>();
+    const { spotify } = useOutletContext<OutletContext>();
     const submit = useSubmit();
 	const [text, setText] = useState("");
     const [fetched, setFetched] = useState(false);
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
+        if (spotify == null) return;
+
         const interval = setInterval(() => {
-            if (Spotify.isReady) {
+            if (spotify.is_ready) {
                 setIsReady(true);
                 clearInterval(interval);
             }
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [])
+    }, [spotify])
 
     useEffect(() => {
-        if (fetched) return;
+        if (fetched || spotify == null) return;
 
         const params = new URLSearchParams(location.search);
         const code = params.get("code");
@@ -65,7 +67,7 @@ export default function Auth_Spotify() {
 
         if (code) {
             setFetched(true);
-            return Spotify.FetchAccessToken(code);
+            return spotify.FetchAccessToken(code);
         }
 
         if (error) {
@@ -83,30 +85,40 @@ export default function Auth_Spotify() {
 
             if (msDiff > 0) {
                 setFetched(true);
-                return Spotify.ProcessTokens({
+                return spotify.ProcessTokens({
                     access_token: loaderData.SpotifyTokens.sat,
                     refresh_token: loaderData.SpotifyTokens.srt,
                     expires_in: loaderData.SpotifyTokens.ein,
-                    createdAt: loaderData.SpotifyTokens.date
+                    created_at: loaderData.SpotifyTokens.date
                 });
             }
         }
 
-        location.replace(Spotify.GetAuthLink());
-    }, [loaderData, fetched])
+        (async () => {
+            const url = await spotify.GenerateAuthLink();
+
+            if (url instanceof Error) {
+                console.error(error);
+                setText(`Error: ${error}`);
+                return;
+            }
+
+            location.replace(url);
+        })()
+    }, [loaderData, fetched, spotify])
 
     useEffect(() => {
         if (isReady) {
             (async () => {
                 setFetched(true);
 
-                const profile = await Spotify.GetProfile();
+                const profile = await spotify.GetProfile();
 
                 if (!(profile instanceof Error)) {
                     setText(`Successfully connected to ${profile.display_name}`);
                 }
                 
-                const tokens = Spotify.GetTokens();
+                const tokens = spotify.GetTokens();
     
                 setTimeout(() => {
                     submit(

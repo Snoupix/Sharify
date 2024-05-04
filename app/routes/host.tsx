@@ -9,7 +9,6 @@ import Title from "~/components/title";
 import { api } from "~/server/handlers.server";
 import type { Party } from "~/server/api.server";
 import { PartyError } from "~/server/api.server";
-import Spotify from "~/utils/spotify";
 import { getSessionData, setSessionData } from "~/server/session.server";
 import type { OutletContext } from "~/root";
 import { GetStorageValue } from "~/utils/utils";
@@ -101,7 +100,7 @@ export const loader: LoaderFunction = async ({
 export default function Host() {
 	const loaderData = useLoaderData<LoaderData>();
 	const actionData = useActionData<ActionData>();
-	const context = useOutletContext<OutletContext>();
+	const { spotify, username: contextUsername } = useOutletContext<OutletContext>();
 	const submit = useSubmit();
 	const navigate = useNavigate();
 	const formRef = useRef<HTMLFormElement>(null);
@@ -125,13 +124,16 @@ export default function Host() {
 		}
 	);
 
-
 	useEffect(() => {
 		let toast_id: Id;
 
-		if (Spotify.isReady) {
+        console.log(spotify);
+        if (!spotify) return;
+        console.log(spotify);
+
+		if (spotify.is_ready) {
 			(async () => {
-				const profile = await Spotify.GetProfile();
+				const profile = await spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
 					toast_id = toast(`[Spotify] Connected as ${profile.display_name}`, {
@@ -150,15 +152,16 @@ export default function Host() {
 					srt: loaderData.spotifyTokens.srt,
 					sd: loaderData.spotifyTokens.ein,
 					sdate: loaderData.spotifyTokens.date,
-					username: context.username,
+					username: contextUsername,
+                    name: `${contextUsername}'s party`,
 					type: "Spotify",
 				});
 	
 				setConnectedTo(prev => ({ ...prev, spotify: true }));
 			})()
-		} else if (GetStorageValue("st") != null && !Spotify.isReady) {
+		} else if (GetStorageValue("st") != null && !spotify.is_ready) {
 			(async () => {
-				const profile = await Spotify.GetProfile();
+				const profile = await spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
 					toast_id = toast(`[Spotify] Connected as ${profile.display_name}`, {
@@ -177,7 +180,8 @@ export default function Host() {
 					srt: loaderData.spotifyTokens.srt,
 					sd: loaderData.spotifyTokens.ein,
 					sdate: loaderData.spotifyTokens.date,
-					username: context.username,
+					username: contextUsername,
+                    name: `${contextUsername}'s party`,
 					type: "Spotify",
 				});
 	
@@ -186,7 +190,7 @@ export default function Host() {
 		}
 
 		return () => toast.dismiss(toast_id);
-	}, [])
+	}, [spotify])
 
 	useEffect(() => {
 		if (actionData?.errorMessage) {
@@ -271,7 +275,10 @@ export default function Host() {
 								placeholder="Username"
 								spellCheck={false}
 								defaultValue={formState.username}
-								onChange={e => setFormState({ username: e.currentTarget.value == "" ? 'Guest' : e.currentTarget.value })}
+								onChange={e => setFormState({
+                                    username: e.currentTarget.value == "" ? 'Guest' : e.currentTarget.value,
+                                    name: `${e.currentTarget.value}'s party`
+                                })}
 							/>
 							<input
 								data-cy="host-form-party-name"
@@ -280,6 +287,7 @@ export default function Host() {
 								maxLength={20}
 								placeholder="Party's name"
 								spellCheck={false}
+                                value={formState.name}
 								onChange={e => setFormState({ name: e.currentTarget.value })}
 							/>
 							<span className="text-2xl">Is the party private ?</span>
