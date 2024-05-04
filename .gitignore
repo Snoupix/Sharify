@@ -1,23 +1,10 @@
+.DS_Store
 node_modules
-
-/.cache
 /build
-/public/build
+/.svelte-kit
+/package
 .env
-
-/app/compiled.css
-
-sharify-google-creds.json
-
-cypress/videos
-cypress/screenshots
-cypress/fixtures
-cypress/downloads
-cypress/support/env.ts
-
-.ignore
-*.vim
-
-# Yes, I use a markdown file that I constantly update to track my progress through the app.
-# It's gonna stay untracked since I don't commit enough for you to get up-to-date with my TODOs anyway.
-TODO.md
+.env.*
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
