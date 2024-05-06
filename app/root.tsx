@@ -1,24 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { w3cwebsocket as WsClient } from "websocket";
 import { toast, ToastContainer } from "react-toastify";
 import type {
-	MetaFunction,
 	LinksFunction,
 	ActionFunction,
 	LoaderFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import { metaV1 } from "@remix-run/v1-meta";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+    isRouteErrorResponse,
 	Links,
 	LiveReload,
 	Meta,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
-	useCatch,
 	useFetcher,
 	useLoaderData,
 	useLocation,
+    useRouteError,
 } from "@remix-run/react";
 
 import styles from "~/compiled.css";
@@ -26,17 +28,19 @@ import toastify from "react-toastify/dist/ReactToastify.min.css";
 import Spotify from "./utils/spotify";
 import { getSessionData } from "./server/session.server";
 import { api } from "./server/handlers.server";
-import { GetStorageValue } from "./utils/utils";
+import type { Party } from "./server/api.server";
 
 export type OutletContext = {
-	username: 	string
-	toast: 		typeof toast
+	username: string
+	toast: typeof toast
+    spotify: Spotify | null
+    party_data: Party | null
+    websocket_connected: boolean
 }
 
 type LoaderData = {
-	id: 			string
-	secret: 		string
-	username: 		string
+	id: 		string
+	username: 	string
 }
 
 export const links: LinksFunction = () => {
@@ -60,7 +64,7 @@ export const links: LinksFunction = () => {
 	]
 }
 
-export const meta: MetaFunction = () => ({
+export const meta = (args: any) => metaV1(args, {
 	charset: "utf-8",
 	title: "Sharify",
 	viewport: "width=device-width,initial-scale=1",
@@ -82,7 +86,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 	return json<LoaderData>({
 		id: process.env.SPOTIFY_CLIENT_ID as string,
-		secret: process.env.SPOTIFY_CLIENT_SECRET as string,
 		username,
 	});
 }
@@ -113,19 +116,91 @@ export default function App() {
 	const loaderData = useLoaderData<LoaderData>();
 	const fetcher = useFetcher();
 	const { pathname } = useLocation();
-
-	const contextData: OutletContext = {
+	const [contextData, setContextData] = useState<OutletContext>({
+        toast,
 		username: loaderData.username || "",
-		toast,
-	};
+        spotify: null,
+        party_data: null,
+        websocket_connected: false,
+	});
+    const [serverInterval, setServerInterval] = useState<NodeJS.Timeout | null>(null);
+    const [isServerUp, setIsServerUp] = useState(false);
+
+    useEffect(() => {
+        // initWS(); // if you're in a room
+
+        if (!loaderData.id || !!contextData.spotify) return;
+
+        console.log("init spotify");
+		setContextData(data => ({ ...data, spotify: new Spotify(loaderData.id) }));
+    }, [loaderData, contextData.spotify]);
+
+    const initWS = () => {
+        const ws = new WsClient(`ws://127.0.0.1:3100/sharify_ws/1`);
+
+        ws.onmessage = (message) => {
+            try {
+                const data = JSON.parse(message.data.toString());
+                console.log(data);
+                contextData.party_data = data;
+            } catch (_) {
+                console.log("websocket message (not JSON):", message);
+            }
+        }
+        
+        ws.onopen = () => {
+            console.log("connected");
+            contextData.websocket_connected = true;
+        };
+
+        ws.onclose = () => {
+            console.log("disconnected");
+            contextData.websocket_connected = false;
+        };
+
+        ws.onerror = (error) => {
+            console.error("websocket error:", error);
+        };
+    };
 
 	useEffect(() => {
-		Spotify.SetCredentials({ id: loaderData.id, secret: loaderData.secret });
+        if (serverInterval) {
+            clearInterval(serverInterval);
+        }
+
+        setServerInterval(setInterval(async () => {
+            try {
+                // console.log(Spotify.BACK_API.split("/").slice(0, 3).join("/"));
+                if ((await fetch(Spotify.BACK_API.split("/").slice(0, 3).join("/"))).status == 200) {
+                    // FIXME: for some reason, serverInterval is null
+                    setIsServerUp(true);
+                    clearInterval(serverInterval!);
+                    setTimeout(() => setServerInterval(null), 5000);
+                    initWS();
+                }
+            } catch (error) {
+                console.error("server not reachable", error);
+            }
+        }, 5000));
+
+		return () => {
+            fetcher.submit(null, { method: 'post' })
+
+            if (serverInterval) {
+                clearInterval(serverInterval);
+            }
+        };
 	}, [])
 
-	useEffect(() => {
-		return () => fetcher.submit(null, { method: 'post' });
-	}, [])
+    if (!isServerUp) {
+        return (
+            <Document>
+                <div className="error-container">
+                    <h1>Server is unreachable/loading...</h1>
+                </div>
+            </Document>
+        );
+    }
 
 	return (
 		<Document>
@@ -146,28 +221,29 @@ export default function App() {
 	);
 }
 
-export function CatchBoundary() {
-	const caught = useCatch();
+export function ErrorBoundary() {
+    const error = useRouteError();
   
-	return (
-		<Document>
-			<div className="error-container">
-				<h1>
-					{caught.status} {caught.statusText}
-				</h1>
-			</div>
-		</Document>
-	);
-}
+    if (isRouteErrorResponse(error)) {
+        return (
+            <Document>
+                <div className="error-container">
+                    <h1>
+                        {error.status} {error.statusText} {error.data}
+                    </h1>
+                </div>
+            </Document>
+        );
+    }
 
-export function ErrorBoundary({ error }: { error: Error }) {
-	console.error(error);
+    const err = error as Error;
+	console.error(error, err);
 
 	return (
 		<Document>
 			<div className="error-container">
 				<h1>App Error</h1>
-				<pre>{error.message}</pre>
+				<pre>{err?.message ?? error}</pre>
 			</div>
 		</Document>
 	);

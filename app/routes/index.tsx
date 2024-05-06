@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import type { ActionFunction } from "@remix-run/node";
-import { Link, useSubmit } from "@remix-run/react";
+import { Link, useOutletContext, useSubmit } from "@remix-run/react";
+import type { UserProfile } from "@spotify/web-api-ts-sdk";
 
+import type { OutletContext } from "~/root";
 import Title from "~/components/title";
 import Spotify from "~/utils/spotify";
 import { unsetSessionData } from "~/server/session.server";
@@ -22,28 +24,31 @@ export const action: ActionFunction = async ({
 }
 
 export default function Index() {
+    const { spotify } = useOutletContext<OutletContext>();
 	const submit = useSubmit();
-	const [spotifyUser, setSpotifyUser] = useState<SpotifyApi.CurrentUsersProfileResponse | null>(null);
+	const [spotifyUser, setSpotifyUser] = useState<UserProfile | null>(null);
 
 	useEffect(() => {
-		if (Spotify.isReady) {
+        if (!spotify) return;
+
+		if (spotify.is_ready) {
 			(async () => {
-				const profile = await Spotify.GetProfile();
+				const profile = await spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
 					setSpotifyUser(profile);
 				}
 			})()
-		} else if (GetStorageValue("st") != null && !Spotify.isReady) {
+		} else if (GetStorageValue("st") != null && !spotify.is_ready) {
 			(async () => {
-				const profile = await Spotify.GetProfile();
+				const profile = await spotify.GetProfile();
 
 				if (!(profile instanceof Error)) {
 					setSpotifyUser(profile);
 				}
 			})()
 		}
-	}, [])
+	}, [spotify])
 
 	const handleSpotifyDisconnect = () => {
 		toast(`[Spotify] Disconnected from ${spotifyUser?.display_name} !`, {

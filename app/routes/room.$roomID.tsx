@@ -7,7 +7,6 @@ import { redirect, json } from "@remix-run/node";
 import { api } from "~/server/handlers.server";
 import Title from "~/components/title";
 import { GetStorageValue, SetStorageValue, useDebounce } from "~/utils/utils";
-import spotify from "~/utils/spotify";
 import { getSessionData } from "~/server/session.server";
 import HostRoom from "~/components/hostRoom";
 import ClientRoom from "~/components/clientRoom";
@@ -138,13 +137,14 @@ export const loader: LoaderFunction = async ({
 
 export default function Room() {
     const loaderData = useLoaderData<LoaderData>();
-    const context = useOutletContext<OutletContext>();
+    const { spotify: _spotify, username: contextUsername } = useOutletContext<OutletContext>();
+    const spotify = _spotify!;
     const fetcher = useFetcher<FetcherData>();
     const navigate = useNavigate();
     const [isAllowed, setIsAllowed] = useState(true);
-    const fetchDataTimeout = useRef<NodeJS.Timer | null>(null);
-    const [fetchInterval, setFetchInterval] = useState<NodeJS.Timer>();
-    const [syncInterval, setSyncInterval] = useState<NodeJS.Timer>();
+    const fetchDataTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [fetchInterval, setFetchInterval] = useState<ReturnType<typeof setInterval>>();
+    const [syncInterval, setSyncInterval] = useState<ReturnType<typeof setInterval>>();
     const [{
         title,
         volume,
@@ -183,6 +183,9 @@ export default function Room() {
     const debounceVolume: number = useDebounce(volume, 600);
     const debounceSearch: string = useDebounce(searchInput, 600);
     const debounceSeek: number = useDebounce(seekPos, 500);
+    if (loaderData?.party?.id) {
+        // ws = io(`ws://127.0.0.1:3100/sharify_ws/${loaderData.party.id}`);
+    }
 
     const FetchData = useCallback((delay?: number) => {
         if (fetchDataTimeout.current)
@@ -303,7 +306,7 @@ export default function Room() {
 
         const interval = setInterval(() => fetcher.submit({
 			type: "fetchData",
-			username: context.username,
+			username: contextUsername,
             currentTrack: title
 		}, { method: "post" }), 1000);
 
@@ -345,7 +348,7 @@ export default function Room() {
                 }
             }
 
-            if (!fetcher.data.clients.find(client => client.username == context.username)) {
+            if (!fetcher.data.clients.find(client => client.username == contextUsername)) {
                 clearInterval(fetchInterval);
                 clearInterval(syncInterval);
 
@@ -447,7 +450,7 @@ export default function Room() {
             }
         });
 
-        spotify.isOwner = loaderData.isHost;
+        spotify.is_owner = loaderData.isHost;
 
         if (currentDevice) return;
 
@@ -456,8 +459,8 @@ export default function Room() {
         if (spotifyDevice) {
             const device = JSON.parse(spotifyDevice) as SpotifyApi.UserDevice;
             setRoomData({ currentDevice: device });
-        } else if (spotify.currentDevice) {
-            setRoomData({ currentDevice: spotify.currentDevice });
+        } else if (spotify.current_device) {
+            setRoomData({ currentDevice: spotify.current_device });
         } else {
             (async () => {
                 const devices = await spotify.GetDevices();
@@ -476,7 +479,7 @@ export default function Room() {
                     return;
                 }
 
-                setRoomData({ currentDevice: spotify.currentDevice, devices });
+                setRoomData({ currentDevice: spotify.current_device, devices });
             })()
         }
     }, [loaderData, navigate])
@@ -516,7 +519,7 @@ export default function Room() {
                     loaderData.isHost
                         ? <HostRoom
                             fetcher={fetcher}
-                            username={context.username}
+                            username={contextUsername}
                             title={title}
                             volume={volume}
                             setRoomData={setRoomData}
@@ -534,7 +537,7 @@ export default function Room() {
                             addTrackToQueue={addTrackToQueue}
                         />
                         : <ClientRoom
-                            username={context.username}
+                            username={contextUsername}
                             title={title}
                             isPlaying={isPlaying}
                             durationMS={durationMS}
