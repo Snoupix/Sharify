@@ -71,7 +71,7 @@
             case "Party":
                 SetStorageValue({ user: data.clients[0], current_room: data! });
                 toast.push(`Successfully created party ${data.name}!`);
-                setTimeout(() => goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`), 5000);
+                goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
                 break;
             case "PartyError":
                 toast.push("Error: " + data?.error);

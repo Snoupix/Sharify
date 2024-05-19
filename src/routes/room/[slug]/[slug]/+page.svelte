@@ -4,10 +4,12 @@
 	import { page } from "$app/stores";
     import type { Writable } from "svelte/store";
     import type { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
+	import { LoaderCircle } from "lucide-svelte";
 
     import ws, { init_ws } from "$/lib/ws_store";
 	import { goto } from "$app/navigation";
 	import { toast } from "@zerodevx/svelte-toast";
+	import { Button } from "$/components/ui/button";
 
     if (!hasContext("GQL_Client")) {
         throw new Error("Unexpected error: Unable to get GraphQL client on context, please contact Snoupix");
@@ -61,3 +63,24 @@
         goto("/");
     }
 </script>
+
+
+<section>
+    {#if $ws != null && $ws.readyState != $ws.OPEN}
+        <span>Connecting to server...</span>
+        <Button disabled>
+            <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+            Please wait
+        </Button>
+    {/if}
+</section>
+
+<style lang="postcss">
+	section {
+		@apply w-2/12 h-screen m-auto flex flex-col justify-center items-center gap-8;
+
+		span {
+			@apply text-center text-xl font-bold;
+		}
+	}
+</style>
