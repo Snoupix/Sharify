@@ -8,3 +8,6 @@ node_modules
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# clone of the legacy_remix branch to locally reproduce changes
+remix_clone/

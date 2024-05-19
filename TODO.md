@@ -26,8 +26,12 @@
 - - [ ] (while in developer mode, 403 unauthorized can be received for accounts that aren't on the app's dashboard)
 - - [ ] latency check for clients requests (struct field latency on SharifyPartyManager { time: Instant(if > 1min, reset), latency: f32(requests time++)})
 
-- [ ] handle the refresh token loops server-side to reduce the update latency (since clients requests are handled server-side)
+- [x] handle the refresh token loops server-side to reduce the update latency (since clients requests are handled server-side)
 - [ ] implement UUIDv4 for user IDs (and party IDs) instead of using their username as IDs (client & server)
 - [ ] limit the (next tracks) queue to avoid spamming (maybe per user and configurable by owner/mods => queue limit, user limit)
 
-- [ ] update (prolly refacto) and check every file to double check the whole codebase
+
+# SvelteKit app
+
+- [ ] Don't forget that every client env var is used dynamically, maybe think about using static after thinking about it
+- [ ] Rework Spotify handler to match the server (the server handles the refresh token etc..)
