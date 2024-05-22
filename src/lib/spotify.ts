@@ -79,23 +79,23 @@ export class SpotifyHandler {
 		);
 	}
 
-    /**
-     * May throw Error on status 429 rate limiter server side
-     */
+	/**
+	 * May throw Error on status 429 rate limiter server side
+	 */
 	public async GenerateAuthLink() {
 		try {
 			let res = await fetch(`${SpotifyHandler.BACK_API}/code_verifier`, { method: "GET" });
-            if (res.status == 429) {
-                throw new Error("Error: Too many tries, please try again later");
-            }
+			if (res.status == 429) {
+				throw new Error("Error: Too many tries, please try again later");
+			}
 			this.code_verifier = await res.text();
 
 			SetStorageValue({ code_verifier: this.code_verifier });
 
 			res = await fetch(`${SpotifyHandler.BACK_API}/code_challenge/${this.code_verifier}`, { method: "GET" });
-            if (res.status == 429) {
-                throw new Error("Error: Too many tries, please try again later");
-            }
+			if (res.status == 429) {
+				throw new Error("Error: Too many tries, please try again later");
+			}
 			this.code_challenge = await res.text();
 
 			const url = new URL("https://accounts.spotify.com/authorize");
@@ -203,16 +203,16 @@ export class SpotifyHandler {
 	}
 
 	public async TokenFetchingEnded() {
-        if (this.tokens.access_token != tokens_default.access_token) {
-            SetStorageValue({
-                st: {
-                    at: this.tokens.access_token,
-                    rt: this.tokens.refresh_token,
-                    ein: this.tokens.expires_in,
-                    date: this.tokens.created_at,
-                },
-            });
-        }
+		if (this.tokens.access_token != tokens_default.access_token) {
+			SetStorageValue({
+				st: {
+					at: this.tokens.access_token,
+					rt: this.tokens.refresh_token,
+					ein: this.tokens.expires_in,
+					date: this.tokens.created_at,
+				},
+			});
+		}
 
 		this.InitSdk();
 		this.is_ready = true;
@@ -221,9 +221,10 @@ export class SpotifyHandler {
 
 		try {
 			const { devices } = await this.sdk!.player.getAvailableDevices();
-			this.current_device = (current_device
-				? devices.find(device => device.id == current_device.id)
-				: devices.find(device => device.is_active)) ?? null;
+			this.current_device =
+				(current_device
+					? devices.find(device => device.id == current_device.id)
+					: devices.find(device => device.is_active)) ?? null;
 
 			const user = await this.sdk!.currentUser.profile();
 			this.current_profile = user;

@@ -11,19 +11,19 @@
 	import { Button } from "$/components/ui/button";
 	import CustomButton from "$/components/button.svelte";
 	import Spotify from "$/lib/spotify";
-    import { CREATE_PARTY } from "$/lib/queries";
-    import { SetStorageValue } from "$/lib/utils";
-    import type { Party } from "$/lib/types";
+	import { CREATE_PARTY } from "$/lib/queries";
+	import { SetStorageValue } from "$/lib/utils";
+	import type { Party } from "$/lib/types";
 
-    if (!hasContext("GQL_Client")) {
-        throw new Error("Unexpected error: Unable to get GraphQL client, please contact Snoupix");
-    }
+	if (!hasContext("GQL_Client")) {
+		throw new Error("Unexpected error: Unable to get GraphQL client, please contact Snoupix");
+	}
 
-    const client: Writable<ApolloClient<NormalizedCacheObject> | null> = getContext("GQL_Client");
+	const client: Writable<ApolloClient<NormalizedCacheObject> | null> = getContext("GQL_Client");
 
-    if ($client == null) {
-        throw new Error("Unexpected error: Unable to initiate GraphQL client, please contact Snoupix");
-    }
+	if ($client == null) {
+		throw new Error("Unexpected error: Unable to initiate GraphQL client, please contact Snoupix");
+	}
 
 	let autoname = true;
 	let party = {
@@ -40,46 +40,47 @@
 		spotify_link = $Spotify?.GenerateAuthLink();
 	});
 
-    async function create_room() {
-        if (party.username.trim() == "" || party.party_name.trim() == "") {
-            throw new Error("Error: Invalid username or room name (they must not be empty)");
-        }
+	async function create_room() {
+		if (party.username.trim() == "" || party.party_name.trim() == "") {
+			throw new Error("Error: Invalid username or room name (they must not be empty)");
+		}
 
-        if (!$Spotify || !$Spotify.is_ready) {
-            throw new Error("Unexpected error: Spotify isn't (properly) linked to Sharify, please contact Snoupix");
-        }
+		if (!$Spotify || !$Spotify.is_ready) {
+			throw new Error("Unexpected error: Spotify isn't (properly) linked to Sharify, please contact Snoupix");
+		}
 
-        const tokens = $Spotify.GetTokens();
+		const tokens = $Spotify.GetTokens();
 
-        const gql_state = await $client?.mutate({
-            mutation: CREATE_PARTY,
-            variables: {
-                "username": party.username,
-                "party_name": party.party_name,
-                "creds": {
-                    "accessToken": tokens.access_token,
-                    "refreshToken": tokens.refresh_token,
-                    "expiresIn": tokens.expires_in.toString(), // Important: these are scalar values (Timestamp => String wrapper of numbers)
-                    "createdAt": tokens.created_at.toString(), // and since I didn't make any resolver for it, Stringify them
-                }
-            }
-        });
+		const gql_state = await $client?.mutate({
+			mutation: CREATE_PARTY,
+			variables: {
+				username: party.username,
+				party_name: party.party_name,
+				creds: {
+					accessToken: tokens.access_token,
+					refreshToken: tokens.refresh_token,
+					expiresIn: tokens.expires_in.toString(), // Important: these are scalar values (Timestamp => String wrapper of numbers)
+					createdAt: tokens.created_at.toString(), // and since I didn't make any resolver for it, Stringify them
+				},
+			},
+		});
 
-        const data: Party & { __typename: "Party" | "PartyError" | string, error: string } = gql_state?.data?.createParty;
+		const data: Party & { __typename: "Party" | "PartyError" | string; error: string } =
+			gql_state?.data?.createParty;
 
-        switch (data?.__typename) {
-            case "Party":
-                SetStorageValue({ user: data.clients[0], current_room: data! });
-                toast.push(`Successfully created party ${data.name}!`);
-                goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
-                break;
-            case "PartyError":
-                toast.push("Error: " + data?.error);
-                break;
-            default:
-                console.error(gql_state);
-        }
-    }
+		switch (data?.__typename) {
+			case "Party":
+				SetStorageValue({ user: data.clients[0], current_room: data! });
+				toast.push(`Successfully created party ${data.name}!`);
+				goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
+				break;
+			case "PartyError":
+				toast.push("Error: " + data?.error);
+				break;
+			default:
+				console.error(gql_state);
+		}
+	}
 </script>
 
 <section>

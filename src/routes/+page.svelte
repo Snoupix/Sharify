@@ -36,11 +36,11 @@
 			clearInterval(server_interval!);
 		}
 
-        // Rate limiter
-        if (res.status == 429) {
-            server_timed_out = true;
+		// Rate limiter
+		if (res.status == 429) {
+			server_timed_out = true;
 			clearInterval(server_interval!);
-        }
+		}
 	}
 </script>
 

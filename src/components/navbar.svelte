@@ -1,41 +1,48 @@
 <script lang="ts">
+	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
 	import { SquareArrowOutUpRight } from "lucide-svelte";
 
 	import Logo from "$/components/logo.svelte";
 	import { Button } from "$/components/ui/button";
+	import CustomButton from "$/components/button.svelte";
 	import Spotify from "$/lib/spotify";
-	import { onDestroy, onMount } from "svelte";
-	import { SetStorageValue } from "$/lib/utils";
+	import { GetStorageValue, SetStorageValue } from "$/lib/utils";
 
 	const hidden_routes = ["/", "/auth_spotify"];
 
 	let path = "/";
 	let profile = "";
-    let spotify_interval: NodeJS.Timeout | null = null;
+	let spotify_interval: NodeJS.Timeout | null = null;
 
 	$: if ($page != null && $page.route.id != null) {
 		path = $page.route.id;
 	}
 
-    onMount(() => {
-        spotify_interval = setInterval(() => {
-            profile = $Spotify?.current_profile?.display_name ?? "";
-        }, 2000);
-    });
+	const dispatch = createEventDispatcher<{ leave_party: { party_id: number | null; client_id: number | null } }>();
 
-    onDestroy(() => spotify_interval != null && clearInterval(spotify_interval));
+	onMount(() => {
+		spotify_interval = setInterval(() => {
+			profile = $Spotify?.current_profile?.display_name ?? "";
+		}, 2000);
+	});
+
+	onDestroy(() => spotify_interval != null && clearInterval(spotify_interval));
 
 	function disconnect() {
 		$Spotify?.Disconnect();
 		goto("/");
 	}
 
-    function leave_room() {
-        SetStorageValue({ current_room: null, user: null });
-        goto("/");
-    }
+	async function leave_room() {
+		dispatch("leave_party", {
+			party_id: GetStorageValue("current_room")?.id ?? null,
+			client_id: GetStorageValue("user")?.id ?? null,
+		});
+		SetStorageValue({ current_room: null, user: null });
+		goto("/");
+	}
 </script>
 
 <nav>
@@ -44,9 +51,11 @@
 	{/if}
 
 	<div>
-        {#if path.includes("/room")}
-            <Button on:click={leave_room}>Leave the room</Button>
-        {/if}
+		{#if path.includes("/room")}
+			<CustomButton
+				class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-[2px]"
+				on:click={leave_room}>Leave the room</CustomButton>
+		{/if}
 		{#if profile != ""}
 			<Button on:click={disconnect}>
 				<svg class="w-5 mr-2 fill-main-content" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"
@@ -71,7 +80,7 @@
 		div {
 			@apply w-auto flex flex-row gap-6 justify-between items-center p-4;
 
-			:global(> *) {
+			:global(> *:not(.custom_btn)) {
 				@apply font-montserrat text-base text-main-content bg-main-color-hover;
 				display: block ruby; /* needed to align text & svg on "a" tag */
 			}

@@ -7,8 +7,8 @@ interface LocalStorage {
 	SpotifyDevice: Device | null;
 	SpotifyProfile: UserProfile | null;
 	code_verifier: string | null;
-    user: PartyClient | null;
-    current_room: Party | null;
+	user: PartyClient | null;
+	current_room: Party | null;
 }
 
 export interface SpotifyTokensStorage {
@@ -45,7 +45,7 @@ export const SetStorageValue = (value: Partial<LocalStorage>): void => {
  * Can throw if localStorage and window.localStorage are not available
  */
 export function GetStorageValue<T extends keyof LocalStorage, S extends StorageType<T>>(value: T): S | null {
-	if (!localStorage || !window.localStorage) return {} as S; //throw new Error("Cannot access localStorage nor window.localStorage");
+	if (!localStorage || !window.localStorage) throw new Error("Cannot access localStorage nor window.localStorage");
 	const store = localStorage ?? window.localStorage;
 
 	const store_object = JSON.parse(store.getItem("Sharify") || "{}") as LocalStorage;

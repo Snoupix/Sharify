@@ -13,19 +13,21 @@ export const load: PageServerLoad = async ({ url }) => {
 		return redirect(300, "/");
 	}
 
-	const [party_id, client_id] = pathname_split.slice(2);
+	const [party_id, password] = pathname_split.slice(2);
 
 	const result = await client.query({ query: GET_PARTY, variables: { id: parseInt(party_id) } });
 
 	if (result.error || (result.errors && result.errors.length > 0)) {
-		console.error("Party doesn't exists anymore", result.error, result.errors, party_id);
+		console.error("Party doesn't exists", result.error, result.errors, party_id);
 		return redirect(301, "/");
 	}
 
 	const party: Party | null = result.data?.getParty;
 
-	if (party == null || party.clients.find(c => c.id == parseInt(client_id)) == undefined) {
-		console.error("Client isn't in party anymore", result.data, party_id, client_id);
+	if (party == null || party.password != password) {
+		console.error("Party not found or password not right", result.data, party_id, password);
 		return redirect(301, "/");
 	}
+
+	return { party };
 };
