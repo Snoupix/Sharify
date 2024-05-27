@@ -1,0 +1,4 @@
+.git
+.cache
+!remix_clone/
+public/
