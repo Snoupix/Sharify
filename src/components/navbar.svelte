@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { createEventDispatcher, onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
 	import { SquareArrowOutUpRight } from "lucide-svelte";
 
 	import Logo from "$/components/logo.svelte";
 	import { Button } from "$/components/ui/button";
-	import CustomButton from "$/components/button.svelte";
 	import Spotify from "$/lib/spotify";
-	import { GetStorageValue, SetStorageValue } from "$/lib/utils";
 
-	const hidden_routes = ["/", "/auth_spotify"];
+	const hidden_routes = ["/", "/auth_spotify", "/host", "/join"];
 
 	let path = "/";
 	let profile = "";
@@ -20,8 +18,6 @@
 		path = $page.route.id;
 	}
 
-	const dispatch = createEventDispatcher<{ leave_party: { party_id: number | null; client_id: number | null } }>();
-
 	onMount(() => {
 		spotify_interval = setInterval(() => {
 			profile = $Spotify?.current_profile?.display_name ?? "";
@@ -30,18 +26,9 @@
 
 	onDestroy(() => spotify_interval != null && clearInterval(spotify_interval));
 
-	function disconnect() {
+	async function disconnect() {
 		$Spotify?.Disconnect();
-		goto("/");
-	}
-
-	async function leave_room() {
-		dispatch("leave_party", {
-			party_id: GetStorageValue("current_room")?.id ?? null,
-			client_id: GetStorageValue("user")?.id ?? null,
-		});
-		SetStorageValue({ current_room: null, user: null });
-		goto("/");
+		await goto("/");
 	}
 </script>
 
@@ -51,11 +38,6 @@
 	{/if}
 
 	<div>
-		{#if path.includes("/room")}
-			<CustomButton
-				class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-[2px]"
-				on:click={leave_room}>Leave the room</CustomButton>
-		{/if}
 		{#if profile != ""}
 			<Button on:click={disconnect}>
 				<svg class="w-5 mr-2 fill-main-content" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"
@@ -75,7 +57,7 @@
 
 <style lang="postcss">
 	nav {
-		@apply fixed right-0 top-0 w-auto h-16;
+		@apply fixed z-50 right-0 top-0 w-auto h-16;
 
 		div {
 			@apply w-auto flex flex-row gap-6 justify-between items-center p-4;

@@ -55,17 +55,22 @@ export function GetStorageValue<T extends keyof LocalStorage, S extends StorageT
 	return returns == ({} as S) ? null : returns;
 }
 
-// export function useDebounce(value: any, delay: number = 500) {
-// 	const [debouncedValue, setDebouncedValue] = useState(value);
-//
-// 	useEffect(() => {
-// 		const handler = setTimeout(() => setDebouncedValue(value), delay);
-//
-// 		return () => clearTimeout(handler);
-// 	}, [value, delay]);
-//
-// 	return debouncedValue;
-// }
+export async function WriteToClipboard(text: string, on_success: () => void | null, on_error: (error: any) => void | null): Promise<boolean> {
+    let success = true;
+
+    try {
+        const type = "text/plain";
+        const blob = new Blob([text], { type });
+        const data = [new ClipboardItem({ [type]: blob })];
+        await (navigator ?? window.navigator).clipboard.write(data);
+        on_success != null && on_success();
+    } catch (error: any) {
+        success = false;
+        on_error != null && on_error(error);
+    }
+
+    return success;
+}
 
 export function FormatTime(progress: number, duration: number) {
 	const [p, m] = [new Date(progress), new Date(duration)];
@@ -75,6 +80,25 @@ export function FormatTime(progress: number, duration: number) {
 	};
 
 	return `${FormatNumber(p.getMinutes())}:${FormatNumber(p.getSeconds())} / ${FormatNumber(m.getMinutes())}:${FormatNumber(m.getSeconds())}`;
+}
+
+/**
+ * Custom zip iterator that takes two arrays to combine them on a tuple value and fills with null when one array is greater than the other
+ */
+export function zip_iter<T1, T2>(arr1: Array<T1>, arr2: Array<T2>) {
+    const output: Array<[T1 | null, T2 | null]> = [];
+    const min_len = Math.min(arr1.length, arr2.length);
+    const max_len = Math.max(arr1.length, arr2.length);
+
+    for (let i = 0; i < min_len; i += 1) {
+        output.push([arr1[i], arr2[i]]);
+    }
+
+    for (let i = min_len; i < max_len; i += 1) {
+        output.push([arr1[i] ?? null, arr2[i] ?? null]);
+    }
+
+    return output;
 }
 
 export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | HTMLDivElement }) {

@@ -153,6 +153,7 @@ export class SpotifyHandler {
 		}
 	}
 
+    // TODO: Fix refresh token trigger
 	public ProcessTokens(data: Partial<SpotifyTokens>) {
 		if (this.timeout) {
 			clearTimeout(this.timeout);
@@ -220,13 +221,15 @@ export class SpotifyHandler {
 		const current_device = GetStorageValue("SpotifyDevice");
 
 		try {
-			const { devices } = await this.sdk!.player.getAvailableDevices();
+            const [{ devices }, user ] = await Promise.all([
+                this.sdk!.player.getAvailableDevices(),
+                this.sdk!.currentUser.profile()
+            ]);
+
 			this.current_device =
 				(current_device
 					? devices.find(device => device.id == current_device.id)
 					: devices.find(device => device.is_active)) ?? null;
-
-			const user = await this.sdk!.currentUser.profile();
 			this.current_profile = user;
 
 			if (this.current_device) {

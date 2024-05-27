@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { onDestroy, onMount } from "svelte";
 	import { env } from "$env/dynamic/public";
 	import LoaderCircle from "lucide-svelte/icons/loader-circle";
@@ -11,7 +11,9 @@
 	let server_i = 0;
 	let server_loaded = false;
 	let server_timed_out = false;
+    let show_retry_button = false;
 	let server_interval: NodeJS.Timeout | null = null;
+	let retry_timeout: NodeJS.Timeout | null = null;
 
 	onMount(async () => {
 		server_interval_fn();
@@ -19,7 +21,10 @@
 		server_interval = setInterval(server_interval_fn, parseInt(env.PUBLIC_SV_INTERVAL!));
 	});
 
-	onDestroy(() => server_interval != null && clearInterval(server_interval));
+	onDestroy(() => {
+        server_interval != null && clearInterval(server_interval);
+        retry_timeout != null && clearTimeout(retry_timeout);
+    });
 
 	async function server_interval_fn() {
 		server_i += 1;
@@ -34,14 +39,33 @@
 		if (res.ok) {
 			server_loaded = true;
 			clearInterval(server_interval!);
+            return;
 		}
 
 		// Rate limiter
 		if (res.status == 429) {
 			server_timed_out = true;
 			clearInterval(server_interval!);
+            return;
 		}
 	}
+
+    function reload_page() {
+        server_i = 0;
+        server_loaded = false;
+        server_timed_out = false;
+        show_retry_button = false;
+        server_interval = null;
+        retry_timeout = null;
+        // await invalidateAll(); => reload the load functions, but I need to reload the onMount
+        window.location.reload();
+    }
+
+    $: if (server_loaded || server_timed_out) {
+        retry_timeout = setTimeout(() => {
+            show_retry_button = true;
+        }, 5000);
+    }
 </script>
 
 <section>
@@ -49,6 +73,9 @@
 	{#if !server_loaded || server_timed_out}
 		{#if server_i == parseInt(env.PUBLIC_SV_TIMEOUT ?? "0")}
 			<span>Failed to reach server, please try again later</span>
+            {#if show_retry_button}
+                <CustomButton on:click={reload_page}>Retry</CustomButton>
+            {/if}
 		{:else}
 			<span>Trying to connect to server...{server_i > 1 ? ` (attempt ${server_i})` : ""}</span>
 			<Button disabled>
@@ -57,8 +84,8 @@
 			</Button>
 		{/if}
 	{:else}
-		<CustomButton on:click={() => goto("/host")}>Host</CustomButton>
-		<CustomButton on:click={() => goto("/join")}>Join</CustomButton>
+		<CustomButton on:click={async () => await goto("/host")}>Host</CustomButton>
+		<CustomButton on:click={async () => await goto("/join")}>Join</CustomButton>
 	{/if}
 </section>
 

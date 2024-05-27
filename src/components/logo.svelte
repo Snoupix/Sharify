@@ -6,7 +6,7 @@
 
 <style lang="postcss">
 	a {
-		@apply z-10 text-main-color font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl;
+		@apply z-50 text-main-color font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl;
 
 		&:hover {
 			transition: all 0.3s;

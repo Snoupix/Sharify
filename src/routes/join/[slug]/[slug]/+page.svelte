@@ -29,10 +29,10 @@
 	let is_loading = false;
 	let error = "";
 
-	onMount(() => {
+	onMount(async () => {
 		if (!data || !data.party) {
 			toast.push("Error: Party not found");
-			return goto("/");
+			return await goto("/");
 		}
 	});
 
@@ -66,7 +66,7 @@
 		}
 
 		toast.push(`You successfully joined room "${party.name}"!`);
-		goto(`/room/${party.id}/${party_client.id}`);
+		await goto(`/room/${party.id}/${party_client.id}`);
 	}
 </script>
 

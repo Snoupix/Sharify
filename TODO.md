@@ -33,5 +33,12 @@
 
 # SvelteKit app
 
+- [ ] Finish the rewrite to match the Remix inital POC
+- - [ ] Display users and their status
 - [ ] Don't forget that every client env var is used dynamically, maybe think about using static after thinking about it
 - [ ] Rework Spotify handler to match the server (the server handles the refresh token etc..)
+- [ ] Better handle on refresh token (on processToken when laucnhing app -> retrieving tokens from localstorage) and disable its loop since it's handled by the server
+- [ ] Remove track from party tracks_queue when track is playing
+
+## Ideas
+- ~~*Maybe use a second Spotify token (of the owner) to only handle the search and spread it to clients ?* if so, update the README~~ No, it won't be good for user experience to ask for 2 access on his/her Spotify account

@@ -10,7 +10,7 @@
 	import Spotify from "$/lib/spotify";
 	import { GetStorageValue, SetStorageValue } from "$/lib/utils";
 	import Navbar from "$/components/navbar.svelte";
-	import { LEAVE_PARTY } from "$/lib/queries";
+    import type { Party, SpotifyData } from "$/lib/types";
 
 	import "$/style.css";
 
@@ -57,8 +57,11 @@
 	});
 	setContext("GQL_Client", apollo_store);
 
-	const room_data_store = writable<any>();
+	const room_data_store = writable<Party | null>(null);
 	setContext("RoomData", room_data_store);
+
+	const spotify_data_store = writable<SpotifyData | null>(null);
+	setContext("SpotifyData", spotify_data_store);
 
 	onMount(() => {
 		const tokens = GetStorageValue("st");
@@ -72,7 +75,7 @@
 		});
 	});
 
-	afterNavigate(navigate => {
+	afterNavigate(async navigate => {
 		// This avoids the redirects and cleans the cache on server redirect
 		if (navigate.to && navigate.to.route.id == "/" && navigate.type == "goto") {
 			SetStorageValue({ current_room: null, user: null });
@@ -94,22 +97,12 @@
 		const client_id = party.clients.find(c => c.id == client.id);
 		if (!client_id) return SetStorageValue({ current_room: null, user: null });
 
-		goto(`/room/${party.id}/${client_id.id}`);
+		await goto(`/room/${party.id}/${client_id.id}`);
 	});
-
-	async function leave_party(event: CustomEvent<{ party_id: number | null; client_id: number | null }>) {
-		const { party_id: id, client_id } = event.detail;
-		if (id != null && client_id != null && $apollo_store != null) {
-			const result = await $apollo_store.mutate({ mutation: LEAVE_PARTY, variables: { id, client_id } });
-			if ((result.data && result.data.leaveParty != null) || result.errors) {
-				console.error("Error on leaving party", result.data, result.errors);
-			}
-		}
-	}
 </script>
 
 <main>
-	<Navbar on:leave_party={leave_party} />
+	<Navbar />
 	<slot />
 	<SvelteToast options={toast_default_options} />
 </main>

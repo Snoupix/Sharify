@@ -13,6 +13,7 @@
 	import Spotify from "$/lib/spotify";
 	import { CREATE_PARTY } from "$/lib/queries";
 	import { SetStorageValue } from "$/lib/utils";
+    import Logo from "$/components/logo.svelte";
 	import type { Party } from "$/lib/types";
 
 	if (!hasContext("GQL_Client")) {
@@ -34,7 +35,9 @@
 
 	$: if (autoname && party.username.trim() != "") {
 		party.party_name = `${party.username}'s party`;
-	}
+	} else if (autoname && party.username.trim() == "") {
+        party.party_name = "";
+    }
 
 	onMount(async () => {
 		spotify_link = $Spotify?.GenerateAuthLink();
@@ -72,7 +75,7 @@
 			case "Party":
 				SetStorageValue({ user: data.clients[0], current_room: data! });
 				toast.push(`Successfully created party ${data.name}!`);
-				goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
+				await goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
 				break;
 			case "PartyError":
 				toast.push("Error: " + data?.error);
@@ -86,6 +89,7 @@
 <section>
 	{#if $Spotify != null && $Spotify.is_ready}
 		<form on:submit|preventDefault={create_room}>
+            <Logo />
 			<div>
 				<Label for="username">Username</Label>
 				<Input
