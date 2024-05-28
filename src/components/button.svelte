@@ -1,6 +1,6 @@
 <script lang="ts">
-	export let class_extended = "";
-	export let type: "button" | "submit" | "reset" | null = "button";
+    export let class_extended = "";
+    export let type: "button" | "submit" | "reset" | null = "button";
     export let title = "";
 </script>
 

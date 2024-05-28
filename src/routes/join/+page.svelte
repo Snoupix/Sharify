@@ -1,10 +1,10 @@
 <script lang="ts">
     import Logo from "$/components/logo.svelte";
-	import { Input } from "$/components/ui/input";
+    import { Input } from "$/components/ui/input";
     import CustomButton from "$/components/button.svelte";
-	import { goto } from "$app/navigation";
+    import { goto } from "$app/navigation";
 
-    let room_id = ""
+    let room_id = "";
     let room_password = "";
     let error = "";
 
