@@ -3,7 +3,7 @@ import { fontFamily } from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
-    darkMode: ["class"],
+    darkMode: ["class", "selector"],
     content: ["./src/**/*.{html,js,svelte,ts}"], // "./app/**/*.{ts,tsx}" Remix paths
     safelist: ["dark"],
     theme: {
@@ -19,6 +19,7 @@ const config = {
                 "main-color": "#7a007a",
                 "main-color-hover": "#7a007aad",
                 "main-content": colors.neutral[200],
+                "main-color-clear": "rgb(151, 1, 151)",
                 "bg-color": "#24004C",
                 border: "hsl(var(--border) / <alpha-value>)",
                 input: "hsl(var(--input) / <alpha-value>)",

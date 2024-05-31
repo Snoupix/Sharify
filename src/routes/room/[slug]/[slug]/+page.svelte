@@ -24,7 +24,7 @@
     import { Button } from "$/components/ui/button";
     import { Input } from "$/components/ui/input";
     import CustomButton from "$/components/button.svelte";
-    import { FormatTime, GetStorageValue, SetStorageValue, WriteToClipboard, zip_iter } from "$/lib/utils";
+    import { format_time, get_storage_value, set_storage_value, write_to_clipboard, zip_iter } from "$/lib/utils";
     import type { Party, SpotifyData, SpotifyTrack, WsMessage } from "$/lib/types";
     import { LEAVE_PARTY } from "$/lib/queries";
 
@@ -147,6 +147,9 @@
                     toast.push("Track paused");
                     $spotify_data!.playback_state!.is_playing = false;
                     break;
+                case "seek_to_pos":
+                    $spotify_data!.playback_state!.progress_ms = message_data.data;
+                    break;
                 case "error":
                     console.error("ERROR on WS message: ", message_data.data);
                     break;
@@ -168,7 +171,7 @@
     }
 
     async function copy_party_link() {
-        await WriteToClipboard(
+        await write_to_clipboard(
             get_party_link(),
             () => {
                 toast.push("Party link copied successfully to your clipboard !");
@@ -189,8 +192,8 @@
         leaving = true;
 
         const { party_id: id, client_id } = {
-            party_id: GetStorageValue("current_room")?.id ?? null,
-            client_id: GetStorageValue("user")?.id ?? null,
+            party_id: get_storage_value("current_room")?.id ?? null,
+            client_id: get_storage_value("user")?.id ?? null,
         };
         if (id != null && client_id != null && $client != null) {
             const result = await $client.mutate({ mutation: LEAVE_PARTY, variables: { id, client_id } });
@@ -199,7 +202,7 @@
             }
         }
 
-        SetStorageValue({ current_room: null, user: null });
+        set_storage_value({ current_room: null, user: null });
         await goto("/");
     }
 
@@ -231,7 +234,7 @@
     async function add_track_to_queue(track_id: SpotifyTrack["track_id"], track_name: SpotifyTrack["track_name"] = "") {
         search_input = "";
 
-        const user = GetStorageValue("user");
+        const user = get_storage_value("user");
 
         if (user == null) {
             toast.push("Unexpected error: Unable to get your user data on local storage, please try again");
@@ -366,7 +369,7 @@
                             <CustomButton
                                 title="Copy Spotify URI to clipboard"
                                 on:click={() =>
-                                    WriteToClipboard(
+                                    write_to_clipboard(
                                         `spotify:track:${$spotify_data?.playback_state?.track_id}`,
                                         () => {
                                             toast.push("Spotify URI copied to clipboard!");
@@ -377,7 +380,7 @@
                         </div>
                     </div>
                     <span class="main-color italic"
-                        >{FormatTime(song_progress_ms, $spotify_data.playback_state.duration_ms)}</span>
+                        >{format_time(song_progress_ms, $spotify_data.playback_state.duration_ms)}</span>
                     <input
                         class="cursor-grab accent-main-color w-2/4"
                         min={0}
@@ -526,7 +529,7 @@
             }
 
             .player_container {
-                @apply m-auto h-full w-6/12 flex flex-col justify-center items-center gap-4 font-content font-semibold;
+                @apply m-auto h-full w-6/12 flex flex-col justify-center items-center gap-4 font-content font-bold;
 
                 .currently_playing {
                     @apply relative w-full flex flex-row justify-center items-center gap-6;

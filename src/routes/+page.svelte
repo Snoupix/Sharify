@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { goto, invalidateAll } from "$app/navigation";
+    import { goto } from "$app/navigation";
     import { onDestroy, onMount } from "svelte";
     import { env } from "$env/dynamic/public";
     import LoaderCircle from "lucide-svelte/icons/loader-circle";

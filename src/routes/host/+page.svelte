@@ -12,7 +12,7 @@
     import CustomButton from "$/components/button.svelte";
     import Spotify from "$/lib/spotify";
     import { CREATE_PARTY } from "$/lib/queries";
-    import { SetStorageValue } from "$/lib/utils";
+    import { set_storage_value } from "$/lib/utils";
     import Logo from "$/components/logo.svelte";
     import type { Party } from "$/lib/types";
 
@@ -73,9 +73,9 @@
 
         switch (data?.__typename) {
             case "Party":
-                SetStorageValue({ user: data.clients[0], current_room: data! });
+                set_storage_value({ user: data.clients[0], current_room: data! });
                 toast.push(`Successfully created party ${data.name}!`);
-                await goto(`/room/${data.id}/${data.clients.find((c: any) => c.username == party.username)?.id}`);
+                await goto(`/room/${data.id}/${data.clients.find(c => c.username == party.username)?.id}`);
                 break;
             case "PartyError":
                 toast.push("Error: " + data?.error);

@@ -9,6 +9,7 @@ interface LocalStorage {
     code_verifier: string | null;
     user: PartyClient | null;
     current_room: Party | null;
+    theme: "dark" | "light" | null; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
 export interface SpotifyTokensStorage {
@@ -23,7 +24,7 @@ type StorageType<T> = T extends keyof LocalStorage ? LocalStorage[T] : never;
 /**
  * Can throw if localStorage and window.localStorage are not available
  */
-export const SetStorageValue = (value: Partial<LocalStorage>): void => {
+export function set_storage_value(value: Partial<LocalStorage>): void {
     if (!localStorage || !window.localStorage) throw new Error("Cannot access localStorage nor window.localStorage");
     const store = localStorage ?? window.localStorage;
 
@@ -44,7 +45,7 @@ export const SetStorageValue = (value: Partial<LocalStorage>): void => {
 /**
  * Can throw if localStorage and window.localStorage are not available
  */
-export function GetStorageValue<T extends keyof LocalStorage, S extends StorageType<T>>(value: T): S | null {
+export function get_storage_value<T extends keyof LocalStorage, S extends StorageType<T>>(value: T): S | null {
     if (!localStorage || !window.localStorage) throw new Error("Cannot access localStorage nor window.localStorage");
     const store = localStorage ?? window.localStorage;
 
@@ -55,7 +56,34 @@ export function GetStorageValue<T extends keyof LocalStorage, S extends StorageT
     return returns == ({} as S) ? null : returns;
 }
 
-export async function WriteToClipboard(
+export function set_theme(theme: LocalStorage["theme"]) {
+    switch (theme) {
+        case "light":
+            document.documentElement.classList.remove("dark");
+            set_storage_value({ theme: "light" });
+            break;
+        case "dark":
+            document.documentElement.classList.add("dark");
+            set_storage_value({ theme: "dark" });
+            break;
+        default: {
+            const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            if (dark) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+            set_storage_value({ theme: null });
+            break;
+        }
+    }
+}
+
+export function get_theme(): LocalStorage["theme"] {
+    return get_storage_value("theme");
+}
+
+export async function write_to_clipboard(
     text: string,
     on_success: () => void | null,
     on_error: (error: any) => void | null,
@@ -76,14 +104,14 @@ export async function WriteToClipboard(
     return success;
 }
 
-export function FormatTime(progress: number, duration: number) {
+export function format_time(progress: number, duration: number) {
     const [p, m] = [new Date(progress), new Date(duration)];
 
-    const FormatNumber = (int: number): string => {
+    const format_number = (int: number): string => {
         return int.toString().padStart(2, "0");
     };
 
-    return `${FormatNumber(p.getMinutes())}:${FormatNumber(p.getSeconds())} / ${FormatNumber(m.getMinutes())}:${FormatNumber(m.getSeconds())}`;
+    return `${format_number(p.getMinutes())}:${format_number(p.getSeconds())} / ${format_number(m.getMinutes())}:${format_number(m.getSeconds())}`;
 }
 
 /**

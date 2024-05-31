@@ -8,7 +8,7 @@
     import colors from "tailwindcss/colors";
 
     import Spotify from "$/lib/spotify";
-    import { GetStorageValue, SetStorageValue } from "$/lib/utils";
+    import { get_storage_value, set_storage_value } from "$/lib/utils";
     import Navbar from "$/components/navbar.svelte";
     import type { Party, SpotifyData } from "$/lib/types";
 
@@ -64,21 +64,31 @@
     setContext("SpotifyData", spotify_data_store);
 
     onMount(() => {
-        const tokens = GetStorageValue("st");
-        if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
+        (() => {
+            const tokens = get_storage_value("st");
+            if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
 
-        $Spotify.ProcessTokens({
-            access_token: tokens.at,
-            refresh_token: tokens.rt,
-            expires_in: tokens.ein,
-            created_at: tokens.date,
-        });
+            $Spotify.ProcessTokens({
+                access_token: tokens.at,
+                refresh_token: tokens.rt,
+                expires_in: tokens.ein,
+                created_at: tokens.date,
+            });
+        })();
+        (() => {
+         const theme = get_storage_value("theme");
+         if ((theme != null && theme == "dark") || (theme == null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+             document.documentElement.classList.add('dark');
+         } else {
+             document.documentElement.classList.remove('dark');
+         }
+        })();
     });
 
     afterNavigate(async navigate => {
         // This avoids the redirects and cleans the cache on server redirect
         if (navigate.to && navigate.to.route.id == "/" && navigate.type == "goto") {
-            SetStorageValue({ current_room: null, user: null });
+            set_storage_value({ current_room: null, user: null });
 
             return;
         }
@@ -88,14 +98,14 @@
             console.log("path", navigate.to?.url.pathname, "is in", dont_redirect_on_paths);
             return;
         }
-        const party = GetStorageValue("current_room");
+        const party = get_storage_value("current_room");
         if (party == null) return;
 
-        const client = GetStorageValue("user");
-        if (client == null) return SetStorageValue({ current_room: null });
+        const client = get_storage_value("user");
+        if (client == null) return set_storage_value({ current_room: null });
 
         const client_id = party.clients.find(c => c.id == client.id);
-        if (!client_id) return SetStorageValue({ current_room: null, user: null });
+        if (!client_id) return set_storage_value({ current_room: null, user: null });
 
         await goto(`/room/${party.id}/${client_id.id}`);
     });

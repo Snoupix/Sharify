@@ -6,19 +6,24 @@
 
     import Logo from "$/components/logo.svelte";
     import { Button } from "$/components/ui/button";
+    import * as Select from "$/components/ui/select";
     import Spotify from "$/lib/spotify";
+    import { get_storage_value, set_theme } from "$/lib/utils";
 
     const hidden_routes = ["/", "/auth_spotify", "/host", "/join"];
 
     let path = "/";
     let profile = "";
     let spotify_interval: NodeJS.Timeout | null = null;
+    let theme = "system";
 
     $: if ($page != null && $page.route.id != null) {
         path = $page.route.id;
     }
 
     onMount(() => {
+        theme = get_storage_value("theme") ?? "system";
+
         spotify_interval = setInterval(() => {
             profile = $Spotify?.current_profile?.display_name ?? "";
         }, 2000);
@@ -46,9 +51,36 @@
                 Disconnect from {profile}
             </Button>
         {/if}
+        <Select.Root
+            selected={{ label: "Theme", value: theme }}
+            onSelectedChange={e => {
+                if (e != undefined) {
+                    switch (e.value) {
+                        case "light":
+                            set_theme("light");
+                            break;
+                        case "dark":
+                            set_theme("dark");
+                            break;
+                        default:
+                            set_theme(null);
+                            break;
+                    }
+                }
+            }}>
+            <Select.Trigger class="xl:w-32">
+                <!--<Select.Value class="text-main-content" placeholder="Theme" />-->
+                <span class="text-main-content text-base font-montserrat font-medium">Theme</span>
+            </Select.Trigger>
+            <Select.Content class="select_content">
+                <Select.Item class="select_item" value="system">System</Select.Item>
+                <Select.Item class="select_item" value="light">Light</Select.Item>
+                <Select.Item class="select_item" value="dark">Dark</Select.Item>
+            </Select.Content>
+        </Select.Root>
         <Button>
             <a href="https://github.com/Snoupix/Sharify" target="_blank"
-                >GitHub <SquareArrowOutUpRight class="ml-2 w-5 stroke-main-content" /></a>
+                >GitHub <SquareArrowOutUpRight class="ml-2 w-4 stroke-main-content" /></a>
         </Button>
         <Button>About</Button>
         <Button>Contact</Button>

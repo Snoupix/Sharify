@@ -3,7 +3,7 @@ import type { PlayHistory, PlaybackState, UserProfile, Queue, SearchResults, Dev
 import { env } from "$env/dynamic/public";
 import { writable } from "svelte/store";
 
-import { GetStorageValue, SetStorageValue } from "$/lib/utils";
+import { get_storage_value, set_storage_value } from "$/lib/utils";
 
 type MaxInt<T extends number> = number extends T ? number : _Range<T, []>;
 type _Range<T extends number, R extends unknown[]> = R["length"] extends T
@@ -90,7 +90,7 @@ export class SpotifyHandler {
             }
             this.code_verifier = await res.text();
 
-            SetStorageValue({ code_verifier: this.code_verifier });
+            set_storage_value({ code_verifier: this.code_verifier });
 
             res = await fetch(`${SpotifyHandler.BACK_API}/code_challenge/${this.code_verifier}`, { method: "GET" });
             if (res.status == 429) {
@@ -176,7 +176,7 @@ export class SpotifyHandler {
     }
 
     public FetchAccessToken(code: string) {
-        const code_verifier = GetStorageValue("code_verifier");
+        const code_verifier = get_storage_value("code_verifier");
 
         if (code_verifier == null) {
             throw new Error("No code verifier on local storage");
@@ -205,7 +205,7 @@ export class SpotifyHandler {
 
     public async TokenFetchingEnded() {
         if (this.tokens.access_token != tokens_default.access_token) {
-            SetStorageValue({
+            set_storage_value({
                 st: {
                     at: this.tokens.access_token,
                     rt: this.tokens.refresh_token,
@@ -218,7 +218,7 @@ export class SpotifyHandler {
         this.InitSdk();
         this.is_ready = true;
 
-        const current_device = GetStorageValue("SpotifyDevice");
+        const current_device = get_storage_value("SpotifyDevice");
 
         try {
             const [{ devices }, user] = await Promise.all([
@@ -233,10 +233,10 @@ export class SpotifyHandler {
             this.current_profile = user;
 
             if (this.current_device) {
-                SetStorageValue({ SpotifyDevice: this.current_device });
+                set_storage_value({ SpotifyDevice: this.current_device });
             }
 
-            SetStorageValue({ SpotifyProfile: user });
+            set_storage_value({ SpotifyProfile: user });
         } catch (error) {
             //location.replace(this.GetAuthLink());
             console.error(error);
@@ -255,7 +255,7 @@ export class SpotifyHandler {
     }
 
     private SetTokens() {
-        const tokens = GetStorageValue("st");
+        const tokens = get_storage_value("st");
 
         if (tokens == null) {
             throw new Error("No Spotify tokens on local storage");
@@ -298,7 +298,7 @@ export class SpotifyHandler {
         this.code_verifier = "";
         this.code_challenge = "";
 
-        SetStorageValue({ st: null, code_verifier: null, SpotifyProfile: null, SpotifyDevice: null });
+        set_storage_value({ st: null, code_verifier: null, SpotifyProfile: null, SpotifyDevice: null });
     }
 
     Pause() {
