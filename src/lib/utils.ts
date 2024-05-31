@@ -40,7 +40,7 @@ export function set_storage_value(value: Partial<LocalStorage>): void {
     store.setItem("Sharify", JSON.stringify({ ...parsed_storage, ...value }));
 
     return;
-};
+}
 
 /**
  * Can throw if localStorage and window.localStorage are not available
