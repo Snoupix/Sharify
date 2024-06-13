@@ -27,7 +27,7 @@
     {outTransitionConfig}
     {sideOffset}
     class={cn(
-        "relative z-50 min-w-[8rem] overflow-hidden rounded-md border outline-none font-montserrat bg-main-color-hover",
+        "relative z-50 min-w-[8rem] overflow-hidden rounded-md border outline-none font-montserrat bg-secondary-color",
         className,
     )}
     {...$$restProps}

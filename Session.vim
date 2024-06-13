@@ -16,18 +16,17 @@ endif
 badd +9 src/components/logo.svelte
 badd +33 TODO.md
 badd +172 src/style.css
-badd +87 src/routes/+layout.svelte
-badd +137 remix/app/styles/tailwind.css
+badd +146 src/routes/+layout.svelte
 badd +7 .env
-badd +4 src/components/button.svelte
+badd +19 src/components/button.svelte
 badd +1 src/app.html
 badd +78 remix_clone/app/routes/index.tsx
-badd +1 tailwind.config.js
+badd +19 tailwind.config.js
 badd +132 remix_clone/app/styles/tailwind.css
-badd +73 src/components/navbar.svelte
+badd +60 src/components/navbar.svelte
 badd +250 remix_clone/app/routes/host.tsx
 badd +2 src/lib/ws_store.ts
-badd +78 src/routes/host/+page.svelte
+badd +70 src/routes/host/+page.svelte
 badd +75 README.md
 badd +1 .ignore
 badd +157 src/lib/spotify.ts
@@ -35,20 +34,19 @@ badd +1 src/lib/utils.ts
 badd +5 src/routes/auth_spotify/+page.svelte
 badd +113 remix_clone/app/routes/auth_spotify.tsx
 badd +7 src/routes/+error.svelte
-badd +66 src/lib/queries.ts
-badd +158 src/routes/room/\[slug]/\[slug]/+page.svelte
+badd +1 src/lib/queries.ts
+badd +623 src/routes/room/\[slug]/\[slug]/+page.svelte
 badd +509 remix_clone/app/routes/room.\$roomID.tsx
-badd +41 src/lib/types.ts
-badd +27 src/routes/room/\[slug]/\[slug]/+page.server.ts
-badd +1 src/lib/server/apollo_client.ts
+badd +52 src/lib/types.ts
+badd +24 src/routes/room/\[slug]/\[slug]/+page.server.ts
+badd +4 src/lib/server/apollo_client.ts
 badd +48 package.json
-badd +32 src/routes/join/\[slug]/\[slug]/+page.server.ts
-badd +69 src/routes/join/\[slug]/\[slug]/+page.svelte
+badd +12 src/routes/join/\[slug]/\[slug]/+page.server.ts
+badd +88 src/routes/join/\[slug]/\[slug]/+page.svelte
 badd +1 /home/snoupix/work/snapi/schema.graphql
 badd +36 src/routes/join/+page.svelte
 badd +146 remix_clone/app/components/hostRoom.tsx
-badd +65 remix_clone/app/utils/utils.tsx
-badd +1 src/routes/+page.svelte
+badd +9 src/components/card.svelte
 argglobal
 %argdel
 set stal=2
@@ -69,12 +67,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 36 - ((34 * winheight(0) + 27) / 54)
+let s:l = 32 - ((30 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 36
-normal! 04|
+keepjumps 32
+normal! 0133|
 lcd /home/snoupix/work/sharify
 tabnext
 edit /home/snoupix/work/sharify/src/routes/room/\[slug]/\[slug]/+page.svelte
@@ -86,6 +84,7 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 argglobal
+balt /home/snoupix/work/sharify/src/components/card.svelte
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -96,12 +95,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 158 - ((26 * winheight(0) + 27) / 54)
+let s:l = 569 - ((26 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 158
-normal! 013|
+keepjumps 569
+normal! 037|
 lcd /home/snoupix/work/sharify
 tabnext
 edit /home/snoupix/work/sharify/remix_clone/app/components/hostRoom.tsx
@@ -138,11 +137,11 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 27) / 54)
+let s:l = 2 - ((1 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
+keepjumps 2
 normal! 0
 lcd /home/snoupix/work/sharify
 tabnext 2
@@ -158,6 +157,7 @@ if filereadable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &g:so = s:so_save | let &g:siso = s:siso_save
+nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :

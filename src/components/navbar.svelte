@@ -95,7 +95,7 @@
             @apply w-auto flex flex-row gap-6 justify-between items-center p-4;
 
             :global(> *:not(.custom_btn)) {
-                @apply font-montserrat text-base text-main-content bg-main-color-hover;
+                @apply font-montserrat text-base text-main-content bg-secondary-color;
                 display: block ruby; /* needed to align text & svg on "a" tag */
             }
 

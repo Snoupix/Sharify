@@ -49,6 +49,10 @@ export type WsMessage = {
         | "play_resume"
         | "pause"
         | "seek_to_pos"
+        | "kick_client"
+        | "ban_client"
+        | "kicked"
+        | "banned"
         | "error";
     data: any;
 };

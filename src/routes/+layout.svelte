@@ -143,6 +143,6 @@
     }
 
     main {
-        @apply relative min-h-screen w-screen bg-[#24004C];
+        @apply relative min-h-screen w-screen bg-bg-color;
     }
 </style>

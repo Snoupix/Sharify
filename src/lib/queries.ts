@@ -65,3 +65,19 @@ export const JOIN_PARTY = gql`
         }
     }
 `;
+
+export const KICK_CLIENT = gql`
+    mutation KickUser($id: Int!, $client_id: Int!) {
+        kickUser(id: $id, userId: $client_id) {
+            error
+        }
+    }
+`;
+
+export const BAN_CLIENT = gql`
+    mutation BanUser($id: Int!, $client_id: Int!) {
+        banUser(id: $id, userId: $client_id) {
+            error
+        }
+    }
+`;

@@ -1,10 +1,13 @@
 <script lang="ts">
     import websocket from "websocket";
-    import { getContext, hasContext, onDestroy, onMount } from "svelte";
+    import { goto } from "$app/navigation";
     import { page } from "$app/stores";
+    import { getContext, hasContext, onDestroy, onMount } from "svelte";
     import type { Writable } from "svelte/store";
     import type { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
     import {
+        Circle,
+        Crown,
         Eye,
         EyeOff,
         Link,
@@ -13,19 +16,22 @@
         Play,
         SkipBack,
         SkipForward,
+        Swords,
         Volume1,
         Volume2,
         VolumeX,
     } from "lucide-svelte";
 
     import ws, { init_ws } from "$/lib/ws_store";
-    import { goto } from "$app/navigation";
     import { toast } from "@zerodevx/svelte-toast";
     import { Button } from "$/components/ui/button";
     import { Input } from "$/components/ui/input";
+    import * as Tabs from "$/components/ui/tabs";
     import CustomButton from "$/components/button.svelte";
+    import Card from "$/components/card.svelte";
     import { format_time, get_storage_value, set_storage_value, write_to_clipboard, zip_iter } from "$/lib/utils";
-    import type { Party, SpotifyData, SpotifyTrack, WsMessage } from "$/lib/types";
+    import { Privileges } from "$/lib/types";
+    import type { Party, PartyClient, SpotifyData, SpotifyTrack, WsMessage } from "$/lib/types";
     import { LEAVE_PARTY } from "$/lib/queries";
 
     if (!hasContext("GQL_Client")) {
@@ -60,13 +66,14 @@
     let volume = -1;
     let show_volume = false;
     let url_uri_input = "";
+    let current_user: PartyClient | null = null;
 
     onMount(async () => {
         const pathname_split = $page.url.pathname.split("/");
 
         if (pathname_split.length != 4) {
             toast.push("Unexpected error: Bad pathname", { duration: 2500 });
-            await goto("/");
+            return await goto("/");
         }
 
         const [room_id, client_id] = pathname_split.slice(2).map(n => parseInt(n));
@@ -84,11 +91,14 @@
 
             song_progress_ms += 1000;
         }, 1000);
+
+        current_user = get_storage_value("user");
     });
 
     onDestroy(() => {
         $ws?.close();
         song_loop && clearInterval(song_loop);
+        $spotify_data = null;
     });
 
     function on_ws_message(message: websocket.IMessageEvent) {
@@ -150,6 +160,20 @@
                 case "seek_to_pos":
                     $spotify_data!.playback_state!.progress_ms = message_data.data;
                     break;
+                case "kicked":
+                    toast.push(message_data.data);
+                    _leave_room();
+                    break;
+                case "banned":
+                    toast.push(message_data.data);
+                    _leave_room();
+                    break;
+                case "kick_client":
+                    toast.push("User kicked out of the room");
+                    break;
+                case "ban_client":
+                    toast.push("User banned from the room");
+                    break;
                 case "error":
                     console.error("ERROR on WS message: ", message_data.data);
                     break;
@@ -202,6 +226,10 @@
             }
         }
 
+        await _leave_room();
+    }
+
+    async function _leave_room() {
         set_storage_value({ current_room: null, user: null });
         await goto("/");
     }
@@ -217,7 +245,7 @@
         }, delay);
     }
 
-    function search_debounce(value: string, delay: number = 500) {
+    function search_debounce(value: string, delay: number = 600) {
         _search_debounce != null && clearTimeout(_search_debounce);
         _search_debounce = setTimeout(() => {
             search_input = value;
@@ -273,10 +301,10 @@
 
     function get_track_id_by_uri_url(s: string): string | null {
         if (s.startsWith("spotify")) {
-            return s.split(":").pop() ?? null;
+            return s.split(":").pop() || null;
         }
 
-        return s.split("/").pop()?.split("?").shift() ?? null;
+        return s.split("/").pop()?.split("?").shift() || null;
     }
 
     function play_resume() {
@@ -295,6 +323,14 @@
         $ws?.send(JSON.stringify({ type: "skip_previous", data: "" }));
     }
 
+    function kick_client(c: PartyClient) {
+        $ws?.send(JSON.stringify({ type: "kick_client", data: c.id }));
+    }
+
+    async function ban_client(c: PartyClient) {
+        $ws?.send(JSON.stringify({ type: "ban_client", data: c.id }));
+    }
+
     $: if (search_input.trim() != "") {
         $ws?.send(JSON.stringify({ type: "search", data: search_input }));
     }
@@ -303,6 +339,12 @@
         $ws?.send(JSON.stringify({ type: "set_volume", data: volume }));
     }
 </script>
+
+<svelte:head>
+    {#if $room_data != null}
+        <title>Sharify room: "{$room_data.name}"</title>
+    {/if}
+</svelte:head>
 
 <section>
     {#if leaving || ($ws != null && $ws.readyState != $ws.OPEN)}
@@ -343,6 +385,7 @@
                 {/if}
             </header>
             {#if !$spotify_data}
+                <!-- TODO: Instead of waiting for server WS data, load a https://www.shadcn-svelte.com/docs/components/skeleton and maybe a toast ? -->
                 <div class="player_container">
                     <h1 class="text-2xl font-bold">Retrieving data from server...</h1>
                     <div class="loader"></div>
@@ -364,7 +407,8 @@
                             <a
                                 href={`https://open.spotify.com/track/${$spotify_data.playback_state.track_id}`}
                                 target="_blank">
-                                <CustomButton class_extended="xl:text-sm">Spotify link</CustomButton>
+                                <CustomButton class_extended="xl:text-sm hover:text-main-content"
+                                    >Spotify link</CustomButton>
                             </a>
                             <CustomButton
                                 title="Copy Spotify URI to clipboard"
@@ -376,7 +420,7 @@
                                         },
                                         console.error,
                                     )}
-                                class_extended="xl:text-sm">Spotify uri</CustomButton>
+                                class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
                         </div>
                     </div>
                     <span class="main-color italic"
@@ -425,47 +469,156 @@
                     </div>
                     <div class="bg-main-color w-full h-[2px] rounded-full"></div>
                 </div>
-                <div class="bottom_container">
-                    <div class="left_wrapper">
-                        <div class="search_input_wrapper">
-                            <Input
-                                class="bg-main-content"
-                                title="Example: spotify:track:4PTG3Z6ehGkBFwjybzWkR8 or https://open.spotify.com/..."
-                                placeholder="Add a song by Spotify URI"
-                                bind:value={url_uri_input} />
-                            <Button
-                                class="font-montserrat text-base text-main-content bg-main-color-hover hover:bg-main-color-hover hover:scale-95"
-                                title="Add song to the owner's queue"
-                                on:click={() => add_track_to_queue_by_id(url_uri_input)}>Add</Button>
-                        </div>
-                        <!-- TODO: Clear the input on search -->
-                        <Input
-                            class="bg-main-content"
-                            placeholder="Search a song by name"
-                            on:input={e => search_debounce(e.currentTarget.value)} />
-                    </div>
-                    <div class="prev_next_songs">
-                        <div class="track_list">
-                            <p class="main-color">Previous songs</p>
-                            {#each $spotify_data.recent_tracks.filter((_, i) => i < 5) as track}
-                                <span>{track.track_name} - {track.artist_name}</span>
-                            {/each}
-                        </div>
-                        <div class="track_list">
-                            <p class="main-color">Next songs</p>
-                            {#each zip_iter( $room_data?.tracks_queue ?? [], $spotify_data.next_tracks.filter((_, i) => i < 5), ) as [party_track, track]}
-                                {#if track != null}
-                                    <!-- Useless condition check because it cannot be null but it satisfies the compiler/lsp -->
-                                    <span
-                                        >{track.track_name} - {track.artist_name}{party_track?.track_id ==
-                                        track?.track_id
-                                            ? ` (${party_track?.username})`
-                                            : ""}</span>
+                <Tabs.Root value="party" class="m-auto mt-6 flex flex-col justify-center items-center">
+                    <Tabs.List>
+                        <Tabs.Trigger value="party">Party buddies</Tabs.Trigger>
+                        <Tabs.Trigger value="spotify">Spotify data</Tabs.Trigger>
+                    </Tabs.List>
+                    <Tabs.Content value="party">
+                        <div class="bottom_container">
+                            <div class="clients">
+                                {#if $room_data != null}
+                                    {#each $room_data.clients as client}
+                                        <!-- TODO: Later, use <BadgeCheck /> for premium users -->
+                                        <Card>
+                                            <div slot="trigger" class="client">
+                                                {#if client.is_connected}
+                                                    <Circle fill="#119302" color="#119302" class="w-4" />
+                                                {:else}
+                                                    <Circle fill="#a20000" color="#a20000" class="w-4" />
+                                                {/if}
+                                                {#if client.privileges == Privileges.Owner}
+                                                    <span title="Owner">
+                                                        <Crown class="w-4 stroke-main-content" />
+                                                    </span>
+                                                {:else if client.privileges == Privileges.Moderator}
+                                                    <span title="Owner">
+                                                        <Swords class="w-4 stroke-main-content" />
+                                                    </span>
+                                                {/if}
+                                                <p>{client.username}</p>
+                                            </div>
+                                            <div slot="content" class="client_card">
+                                                <div>
+                                                    <span>Username:</span>
+                                                    <span>{client.username}</span>
+                                                </div>
+                                                <div>
+                                                    <span>Status:</span>
+                                                    <span>{client.is_connected ? "Online" : "Offline"}</span>
+                                                </div>
+                                                <div>
+                                                    <span>Privileges:</span>
+                                                    <span>
+                                                        {#if client.privileges == Privileges.Owner}
+                                                            Owner
+                                                        {:else if client.privileges == Privileges.Moderator}
+                                                            Moderator
+                                                        {:else if client.privileges == Privileges.User}
+                                                            User
+                                                        {/if}
+                                                    </span>
+                                                </div>
+                                                {#if current_user != null && client.id != current_user.id && client.privileges != Privileges.Owner && current_user.privileges > client.privileges}
+                                                    <div>
+                                                        <Button on:click={() => kick_client(client)}>Kick</Button>
+                                                        <Button on:click={() => ban_client(client)}>Ban</Button>
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </Card>
+                                    {/each}
                                 {/if}
-                            {/each}
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </Tabs.Content>
+                    <Tabs.Content value="spotify">
+                        <div class="bottom_container">
+                            <div class="prev_next_songs">
+                                <div class="track_list">
+                                    <p class="main-color">Previous songs</p>
+                                    {#each $spotify_data.recent_tracks.filter((_, i) => i < 5) as track}
+                                        <Card>
+                                            <span slot="trigger">{track.track_name} - {track.artist_name}</span>
+                                            <div slot="content" class="spotify_links">
+                                                <a
+                                                    href={`https://open.spotify.com/track/${track.track_id}`}
+                                                    target="_blank">
+                                                    <CustomButton class_extended="xl:text-sm hover:text-main-content"
+                                                        >Spotify link</CustomButton>
+                                                </a>
+                                                <CustomButton
+                                                    title="Copy Spotify URI to clipboard"
+                                                    on:click={() =>
+                                                        write_to_clipboard(
+                                                            `spotify:track:${track.track_id}`,
+                                                            () => {
+                                                                toast.push("Spotify URI copied to clipboard!");
+                                                            },
+                                                            console.error,
+                                                        )}
+                                                    class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+                                            </div>
+                                        </Card>
+                                    {/each}
+                                </div>
+                                <div class="search_wrapper">
+                                    <div class="search_input_wrapper">
+                                        <Input
+                                            class="bg-main-content"
+                                            title="Example: spotify:track:4PTG3Z6ehGkBFwjybzWkR8 or https://open.spotify.com/..."
+                                            placeholder="Add a song by Spotify URI"
+                                            bind:value={url_uri_input} />
+                                        <Button
+                                            class="font-montserrat text-base text-main-content bg-main-color-hover hover:bg-main-color-hover hover:scale-95"
+                                            title="Add song to the owner's queue"
+                                            on:click={() => add_track_to_queue_by_id(url_uri_input)}>Add</Button>
+                                    </div>
+                                    <!-- TODO: Clear the input on search -->
+                                    <Input
+                                        class="bg-main-content"
+                                        placeholder="Search a song by name"
+                                        on:input={e => search_debounce(e.currentTarget.value)} />
+                                </div>
+                                <div class="track_list">
+                                    <p class="main-color">Next songs</p>
+                                    <!-- prettier-ignore -->
+                                    {#each zip_iter($room_data?.tracks_queue ?? [], $spotify_data.next_tracks.filter((_, i) => i < 5)) as [party_track, track]}
+                                        <!-- Useless condition check because it cannot be null but it satisfies the compiler/lsp -->
+                                        {#if track != null}
+                                            <Card>
+                                                <span slot="trigger"
+                                                    >{track.track_name} - {track.artist_name}{party_track?.track_id ==
+                                                    track?.track_id
+                                                        ? ` (${party_track?.username})`
+                                                        : ""}</span>
+                                                <div slot="content" class="spotify_links">
+                                                    <a
+                                                        href={`https://open.spotify.com/track/${track.track_id}`}
+                                                        target="_blank">
+                                                        <CustomButton class_extended="xl:text-sm hover:text-main-content"
+                                                            >Spotify link</CustomButton>
+                                                    </a>
+                                                    <CustomButton
+                                                        title="Copy Spotify URI to clipboard"
+                                                        on:click={() =>
+                                                            write_to_clipboard(
+                                                                `spotify:track:${track.track_id}`,
+                                                                () => {
+                                                                    toast.push("Spotify URI copied to clipboard!");
+                                                                },
+                                                                console.error,
+                                                            )}
+                                                        class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+                                                </div>
+                                            </Card>
+                                        {/if}
+                                    {/each}
+                                </div>
+                            </div>
+                        </div>
+                    </Tabs.Content>
+                </Tabs.Root>
                 {#if search_input.trim() != "" && search_results.length != 0}
                     <div class="results_wrapper">
                         <div class="bg-main-color w-6/12 h-[2px] rounded-full"></div>
@@ -514,7 +667,7 @@
 
                 > :last-child {
                     :global(> button) {
-                        @apply font-montserrat text-base text-main-content bg-main-color-hover;
+                        @apply font-montserrat text-base text-main-content bg-secondary-color;
                         display: block ruby; /* needed to align text & svg on "a" tag */
                     }
 
@@ -549,24 +702,36 @@
             }
 
             .bottom_container {
-                @apply m-auto mt-6 w-9/12 flex flex-row justify-center items-center;
-
-                .left_wrapper {
-                    @apply flex flex-col justify-start items-center gap-4 w-3/12;
-
-                    .search_input_wrapper {
-                        @apply flex flex-row justify-center items-center gap-4 w-full;
-                    }
-                }
+                @apply m-auto mt-6 w-full flex flex-row justify-center items-center;
 
                 .prev_next_songs {
-                    @apply flex flex-row justify-center items-start gap-8 w-9/12;
+                    @apply flex flex-row justify-center items-start gap-8 w-full;
+
+                    .search_wrapper {
+                        @apply flex flex-col justify-start items-center gap-4 w-4/12;
+
+                        .search_input_wrapper {
+                            @apply flex flex-row justify-center items-center gap-4 w-full;
+                        }
+                    }
 
                     .track_list {
-                        @apply flex flex-col justify-center items-center gap-2 w-4/12 text-center;
+                        @apply flex flex-col justify-center items-center gap-2 w-5/12 text-center;
 
                         p {
                             @apply font-semibold text-lg;
+                        }
+                    }
+                }
+
+                .clients {
+                    @apply flex flex-col gap-4 justify-start items-start flex-wrap;
+
+                    .client {
+                        @apply flex flex-row justify-center items-center gap-2 py-1 px-4 rounded-full bg-main-color-hover;
+
+                        p {
+                            @apply font-content;
                         }
                     }
                 }
@@ -585,8 +750,24 @@
 
                 :global(.round) {
                     @apply rounded-full bg-transparent border border-main-color m-0 p-0 w-10 h-10 hover:bg-main-color-hover hover:border-none transition-all duration-300;
+
+                    :global(svg) {
+                        @apply transition-all duration-500;
+                    }
+
+                    &:hover {
+                        :global(svg) {
+                            @apply stroke-main-content;
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    :global(.client_card) {
+        * {
+            @apply dark:text-main-color-clear text-main-content;
         }
     }
 </style>

@@ -12,6 +12,7 @@
     import CustomButton from "$/components/button.svelte";
     import { JOIN_PARTY } from "$/lib/queries";
     import type { Party } from "$/lib/types";
+    import { set_storage_value } from "$/lib/utils";
 
     if (!hasContext("GQL_Client")) {
         throw new Error("Unexpected error: Unable to get GraphQL client on context, please contact Snoupix");
@@ -59,12 +60,13 @@
         const party_client = party.clients.find(c => c.username == username);
 
         if (party_client == undefined) {
-            error = "Username not found on party clients, check the console for more details"; // TODO: Do better too
+            error = "Username not found on party clients, check the console for more details"; // TODO: Do better
             console.error(result);
             is_loading = false;
             return;
         }
 
+        set_storage_value({ user: party_client, current_room: party });
         toast.push(`You successfully joined room "${party.name}"!`);
         await goto(`/room/${party.id}/${party_client.id}`);
     }
@@ -73,7 +75,12 @@
 {#if data && data.party}
     <section>
         <span>What's your username ?</span>
-        <Input type="text" disabled={is_loading} placeholder="username" bind:value={username} />
+        <Input
+            on:keydown={k => k.key == "Enter" && join_party()}
+            type="text"
+            disabled={is_loading}
+            placeholder="username"
+            bind:value={username} />
         {#if is_loading}
             <Button disabled>
                 <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />

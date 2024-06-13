@@ -126,6 +126,7 @@
         </form>
     {:else}
         <div>
+            <Logo />
             <p>First, you need to link Spotify to Sharify !</p>
             {#await spotify_link then link}
                 {#if typeof link == "string"}

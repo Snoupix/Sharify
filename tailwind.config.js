@@ -16,11 +16,19 @@ const config = {
         },
         extend: {
             colors: {
+                // "d-" prefix means dark variant
                 "main-color": "#7a007a",
                 "main-color-hover": "#7a007aad",
+                "secondary-color": "#591060",
                 "main-content": colors.neutral[200],
-                "main-color-clear": "rgb(151, 1, 151)",
+                "main-color-clear": "#970197",
                 "bg-color": "#24004C",
+                // "main-color": "#ad00ad",
+                // "main-color-hover": "#8e278ead",
+                // "secondary-color": "#56285b",
+                // "main-content": colors.neutral[100],
+                // "main-color-clear": "#8e2c8e",
+                // "bg-color": "#450093",
                 border: "hsl(var(--border) / <alpha-value>)",
                 input: "hsl(var(--input) / <alpha-value>)",
                 ring: "hsl(var(--ring) / <alpha-value>)",

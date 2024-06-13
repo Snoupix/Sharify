@@ -29,6 +29,7 @@
 - [x] handle the refresh token loops server-side to reduce the update latency (since clients requests are handled server-side)
 - [ ] implement UUIDv4 for user IDs (and party IDs) instead of using their username as IDs (client & server)
 - [ ] limit the (next tracks) queue to avoid spamming (maybe per user and configurable by owner/mods => queue limit, user limit)
+- [ ] define and delete a "dead room" by the time no user is connected to avoid having rooms with no clients and keeping the interval for too much time
 
 
 # SvelteKit app
