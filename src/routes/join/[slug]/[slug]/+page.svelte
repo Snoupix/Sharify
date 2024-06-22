@@ -8,11 +8,12 @@
     import type { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
 
     import type { PageData } from "./$types";
+    import type { LayoutData } from "../../../$types"; // $/$types won't work somehow
     import { Input } from "$/components/ui/input";
     import CustomButton from "$/components/button.svelte";
     import { JOIN_PARTY } from "$/lib/queries";
     import type { Party } from "$/lib/types";
-    import { set_storage_value } from "$/lib/utils";
+    import { get_storage_value, set_storage_value } from "$/lib/utils";
 
     if (!hasContext("GQL_Client")) {
         throw new Error("Unexpected error: Unable to get GraphQL client on context, please contact Snoupix");
@@ -24,7 +25,7 @@
         throw new Error("Unexpected error: Unable to initiate GraphQL client, please contact Snoupix");
     }
 
-    export let data: PageData;
+    export let data: PageData & LayoutData;
 
     let username = "";
     let is_loading = false;
@@ -34,6 +35,10 @@
         if (!data || !data.party) {
             toast.push("Error: Party not found");
             return await goto("/");
+        }
+
+        if (data.session?.user?.name) {
+            username = data.session.user.name;
         }
     });
 
@@ -46,7 +51,17 @@
             return;
         }
 
-        const result = await $client?.mutate({ mutation: JOIN_PARTY, variables: { id: data.party.id, username } });
+        const user_id = get_storage_value("user_id");
+
+        if (user_id == null) {
+            toast.push("Unexpected error: You're not logged in");
+            return await goto("/");
+        }
+
+        const result = await $client?.mutate({
+            mutation: JOIN_PARTY,
+            variables: { id: data.party.id, username, user_id },
+        });
         const party: (Party & { __typename: "Party" }) | { __typename: "PartyError"; error: string } | undefined =
             result?.data?.joinParty;
 
@@ -68,7 +83,7 @@
 
         set_storage_value({ user: party_client, current_room: party });
         toast.push(`You successfully joined room "${party.name}"!`);
-        await goto(`/room/${party.id}/${party_client.id}`);
+        await goto(`/room/${party.id}`);
     }
 </script>
 

@@ -14,39 +14,47 @@ else
   set shortmess=aoO
 endif
 badd +9 src/components/logo.svelte
-badd +33 TODO.md
+badd +34 TODO.md
 badd +172 src/style.css
-badd +146 src/routes/+layout.svelte
-badd +7 .env
+badd +112 src/routes/+layout.svelte
+badd +2 .env
 badd +19 src/components/button.svelte
 badd +1 src/app.html
 badd +78 remix_clone/app/routes/index.tsx
 badd +19 tailwind.config.js
 badd +132 remix_clone/app/styles/tailwind.css
-badd +60 src/components/navbar.svelte
-badd +250 remix_clone/app/routes/host.tsx
-badd +2 src/lib/ws_store.ts
-badd +70 src/routes/host/+page.svelte
+badd +23 src/components/navbar.svelte
+badd +1 remix_clone/app/routes/host.tsx
+badd +29 src/lib/ws_store.ts
+badd +85 src/routes/host/+page.svelte
 badd +75 README.md
 badd +1 .ignore
-badd +157 src/lib/spotify.ts
-badd +1 src/lib/utils.ts
+badd +6 src/lib/spotify.ts
+badd +183 src/lib/utils.ts
 badd +5 src/routes/auth_spotify/+page.svelte
 badd +113 remix_clone/app/routes/auth_spotify.tsx
 badd +7 src/routes/+error.svelte
-badd +1 src/lib/queries.ts
-badd +623 src/routes/room/\[slug]/\[slug]/+page.svelte
+badd +95 src/lib/queries.ts
 badd +509 remix_clone/app/routes/room.\$roomID.tsx
-badd +52 src/lib/types.ts
-badd +24 src/routes/room/\[slug]/\[slug]/+page.server.ts
-badd +4 src/lib/server/apollo_client.ts
+badd +3 src/lib/types.ts
+badd +6 src/lib/server/apollo_client.ts
 badd +48 package.json
 badd +12 src/routes/join/\[slug]/\[slug]/+page.server.ts
-badd +88 src/routes/join/\[slug]/\[slug]/+page.svelte
+badd +10 src/routes/join/\[slug]/\[slug]/+page.svelte
 badd +1 /home/snoupix/work/snapi/schema.graphql
-badd +36 src/routes/join/+page.svelte
+badd +18 src/routes/join/+page.svelte
 badd +146 remix_clone/app/components/hostRoom.tsx
 badd +9 src/components/card.svelte
+badd +7 src/lib/auth.ts
+badd +1 src/routes/signin/+page.server.ts
+badd +1 src/routes/signout/+page.server.ts
+badd +9 src/hooks.server.ts
+badd +2 src/routes/+layout.server.ts
+badd +38 src/routes/+page.svelte
+badd +5 src/routes/auth/callback/\[slug]/+page.svelte
+badd +19 .env.layout
+badd +126 src/routes/room/\[slug]/+page.svelte
+badd +3 src/routes/room/\[slug]/+page.server.ts
 argglobal
 %argdel
 set stal=2
@@ -56,7 +64,6 @@ tabnew +setlocal\ bufhidden=wipe
 tabrewind
 edit TODO.md
 argglobal
-balt src/routes/room/\[slug]/\[slug]/+page.svelte
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -67,15 +74,15 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 32 - ((30 * winheight(0) + 27) / 54)
+let s:l = 39 - ((27 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 32
-normal! 0133|
+keepjumps 39
+normal! 04|
 lcd /home/snoupix/work/sharify
 tabnext
-edit /home/snoupix/work/sharify/src/routes/room/\[slug]/\[slug]/+page.svelte
+edit /home/snoupix/work/sharify/src/routes/room/\[slug]/+page.svelte
 wincmd t
 let s:save_winminheight = &winminheight
 let s:save_winminwidth = &winminwidth
@@ -84,7 +91,7 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 argglobal
-balt /home/snoupix/work/sharify/src/components/card.svelte
+balt /home/snoupix/work/sharify/src/lib/utils.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -95,12 +102,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 569 - ((26 * winheight(0) + 27) / 54)
+let s:l = 127 - ((27 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 569
-normal! 037|
+keepjumps 127
+normal! 048|
 lcd /home/snoupix/work/sharify
 tabnext
 edit /home/snoupix/work/sharify/remix_clone/app/components/hostRoom.tsx
@@ -137,12 +144,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 2 - ((1 * winheight(0) + 27) / 54)
+let s:l = 11 - ((10 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 2
-normal! 0
+keepjumps 11
+normal! 062|
 lcd /home/snoupix/work/sharify
 tabnext 2
 set stal=1
@@ -157,7 +164,6 @@ if filereadable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &g:so = s:so_save | let &g:siso = s:siso_save
-nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :

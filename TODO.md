@@ -29,17 +29,25 @@
 - [x] handle the refresh token loops server-side to reduce the update latency (since clients requests are handled server-side)
 - [ ] implement UUIDv4 for user IDs (and party IDs) instead of using their username as IDs (client & server)
 - [ ] limit the (next tracks) queue to avoid spamming (maybe per user and configurable by owner/mods => queue limit, user limit)
-- [ ] define and delete a "dead room" by the time no user is connected to avoid having rooms with no clients and keeping the interval for too much time
+- [ ] define and delete a "dead room" by the time no user is connected to avoid having rooms with no clients and keeping the interval(s) for too much time
 
 
 # SvelteKit app
 
-- [ ] Finish the rewrite to match the Remix inital POC
-- - [ ] Display users and their status
+- [x] Finish the rewrite to match the Remix inital POC
+- - [x] Display users and their status
 - [ ] Don't forget that every client env var is used dynamically, maybe think about using static after thinking about it
-- [ ] Rework Spotify handler to match the server (the server handles the refresh token etc..)
+- [x] Rework Spotify handler to match the server (the server handles the refresh token etc..)
 - [ ] Better handle on refresh token (on processToken when laucnhing app -> retrieving tokens from localstorage) and disable its loop since it's handled by the server
 - [ ] Remove track from party tracks_queue when track is playing
+- [ ] Handle queue tracks better (if adding a track on the Spotify app, the order is fucked so maybe transform added tracks queue to a real queue ?)
+- [x] Impl signin auth methods/sessions
+- - [x] GitHub
+- - [x] Google
+- - [x] Discord
+- - [x] Spotify
+- [x] Use session user email and hash it to hex to use it as UserID
+- [x] Check when If owner is leaving, party is removed
 
 ## Ideas
 - ~~*Maybe use a second Spotify token (of the owner) to only handle the search and spread it to clients ?* if so, update the README~~ No, it won't be good for user experience to ask for 2 access on his/her Spotify account

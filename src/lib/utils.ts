@@ -3,21 +3,22 @@ import type { Device, UserProfile } from "@spotify/web-api-ts-sdk";
 import type { Party, PartyClient } from "./types";
 
 interface LocalStorage {
-    st: SpotifyTokensStorage | null;
-    SpotifyDevice: Device | null;
-    SpotifyProfile: UserProfile | null;
+    spotify_tokens: SpotifyTokens | null;
+    spotify_device: Device | null;
+    spotify_profile: UserProfile | null;
     code_verifier: string | null;
     user: PartyClient | null;
+    user_id: string | null;
     current_room: Party | null;
     theme: "dark" | "light" | null; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
-export interface SpotifyTokensStorage {
-    at: string;
-    rt: string;
-    ein: number;
-    date: number;
-}
+export type SpotifyTokens = {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    created_at: number;
+};
 
 type StorageType<T> = T extends keyof LocalStorage ? LocalStorage[T] : never;
 
@@ -56,6 +57,53 @@ export function get_storage_value<T extends keyof LocalStorage, S extends Storag
     return returns == ({} as S) ? null : returns;
 }
 
+export function string_to_hex_uuid(email: string, uuid_len: number): string {
+    if (email.trim() == "") return "";
+
+    const hex_values = [];
+    const split = email.split("");
+
+    const [MIN_CHAR, MAX_CHAR] = ["-".charCodeAt(0), "z".charCodeAt(0)];
+    const authorized_bytes = Array.from({ length: MAX_CHAR - MIN_CHAR + 1 }, (_, i) => MIN_CHAR + i);
+
+    for (let i = 0; i < split.length; i += 1) {
+        if ((i & 1) == 1 || i + 1 >= split.length) {
+            continue;
+        }
+
+        const byte_one = split.at(i)?.charCodeAt(0);
+        const byte_two = split.at(i + 1)?.charCodeAt(0);
+
+        if (
+            byte_one == undefined ||
+            !authorized_bytes.includes(byte_one) ||
+            byte_two == undefined ||
+            !authorized_bytes.includes(byte_one)
+        ) {
+            continue;
+        }
+
+        hex_values.push(`${byte_one.toString(16).toUpperCase()}${byte_two.toString(16).toUpperCase()}`);
+    }
+
+    if (hex_values.length == 0) {
+        return "";
+    }
+
+    let i = 0;
+    while (hex_values.length != uuid_len) {
+        if (hex_values.length < uuid_len) {
+            hex_values.push(hex_values[i % hex_values.length]);
+            i += 1;
+        } else {
+            hex_values.pop();
+            i -= 1;
+        }
+    }
+
+    return hex_values.join(":");
+}
+
 export function set_theme(theme: LocalStorage["theme"]) {
     switch (theme) {
         case "light":
@@ -83,10 +131,10 @@ export function get_theme(): LocalStorage["theme"] {
     return get_storage_value("theme");
 }
 
-export async function write_to_clipboard(
+export async function write_to_clipboard<T>(
     text: string,
     on_success: () => void | null,
-    on_error: (error: any) => void | null,
+    on_error: (error: T) => void | null,
 ): Promise<boolean> {
     let success = true;
 
@@ -96,9 +144,9 @@ export async function write_to_clipboard(
         const data = [new ClipboardItem({ [type]: blob })];
         await (navigator ?? window.navigator).clipboard.write(data);
         on_success != null && on_success();
-    } catch (error: any) {
+    } catch (error) {
         success = false;
-        on_error != null && on_error(error);
+        on_error != null && on_error(error as T);
     }
 
     return success;
@@ -132,6 +180,31 @@ export function zip_iter<T1, T2>(arr1: Array<T1>, arr2: Array<T2>) {
 
     return output;
 }
+
+export function are_objects_equal(object1: object, object2: object) {
+    const object_keys = Object.keys(object1);
+
+    if (object_keys.length != Object.keys(object2).length) return false;
+
+    for (const k of object_keys) {
+        // @ts-expect-error JS is trash
+        const v1 = object1[k];
+        // @ts-expect-error JS is trash
+        const v2 = object2[k];
+
+        const are_objects = is_object(v1) && is_object(v2);
+
+        if ((are_objects && !are_objects_equal(v1, v2)) || (!are_objects && v1 != v2)) {
+            return false;
+        }
+    }
+    return true;
+};
+
+function is_object(object: unknown) {
+    return object != null && typeof object == "object";
+}
+
 
 export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | HTMLDivElement }) {
     // @ts-expect-error This is a hack to make the button click the link

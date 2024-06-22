@@ -12,7 +12,7 @@
     import CustomButton from "$/components/button.svelte";
     import Spotify from "$/lib/spotify";
     import { CREATE_PARTY } from "$/lib/queries";
-    import { set_storage_value } from "$/lib/utils";
+    import { get_storage_value, set_storage_value } from "$/lib/utils";
     import Logo from "$/components/logo.svelte";
     import type { Party } from "$/lib/types";
 
@@ -52,12 +52,21 @@
             throw new Error("Unexpected error: Spotify isn't (properly) linked to Sharify, please contact Snoupix");
         }
 
+        const user_id = get_storage_value("user_id");
+
+        if (user_id == null) {
+            throw new Error(
+                "Unexpected error: You are not logged in and/or you don't have a UUID set on your localstorage",
+            );
+        }
+
         const tokens = $Spotify.GetTokens();
 
         const gql_state = await $client?.mutate({
             mutation: CREATE_PARTY,
             variables: {
                 username: party.username,
+                user_id,
                 party_name: party.party_name,
                 creds: {
                     accessToken: tokens.access_token,
@@ -75,7 +84,7 @@
             case "Party":
                 set_storage_value({ user: data.clients[0], current_room: data! });
                 toast.push(`Successfully created party ${data.name}!`);
-                await goto(`/room/${data.id}/${data.clients.find(c => c.username == party.username)?.id}`);
+                await goto(`/room/${data.id}`);
                 break;
             case "PartyError":
                 toast.push("Error: " + data?.error);

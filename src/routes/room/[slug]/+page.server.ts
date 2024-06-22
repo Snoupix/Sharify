@@ -3,17 +3,21 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import client from "$/lib/server/apollo_client";
 import { GET_PARTY } from "$/lib/queries";
-import type { Party } from "$/lib/types";
+import type { CookieSession, Party } from "$/lib/types";
 
-export const load: PageServerLoad = async ({ url }) => {
-    const { pathname } = url;
-    const pathname_split = pathname.split("/");
+export const load: PageServerLoad = async ({ params, locals }) => {
+    const party_id = params.slug;
+    const session = (await locals.auth()) as CookieSession;
 
-    if (pathname_split.length != 4) {
+    if (session == null) {
         return redirect(300, "/");
     }
 
-    const [party_id, client_id] = pathname_split.slice(2);
+    const client_id = session.user_uuid;
+
+    if (client_id == null) {
+        return redirect(300, "/");
+    }
 
     const result = await client.query({ query: GET_PARTY, variables: { id: parseInt(party_id) } });
 
@@ -24,7 +28,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
     const party: Party | null = result.data?.getParty;
 
-    if (party == null || party.clients.find(c => c.id == parseInt(client_id)) == undefined) {
+    if (party == null || party.clients.find(c => c.id == client_id) == undefined) {
         console.error("Client isn't in party anymore", result.data, party_id, client_id);
         return redirect(301, "/");
     }

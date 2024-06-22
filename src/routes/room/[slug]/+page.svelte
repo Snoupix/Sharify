@@ -17,6 +17,7 @@
         SkipBack,
         SkipForward,
         Swords,
+        User,
         Volume1,
         Volume2,
         VolumeX,
@@ -29,10 +30,10 @@
     import * as Tabs from "$/components/ui/tabs";
     import CustomButton from "$/components/button.svelte";
     import Card from "$/components/card.svelte";
-    import { format_time, get_storage_value, set_storage_value, write_to_clipboard, zip_iter } from "$/lib/utils";
+    import { are_objects_equal, format_time, get_storage_value, set_storage_value, write_to_clipboard, zip_iter } from "$/lib/utils";
     import { Privileges } from "$/lib/types";
     import type { Party, PartyClient, SpotifyData, SpotifyTrack, WsMessage } from "$/lib/types";
-    import { LEAVE_PARTY } from "$/lib/queries";
+    import { LEAVE_PARTY, DEMOTE_CLIENT, PROMOTE_CLIENT } from "$/lib/queries";
 
     if (!hasContext("GQL_Client")) {
         throw new Error("Unexpected error: Unable to get GraphQL client on context, please contact Snoupix");
@@ -71,12 +72,18 @@
     onMount(async () => {
         const pathname_split = $page.url.pathname.split("/");
 
-        if (pathname_split.length != 4) {
-            toast.push("Unexpected error: Bad pathname", { duration: 2500 });
+        if (pathname_split.length != 3) {
+            toast.push("Error: Bad pathname", { duration: 2500 });
             return await goto("/");
         }
 
-        const [room_id, client_id] = pathname_split.slice(2).map(n => parseInt(n));
+        const room_id = parseInt(pathname_split[pathname_split.length - 1]);
+        const client_id = get_storage_value("user_id");
+
+        if (client_id == null) {
+            toast.push("Unexpected error: You're not logged in", { duration: 2500 });
+            return await goto("/");
+        }
 
         init_ws(room_id, client_id, undefined, undefined, on_ws_error, on_ws_message);
 
@@ -113,19 +120,27 @@
                 case "lobby_data":
                     $room_data = message_data.data;
                     // console.log($room_data);
+                    if (current_user != null && $room_data != null) {
+                        const user = $room_data.clients.find(c => c.id == current_user!.id)!;
+
+                        if (!are_objects_equal(current_user, user)) {
+                            current_user = user;
+                            set_storage_value({ user });
+                        }
+                    }
                     break;
                 case "user_connect":
                     console.log("user connect", message_data.data);
                     // TODO: FIXME its temporary and ugly
                     toast.push(
-                        `User "${$room_data!.clients.find(c => c.id == parseInt(message_data.data))?.username ?? "id: " + message_data.data}" joined the room!`,
+                        `User "${$room_data!.clients.find(c => c.id == message_data.data)?.username ?? "id: " + message_data.data}" joined the room!`,
                     );
                     break;
                 case "user_disconnect":
                     console.log("user disconnect", message_data.data);
                     // TODO: FIXME its temporary and ugly
                     toast.push(
-                        `User "${$room_data!.clients.find(c => c.id == parseInt(message_data.data))?.username ?? "id: " + message_data.data}" left the room!`,
+                        `User "${$room_data!.clients.find(c => c.id == message_data.data)?.username ?? "id: " + message_data.data}" left the room!`,
                     );
                     break;
                 case "spotify_data":
@@ -217,7 +232,7 @@
 
         const { party_id: id, client_id } = {
             party_id: get_storage_value("current_room")?.id ?? null,
-            client_id: get_storage_value("user")?.id ?? null,
+            client_id: get_storage_value("user_id"),
         };
         if (id != null && client_id != null && $client != null) {
             const result = await $client.mutate({ mutation: LEAVE_PARTY, variables: { id, client_id } });
@@ -232,6 +247,32 @@
     async function _leave_room() {
         set_storage_value({ current_room: null, user: null });
         await goto("/");
+    }
+
+    async function promote_client(c: PartyClient) {
+        const { party_id: id, client_id } = {
+            party_id: get_storage_value("current_room")?.id ?? null,
+            client_id: get_storage_value("user_id"),
+        };
+        if (id != null && client_id != null && $client != null) {
+            const result = await $client.mutate({ mutation: PROMOTE_CLIENT, variables: { id, client_id, target_id: c.id } });
+            if ((result.data && result.data.promoteUser != null) || result.errors) {
+                console.error("Error on promote client", result.data, result.errors);
+            }
+        }
+    }
+
+    async function demote_client(c: PartyClient) {
+        const { party_id: id, client_id } = {
+            party_id: get_storage_value("current_room")?.id ?? null,
+            client_id: get_storage_value("user_id"),
+        };
+        if (id != null && client_id != null && $client != null) {
+            const result = await $client.mutate({ mutation: DEMOTE_CLIENT, variables: { id, client_id, target_id: c.id } });
+            if ((result.data && result.data.demoteUser != null) || result.errors) {
+                console.error("Error on demote client", result.data, result.errors);
+            }
+        }
     }
 
     function seek_debounce(value: number, delay: number = 400) {
@@ -327,7 +368,7 @@
         $ws?.send(JSON.stringify({ type: "kick_client", data: c.id }));
     }
 
-    async function ban_client(c: PartyClient) {
+    function ban_client(c: PartyClient) {
         $ws?.send(JSON.stringify({ type: "ban_client", data: c.id }));
     }
 
@@ -364,7 +405,13 @@
             <header>
                 <CustomButton
                     class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-[2px]"
-                    on:click={leave_room}>Leave the room</CustomButton>
+                    on:click={leave_room}>
+                        {#if current_user && current_user.privileges == Privileges.Owner}
+                            {`Close the room`}
+                        {:else}
+                            {`Leave the room`}
+                        {/if}
+                    </CustomButton>
                 {#if show_link}
                     <div>
                         <Input readonly value={get_party_link()} />
@@ -425,48 +472,52 @@
                     </div>
                     <span class="main-color italic"
                         >{format_time(song_progress_ms, $spotify_data.playback_state.duration_ms)}</span>
-                    <input
-                        class="cursor-grab accent-main-color w-2/4"
-                        min={0}
-                        max={$spotify_data.playback_state.duration_ms}
-                        value={song_progress_ms}
-                        on:change={e => seek_debounce(parseInt(e.currentTarget.value))}
-                        type="range" />
-                    <div class="player_controls">
-                        <Button class="round" title="Skip back to previous track" on:click={skip_previous}
-                            ><SkipBack /></Button>
-                        <Button
-                            class="round"
-                            title="Play/Pause the currently playing track"
-                            on:click={() => ($spotify_data?.playback_state?.is_playing ? pause() : play_resume())}>
-                            {#if $spotify_data.playback_state.is_playing}
-                                <Pause />
-                            {:else}
-                                <Play />
-                            {/if}
-                        </Button>
-                        <Button class="round" title="Skip to next track" on:click={skip_next}><SkipForward /></Button>
-                        <Button class="round" title="Toggle volume slider" on:click={() => (show_volume = !show_volume)}
-                            ><!-- TODO: Handle scroll up/down to set volume -->
-                            {#if volume >= 50}
-                                <Volume2 />
-                            {:else if volume == 0}
-                                <VolumeX />
-                            {:else}
-                                <Volume1 />
-                            {/if}
-                        </Button>
-                        {#if show_volume}
+                    {#key current_user}
+                        {#if current_user != null && current_user.privileges >= Privileges.Moderator}
                             <input
-                                class="cursor-grab accent-main-color w-2/6"
+                                class="cursor-grab accent-main-color w-2/4"
                                 min={0}
-                                max={100}
-                                value={$spotify_data.playback_state.device_volume}
-                                on:change={e => volume_debounce(parseInt(e.currentTarget.value))}
-                                title="change volume"
+                                max={$spotify_data.playback_state.duration_ms}
+                                value={song_progress_ms}
+                                on:change={e => seek_debounce(parseInt(e.currentTarget.value))}
                                 type="range" />
+                            <div class="player_controls">
+                                <Button class="round" title="Skip back to previous track" on:click={skip_previous}
+                                    ><SkipBack /></Button>
+                                <Button
+                                    class="round"
+                                    title="Play/Pause the currently playing track"
+                                    on:click={() => ($spotify_data?.playback_state?.is_playing ? pause() : play_resume())}>
+                                    {#if $spotify_data.playback_state.is_playing}
+                                        <Pause />
+                                    {:else}
+                                        <Play />
+                                    {/if}
+                                </Button>
+                                <Button class="round" title="Skip to next track" on:click={skip_next}><SkipForward /></Button>
+                                <Button class="round" title="Toggle volume slider" on:click={() => (show_volume = !show_volume)}
+                                    ><!-- TODO: Handle scroll up/down to set volume -->
+                                    {#if volume >= 50}
+                                        <Volume2 />
+                                    {:else if volume == 0}
+                                        <VolumeX />
+                                    {:else}
+                                        <Volume1 />
+                                    {/if}
+                                </Button>
+                                {#if show_volume}
+                                    <input
+                                        class="cursor-grab accent-main-color w-2/6"
+                                        min={0}
+                                        max={100}
+                                        value={$spotify_data.playback_state.device_volume}
+                                        on:change={e => volume_debounce(parseInt(e.currentTarget.value))}
+                                        title="change volume"
+                                        type="range" />
+                                {/if}
+                            </div>
                         {/if}
-                    </div>
+                    {/key}
                     <div class="bg-main-color w-full h-[2px] rounded-full"></div>
                 </div>
                 <Tabs.Root value="party" class="m-auto mt-6 flex flex-col justify-center items-center">
@@ -492,8 +543,12 @@
                                                         <Crown class="w-4 stroke-main-content" />
                                                     </span>
                                                 {:else if client.privileges == Privileges.Moderator}
-                                                    <span title="Owner">
+                                                    <span title="Moderator">
                                                         <Swords class="w-4 stroke-main-content" />
+                                                    </span>
+                                                {:else if client.privileges == Privileges.User}
+                                                    <span title="User">
+                                                        <User class="w-4 stroke-main-content" />
                                                     </span>
                                                 {/if}
                                                 <p>{client.username}</p>
@@ -519,11 +574,19 @@
                                                         {/if}
                                                     </span>
                                                 </div>
-                                                {#if current_user != null && client.id != current_user.id && client.privileges != Privileges.Owner && current_user.privileges > client.privileges}
-                                                    <div>
-                                                        <Button on:click={() => kick_client(client)}>Kick</Button>
-                                                        <Button on:click={() => ban_client(client)}>Ban</Button>
-                                                    </div>
+                                                {#if current_user != null && client.id != current_user.id && client.privileges != Privileges.Owner}
+                                                    {#if current_user.privileges > client.privileges}
+                                                        <div>
+                                                            <Button on:click={() => kick_client(client)}>Kick</Button>
+                                                            <Button on:click={() => ban_client(client)}>Ban</Button>
+                                                            {#if client.privileges == Privileges.User}
+                                                                <Button on:click={() => promote_client(client)}>Promote to Moderator</Button>
+                                                            {/if}
+                                                            {#if client.privileges == Privileges.Moderator}
+                                                                <Button on:click={() => demote_client(client)}>Demote to User</Button>
+                                                            {/if}
+                                                        </div>
+                                                    {/if}
                                                 {/if}
                                             </div>
                                         </Card>
@@ -557,7 +620,8 @@
                                                             },
                                                             console.error,
                                                         )}
-                                                    class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+                                                    class_extended="xl:text-sm hover:text-main-content"
+                                                    >Spotify uri</CustomButton>
                                             </div>
                                         </Card>
                                     {/each}

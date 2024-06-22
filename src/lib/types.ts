@@ -1,5 +1,7 @@
+import type { Session } from "@auth/sveltekit";
+
 export type PartyID = number;
-export type PartyClientID = number;
+export type PartyClientID = string;
 
 export type Party = {
     id: PartyID;
@@ -78,3 +80,7 @@ export type SpotifyData = {
         | null;
     next_tracks: Array<SpotifyTrack>;
 };
+
+export type Nullable<T> = T | null;
+
+export type CookieSession = (Session & { user_uuid: Nullable<string> }) | null;

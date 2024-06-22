@@ -1,21 +1,14 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
-import type { PlayHistory, PlaybackState, UserProfile, Queue, SearchResults, Device } from "@spotify/web-api-ts-sdk";
+import type { UserProfile, Device } from "@spotify/web-api-ts-sdk";
 import { env } from "$env/dynamic/public";
 import { writable } from "svelte/store";
 
-import { get_storage_value, set_storage_value } from "$/lib/utils";
+import { get_storage_value, set_storage_value, type SpotifyTokens } from "$/lib/utils";
 
 type MaxInt<T extends number> = number extends T ? number : _Range<T, []>;
 type _Range<T extends number, R extends unknown[]> = R["length"] extends T
     ? R[number] | T
     : _Range<T, [R["length"], ...R]>;
-
-type SpotifyTokens = {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-    created_at: number;
-};
 
 const tokens_default: SpotifyTokens = {
     access_token: "",
@@ -34,7 +27,7 @@ const tokens_default: SpotifyTokens = {
 //                       \|_________|                                       \|___|/
 
 export class SpotifyHandler {
-    public static readonly BACK_API = `${env.PUBLIC_LOCAL_SERVER_ADDR}/sharify`; // TODO: handle public server addr
+    public static readonly BACK_API = `${env.PUBLIC_SERVER_ADDR_DEV}/sharify`; // TODO: handle public server addr
 
     private sdk: SpotifyApi | null = null;
     private tokens = tokens_default;
@@ -57,7 +50,6 @@ export class SpotifyHandler {
 
     public current_device: Device | null = null;
     public current_profile: UserProfile | null = null;
-    public is_owner = true;
     public is_ready = false;
 
     constructor(client_id: string) {
@@ -148,7 +140,7 @@ export class SpotifyHandler {
             }
 
             this.ProcessTokens(json);
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
         }
     }
@@ -205,20 +197,13 @@ export class SpotifyHandler {
 
     public async TokenFetchingEnded() {
         if (this.tokens.access_token != tokens_default.access_token) {
-            set_storage_value({
-                st: {
-                    at: this.tokens.access_token,
-                    rt: this.tokens.refresh_token,
-                    ein: this.tokens.expires_in,
-                    date: this.tokens.created_at,
-                },
-            });
+            set_storage_value({ spotify_tokens: this.tokens });
         }
 
         this.InitSdk();
         this.is_ready = true;
 
-        const current_device = get_storage_value("SpotifyDevice");
+        const current_device = get_storage_value("spotify_device");
 
         try {
             const [{ devices }, user] = await Promise.all([
@@ -233,10 +218,10 @@ export class SpotifyHandler {
             this.current_profile = user;
 
             if (this.current_device) {
-                set_storage_value({ SpotifyDevice: this.current_device });
+                set_storage_value({ spotify_device: this.current_device });
             }
 
-            set_storage_value({ SpotifyProfile: user });
+            set_storage_value({ spotify_profile: user });
         } catch (error) {
             //location.replace(this.GetAuthLink());
             console.error(error);
@@ -255,18 +240,13 @@ export class SpotifyHandler {
     }
 
     private SetTokens() {
-        const tokens = get_storage_value("st");
+        const tokens = get_storage_value("spotify_tokens");
 
         if (tokens == null) {
             throw new Error("No Spotify tokens on local storage");
         }
 
-        this.ProcessTokens({
-            access_token: tokens.at,
-            refresh_token: tokens.rt,
-            expires_in: tokens.ein,
-            created_at: tokens.date,
-        });
+        this.ProcessTokens(tokens);
     }
 
     private EnsureInitialized() {
@@ -298,182 +278,151 @@ export class SpotifyHandler {
         this.code_verifier = "";
         this.code_challenge = "";
 
-        set_storage_value({ st: null, code_verifier: null, SpotifyProfile: null, SpotifyDevice: null });
+        set_storage_value({ spotify_tokens: null, code_verifier: null, spotify_profile: null, spotify_device: null });
     }
 
-    Pause() {
+    async Pause() {
         this.EnsureInitialized();
-        return new Promise<SpotifyHandler>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.pausePlayback(this.current_device?.id ?? "");
+        try {
+            await this.sdk!.player.pausePlayback(this.current_device?.id ?? "");
 
-                resolve(this);
-            } catch (error: any) {
-                reject(new Error(`There was an error pausing track. (${error})`));
-            }
-        });
-    }
-
-    Resume() {
-        this.EnsureInitialized();
-        return new Promise<SpotifyHandler>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.startResumePlayback(this.current_device?.id ?? "");
-
-                resolve(this);
-            } catch (error: any) {
-                reject(new Error(`There was an error resuming track. (${error})`));
-            }
-        });
-    }
-
-    AddNextTrack(link: string) {
-        this.EnsureInitialized();
-        return new Promise<void | Error>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.addItemToPlaybackQueue(this.LinkToURI(link), this.current_device?.id ?? "");
-
-                resolve();
-            } catch (error: any) {
-                reject(new Error(`There was an error adding track to the queue. (${error})`));
-            }
-        });
-    }
-
-    SkipToPrevious() {
-        this.EnsureInitialized();
-        return new Promise<SpotifyHandler>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.skipToPrevious(this.current_device?.id ?? "");
-
-                resolve(this);
-            } catch (error: any) {
-                reject(new Error(`There was an error skiping to previous track. (${error})`));
-            }
-        });
-    }
-
-    SkipToNext() {
-        this.EnsureInitialized();
-        return new Promise<SpotifyHandler>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.skipToNext(this.current_device?.id ?? "");
-
-                resolve(this);
-            } catch (error: any) {
-                reject(new Error(`There was an error skiping to next track. (${error})`));
-            }
-        });
-    }
-
-    GetRecentlyPlayedTracks(limit: MaxInt<50>) {
-        this.EnsureInitialized();
-        return new Promise<Array<PlayHistory> | Error>(async (resolve, reject) => {
-            try {
-                const { items } = await this.sdk!.player.getRecentlyPlayedTracks(limit);
-
-                resolve(items);
-            } catch (error: any) {
-                reject(new Error(`There was an error showing the ${limit} recently played tracks. (${error})`));
-            }
-        });
-    }
-
-    SetVolume(value: number) {
-        this.EnsureInitialized();
-        return new Promise<void | Error>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.setPlaybackVolume(value, this.current_device?.id ?? "");
-
-                resolve();
-            } catch (error: any) {
-                reject(new Error(`There was an error setting volume to ${value}. (${error})`));
-            }
-        });
-    }
-
-    GetCurrentTrackData() {
-        this.EnsureInitialized();
-        return new Promise<PlaybackState | Error>(async (resolve, reject) => {
-            try {
-                const state = await this.sdk!.player.getPlaybackState();
-
-                resolve(state);
-            } catch (error: any) {
-                reject(new Error(`There was an error getting current playback response (${error})`));
-            }
-        });
-    }
-
-    SearchTracks(input: string) {
-        this.EnsureInitialized();
-        return new Promise<SearchResults<Array<"track">> | Error>(async (resolve, reject) => {
-            try {
-                // @ts-ignore
-                const res = await this.sdk!.search(input, ["tracks"], undefined, 10);
-
-                resolve(res);
-            } catch (error: any) {
-                reject(new Error(`There was an error searching for tracks with ${input} (${error})`));
-            }
-        });
-    }
-
-    GetDevices() {
-        this.EnsureInitialized();
-        return new Promise<Array<Device> | Error>(async (resolve, reject) => {
-            try {
-                const { devices } = await this.sdk!.player.getAvailableDevices();
-
-                resolve(devices);
-            } catch (error: any) {
-                reject(new Error(`There was an error searching for devices (${error})`));
-            }
-        });
-    }
-
-    Seek(position: number) {
-        this.EnsureInitialized();
-        return new Promise<void | Error>(async (resolve, reject) => {
-            try {
-                await this.sdk!.player.seekToPosition(position, this.current_device?.id ?? "");
-
-                resolve();
-            } catch (error: any) {
-                reject(new Error(`There was an error seeking to ${position} (${error})`));
-            }
-        });
-    }
-
-    GetProfile(): Promise<UserProfile | Error> {
-        if (!this.is_owner) {
-            this.Disconnect();
-            return new Promise<Error>((_, reject) => reject(new Error()));
+            return this;
+        } catch (error) {
+            throw new Error(`There was an error pausing track. (${error})`);
         }
-
-        this.EnsureInitialized();
-        return new Promise<UserProfile | Error>(async (resolve, reject) => {
-            try {
-                const profile = await this.sdk!.currentUser.profile();
-
-                resolve(profile);
-            } catch (error: any) {
-                reject(new Error(`There was an error getting profile (${error})`));
-            }
-        });
     }
 
-    GetCurrentQueueData() {
+    async Resume() {
         this.EnsureInitialized();
-        return new Promise<Queue | Error>(async (resolve, reject) => {
-            try {
-                const queue = await this.sdk!.player.getUsersQueue();
+        try {
+            await this.sdk!.player.startResumePlayback(this.current_device?.id ?? "");
 
-                resolve(queue);
-            } catch (error: any) {
-                reject(new Error(`There was an error getting current queue data (${error})`));
-            }
-        });
+            return this;
+        } catch (error) {
+            throw new Error(`There was an error resuming track. (${error})`);
+        }
+    }
+
+    async AddNextTrack(link: string) {
+        this.EnsureInitialized();
+        try {
+            await this.sdk!.player.addItemToPlaybackQueue(this.LinkToURI(link), this.current_device?.id ?? "");
+
+            return;
+        } catch (error) {
+            throw new Error(`There was an error adding track to the queue. (${error})`);
+        }
+    }
+
+    async SkipToPrevious() {
+        this.EnsureInitialized();
+        try {
+            await this.sdk!.player.skipToPrevious(this.current_device?.id ?? "");
+
+            return this;
+        } catch (error) {
+            throw new Error(`There was an error skiping to previous track. (${error})`);
+        }
+    }
+
+    async SkipToNext() {
+        this.EnsureInitialized();
+        try {
+            await this.sdk!.player.skipToNext(this.current_device?.id ?? "");
+
+            return this;
+        } catch (error) {
+            throw new Error(`There was an error skiping to next track. (${error})`);
+        }
+    }
+
+    async GetRecentlyPlayedTracks(limit: MaxInt<50>) {
+        this.EnsureInitialized();
+        try {
+            const { items } = await this.sdk!.player.getRecentlyPlayedTracks(limit);
+
+            return items;
+        } catch (error) {
+            throw new Error(`There was an error showing the ${limit} recently played tracks. (${error})`);
+        }
+    }
+
+    async SetVolume(value: number) {
+        this.EnsureInitialized();
+        try {
+            await this.sdk!.player.setPlaybackVolume(value, this.current_device?.id ?? "");
+
+            return;
+        } catch (error) {
+            throw new Error(`There was an error setting volume to ${value}. (${error})`);
+        }
+    }
+
+    async GetCurrentTrackData() {
+        this.EnsureInitialized();
+        try {
+            const state = await this.sdk!.player.getPlaybackState();
+
+            return state;
+        } catch (error) {
+            throw new Error(`There was an error getting current playback response (${error})`);
+        }
+    }
+
+    async SearchTracks(input: string) {
+        this.EnsureInitialized();
+        try {
+            // @ts-expect-ignore
+            const res = await this.sdk!.search(input, ["tracks"], undefined, 10);
+
+            return res;
+        } catch (error) {
+            throw new Error(`There was an error searching for tracks with ${input} (${error})`);
+        }
+    }
+
+    async GetDevices() {
+        this.EnsureInitialized();
+        try {
+            const { devices } = await this.sdk!.player.getAvailableDevices();
+
+            return devices;
+        } catch (error) {
+            throw new Error(`There was an error searching for devices (${error})`);
+        }
+    }
+
+    async Seek(position: number) {
+        this.EnsureInitialized();
+        try {
+            await this.sdk!.player.seekToPosition(position, this.current_device?.id ?? "");
+
+            return;
+        } catch (error) {
+            throw new Error(`There was an error seeking to ${position} (${error})`);
+        }
+    }
+
+    async GetProfile(): Promise<UserProfile | Error> {
+        this.EnsureInitialized();
+        try {
+            const profile = await this.sdk!.currentUser.profile();
+
+            return profile;
+        } catch (error) {
+            throw new Error(`There was an error getting profile (${error})`);
+        }
+    }
+
+    async GetCurrentQueueData() {
+        this.EnsureInitialized();
+        try {
+            const queue = await this.sdk!.player.getUsersQueue();
+
+            return queue;
+        } catch (error) {
+            throw new Error(`There was an error getting current queue data (${error})`);
+        }
     }
 
     // TODO

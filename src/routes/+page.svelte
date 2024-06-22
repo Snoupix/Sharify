@@ -35,7 +35,7 @@
             return;
         }
 
-        const res = await fetch(env.PUBLIC_LOCAL_SERVER_ADDR!);
+        const res = await fetch(env.PUBLIC_SERVER_ADDR_DEV!); // TODO: Change me on prod
         if (res.ok) {
             server_loaded = true;
             clearInterval(server_interval!);
