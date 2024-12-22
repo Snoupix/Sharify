@@ -27,9 +27,10 @@
 - - [ ] latency check for clients requests (struct field latency on SharifyPartyManager { time: Instant(if > 1min, reset), latency: f32(requests time++)})
 
 - [x] handle the refresh token loops server-side to reduce the update latency (since clients requests are handled server-side)
-- [ ] implement UUIDv4 for user IDs (and party IDs) instead of using their username as IDs (client & server)
+- [x] implement UUIDv4 for user IDs (and party IDs) instead of using their username as IDs (client & server)
 - [ ] limit the (next tracks) queue to avoid spamming (maybe per user and configurable by owner/mods => queue limit, user limit)
 - [ ] define and delete a "dead room" by the time no user is connected to avoid having rooms with no clients and keeping the interval(s) for too much time
+- [ ] handle/try the "owner closes the room" => clients should be kicked from WS
 
 
 # SvelteKit app
@@ -39,7 +40,7 @@
 - [ ] Don't forget that every client env var is used dynamically, maybe think about using static after thinking about it
 - [x] Rework Spotify handler to match the server (the server handles the refresh token etc..)
 - [ ] Better handle on refresh token (on processToken when laucnhing app -> retrieving tokens from localstorage) and disable its loop since it's handled by the server
-- [ ] Remove track from party tracks_queue when track is playing
+- [x] Remove track from party tracks_queue when track is playing
 - [ ] Handle queue tracks better (if adding a track on the Spotify app, the order is fucked so maybe transform added tracks queue to a real queue ?)
 - [x] Impl signin auth methods/sessions
 - - [x] GitHub

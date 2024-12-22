@@ -3,7 +3,7 @@ let s:so_save = &g:so | let s:siso_save = &g:siso | setg so=0 siso=0 | setl so=-
 let v:this_session=expand("<sfile>:p")
 silent only
 silent tabonly
-cd /home/snoupix/work/sharify
+cd ~/work/sharify
 if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
@@ -23,7 +23,7 @@ badd +1 src/app.html
 badd +78 remix_clone/app/routes/index.tsx
 badd +19 tailwind.config.js
 badd +132 remix_clone/app/styles/tailwind.css
-badd +23 src/components/navbar.svelte
+badd +167 src/components/navbar.svelte
 badd +1 remix_clone/app/routes/host.tsx
 badd +29 src/lib/ws_store.ts
 badd +85 src/routes/host/+page.svelte
@@ -36,16 +36,16 @@ badd +113 remix_clone/app/routes/auth_spotify.tsx
 badd +7 src/routes/+error.svelte
 badd +95 src/lib/queries.ts
 badd +509 remix_clone/app/routes/room.\$roomID.tsx
-badd +3 src/lib/types.ts
+badd +66 src/lib/types.ts
 badd +6 src/lib/server/apollo_client.ts
 badd +48 package.json
 badd +12 src/routes/join/\[slug]/\[slug]/+page.server.ts
 badd +10 src/routes/join/\[slug]/\[slug]/+page.svelte
-badd +1 /home/snoupix/work/snapi/schema.graphql
+badd +1 ~/work/snapi/schema.graphql
 badd +18 src/routes/join/+page.svelte
 badd +146 remix_clone/app/components/hostRoom.tsx
 badd +9 src/components/card.svelte
-badd +7 src/lib/auth.ts
+badd +12 src/lib/auth.ts
 badd +1 src/routes/signin/+page.server.ts
 badd +1 src/routes/signout/+page.server.ts
 badd +9 src/hooks.server.ts
@@ -53,7 +53,7 @@ badd +2 src/routes/+layout.server.ts
 badd +38 src/routes/+page.svelte
 badd +5 src/routes/auth/callback/\[slug]/+page.svelte
 badd +19 .env.layout
-badd +126 src/routes/room/\[slug]/+page.svelte
+badd +303 src/routes/room/\[slug]/+page.svelte
 badd +3 src/routes/room/\[slug]/+page.server.ts
 argglobal
 %argdel
@@ -74,24 +74,17 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 39 - ((27 * winheight(0) + 27) / 54)
+let s:l = 43 - ((32 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 39
+keepjumps 43
 normal! 04|
-lcd /home/snoupix/work/sharify
+lcd ~/work/sharify
 tabnext
-edit /home/snoupix/work/sharify/src/routes/room/\[slug]/+page.svelte
-wincmd t
-let s:save_winminheight = &winminheight
-let s:save_winminwidth = &winminwidth
-set winminheight=0
-set winheight=1
-set winminwidth=0
-set winwidth=1
+edit ~/work/sharify/src/components/navbar.svelte
 argglobal
-balt /home/snoupix/work/sharify/src/lib/utils.ts
+balt ~/work/sharify/src/lib/auth.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -102,17 +95,17 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 127 - ((27 * winheight(0) + 27) / 54)
+let s:l = 167 - ((27 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 127
-normal! 048|
-lcd /home/snoupix/work/sharify
+keepjumps 167
+normal! 0
+lcd ~/work/sharify
 tabnext
-edit /home/snoupix/work/sharify/remix_clone/app/components/hostRoom.tsx
+edit ~/work/sharify/remix_clone/app/components/hostRoom.tsx
 argglobal
-balt /home/snoupix/work/sharify/remix_clone/app/routes/room.\$roomID.tsx
+balt ~/work/sharify/remix_clone/app/routes/room.\$roomID.tsx
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -123,17 +116,17 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 146 - ((26 * winheight(0) + 27) / 54)
+let s:l = 227 - ((27 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 146
-normal! 037|
-lcd /home/snoupix/work/sharify
+keepjumps 227
+normal! 034|
+lcd ~/work/sharify
 tabnext
-edit /home/snoupix/work/snapi/schema.graphql
+edit ~/work/snapi/schema.graphql
 argglobal
-balt /home/snoupix/work/sharify/remix_clone/app/routes/room.\$roomID.tsx
+balt ~/work/sharify/remix_clone/app/routes/room.\$roomID.tsx
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -144,13 +137,13 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 11 - ((10 * winheight(0) + 27) / 54)
+let s:l = 11 - ((10 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
 keepjumps 11
 normal! 062|
-lcd /home/snoupix/work/sharify
+lcd ~/work/sharify
 tabnext 2
 set stal=1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
@@ -164,6 +157,7 @@ if filereadable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &g:so = s:so_save | let &g:siso = s:siso_save
+nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :

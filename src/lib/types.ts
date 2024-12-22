@@ -24,6 +24,7 @@ export type PartyTrack = {
     username: string;
     track_id: string;
     track_name: string;
+    track_duration: number;
 };
 
 export type PartyClient = {
@@ -62,6 +63,7 @@ export type WsMessage = {
 export type SpotifyTrack = {
     track_id: string;
     track_name: string;
+    track_duration: number;
     artist_name: string;
 };
 

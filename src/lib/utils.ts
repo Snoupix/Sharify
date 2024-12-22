@@ -199,12 +199,11 @@ export function are_objects_equal(object1: object, object2: object) {
         }
     }
     return true;
-};
+}
 
 function is_object(object: unknown) {
     return object != null && typeof object == "object";
 }
-
 
 export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | HTMLDivElement }) {
     // @ts-expect-error This is a hack to make the button click the link

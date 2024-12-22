@@ -30,7 +30,14 @@
     import * as Tabs from "$/components/ui/tabs";
     import CustomButton from "$/components/button.svelte";
     import Card from "$/components/card.svelte";
-    import { are_objects_equal, format_time, get_storage_value, set_storage_value, write_to_clipboard, zip_iter } from "$/lib/utils";
+    import {
+        are_objects_equal,
+        format_time,
+        get_storage_value,
+        set_storage_value,
+        write_to_clipboard,
+        zip_iter,
+    } from "$/lib/utils";
     import { Privileges } from "$/lib/types";
     import type { Party, PartyClient, SpotifyData, SpotifyTrack, WsMessage } from "$/lib/types";
     import { LEAVE_PARTY, DEMOTE_CLIENT, PROMOTE_CLIENT } from "$/lib/queries";
@@ -255,7 +262,10 @@
             client_id: get_storage_value("user_id"),
         };
         if (id != null && client_id != null && $client != null) {
-            const result = await $client.mutate({ mutation: PROMOTE_CLIENT, variables: { id, client_id, target_id: c.id } });
+            const result = await $client.mutate({
+                mutation: PROMOTE_CLIENT,
+                variables: { id, client_id, target_id: c.id },
+            });
             if ((result.data && result.data.promoteUser != null) || result.errors) {
                 console.error("Error on promote client", result.data, result.errors);
             }
@@ -268,7 +278,10 @@
             client_id: get_storage_value("user_id"),
         };
         if (id != null && client_id != null && $client != null) {
-            const result = await $client.mutate({ mutation: DEMOTE_CLIENT, variables: { id, client_id, target_id: c.id } });
+            const result = await $client.mutate({
+                mutation: DEMOTE_CLIENT,
+                variables: { id, client_id, target_id: c.id },
+            });
             if ((result.data && result.data.demoteUser != null) || result.errors) {
                 console.error("Error on demote client", result.data, result.errors);
             }
@@ -300,7 +313,11 @@
         }, delay);
     }
 
-    async function add_track_to_queue(track_id: SpotifyTrack["track_id"], track_name: SpotifyTrack["track_name"] = "") {
+    async function add_track_to_queue(
+        track_id: SpotifyTrack["track_id"],
+        track_name: SpotifyTrack["track_name"] = "",
+        track_duration: SpotifyTrack["track_duration"] = 0,
+    ) {
         search_input = "";
 
         const user = get_storage_value("user");
@@ -318,13 +335,13 @@
         $ws.send(
             JSON.stringify({
                 type: "add_to_queue",
-                data: { track_id, track_name },
+                data: { track_id, track_name, track_duration },
             }),
         );
     }
 
     async function add_track_to_queue_by_track(track: SpotifyTrack) {
-        return await add_track_to_queue(track.track_id, track.track_name);
+        return await add_track_to_queue(track.track_id, track.track_name, track.track_duration);
     }
 
     async function add_track_to_queue_by_id(uri_url: string) {
@@ -406,12 +423,12 @@
                 <CustomButton
                     class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-[2px]"
                     on:click={leave_room}>
-                        {#if current_user && current_user.privileges == Privileges.Owner}
-                            {`Close the room`}
-                        {:else}
-                            {`Leave the room`}
-                        {/if}
-                    </CustomButton>
+                    {#if current_user && current_user.privileges == Privileges.Owner}
+                        {`Close the room`}
+                    {:else}
+                        {`Leave the room`}
+                    {/if}
+                </CustomButton>
                 {#if show_link}
                     <div>
                         <Input readonly value={get_party_link()} />
@@ -487,15 +504,20 @@
                                 <Button
                                     class="round"
                                     title="Play/Pause the currently playing track"
-                                    on:click={() => ($spotify_data?.playback_state?.is_playing ? pause() : play_resume())}>
+                                    on:click={() =>
+                                        $spotify_data?.playback_state?.is_playing ? pause() : play_resume()}>
                                     {#if $spotify_data.playback_state.is_playing}
                                         <Pause />
                                     {:else}
                                         <Play />
                                     {/if}
                                 </Button>
-                                <Button class="round" title="Skip to next track" on:click={skip_next}><SkipForward /></Button>
-                                <Button class="round" title="Toggle volume slider" on:click={() => (show_volume = !show_volume)}
+                                <Button class="round" title="Skip to next track" on:click={skip_next}
+                                    ><SkipForward /></Button>
+                                <Button
+                                    class="round"
+                                    title="Toggle volume slider"
+                                    on:click={() => (show_volume = !show_volume)}
                                     ><!-- TODO: Handle scroll up/down to set volume -->
                                     {#if volume >= 50}
                                         <Volume2 />
@@ -580,10 +602,12 @@
                                                             <Button on:click={() => kick_client(client)}>Kick</Button>
                                                             <Button on:click={() => ban_client(client)}>Ban</Button>
                                                             {#if client.privileges == Privileges.User}
-                                                                <Button on:click={() => promote_client(client)}>Promote to Moderator</Button>
+                                                                <Button on:click={() => promote_client(client)}
+                                                                    >Promote to Moderator</Button>
                                                             {/if}
                                                             {#if client.privileges == Privileges.Moderator}
-                                                                <Button on:click={() => demote_client(client)}>Demote to User</Button>
+                                                                <Button on:click={() => demote_client(client)}
+                                                                    >Demote to User</Button>
                                                             {/if}
                                                         </div>
                                                     {/if}

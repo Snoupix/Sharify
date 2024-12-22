@@ -3,13 +3,15 @@ import GitHub from "@auth/sveltekit/providers/github";
 import Google from "@auth/sveltekit/providers/google";
 import Discord from "@auth/sveltekit/providers/discord";
 import Spotify from "@auth/sveltekit/providers/spotify";
+import Reddit from "@auth/sveltekit/providers/reddit";
+import Twitch from "@auth/sveltekit/providers/twitch";
 
 import { string_to_hex_uuid } from "./utils";
 
 const USER_ID_LEN = 10;
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
-    providers: [GitHub, Google, Discord, Spotify],
+    providers: [GitHub, Google, Discord, Spotify, Reddit, Twitch],
     callbacks: {
         async session({ session: s }) {
             const session: typeof s & { user_uuid: string | null } = { user_uuid: null, ...s };
