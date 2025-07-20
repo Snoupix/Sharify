@@ -9,5 +9,9 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+*.vim
+.ignore
+
 # clone of the legacy_remix branch to locally reproduce changes
-remix_clone/
+remix/
+svelte4/
