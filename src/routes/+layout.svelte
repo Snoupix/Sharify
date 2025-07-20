@@ -23,16 +23,8 @@
         pausable: true,
         dismissable: true,
         duration: 5000,
-        theme: {
-            "--toastContainerTop": "auto",
-            "--toastContainerBottom": "1.5rem",
-            "--toastBorderRadius": "0.25rem",
-            "--toastWidth": "18rem",
-            "--toastPadding": "0.25rem 1.25rem",
-            "--toastColor": colors.neutral[200],
-            "--toastBackground": colors.purple[400],
-            "--toastBarBackground": colors.purple[200],
-        },
+        reversed: true,
+        intro: { y: -150 },
     };
 
     const apollo_store = writable<ApolloClient<NormalizedCacheObject> | null>();
@@ -160,6 +152,21 @@
             theme("colors.bg-color"),
             theme("colors.main-color")
         );
+        --toastContainerTop: 2vh;
+        --toastContainerRight: auto;
+        --toastContainerLeft: .5vw;
+
+        --toastBorderRadius: 0.5rem;
+        --toastWidth: 25vw;
+        --toastPadding: 0.25rem 1.25rem;
+        --toastColor: theme("colors.neutral.200");
+        --toastBackground: theme("colors.purple.400");
+        --toastBarBackground: theme("colors.purple.200");
+    }
+
+    :global(._toastContainer) {
+        border: 1px solid black;
+        border-radius: 5rem;
     }
 
     :global(html) {

@@ -432,7 +432,7 @@
                 {#if show_link}
                     <div>
                         <Input readonly value={get_party_link()} />
-                        <Button class="eye" title="Hide link" on:click={() => (show_link = false)}>
+                        <Button class="eye !rounded-3xl" title="Hide link" on:click={() => (show_link = false)}>
                             <EyeOff class="stroke-main-content hover:cursor-pointer" />
                         </Button>
                     </div>
@@ -442,7 +442,7 @@
                             {"Copy party link "}
                             <Link class="w-5 ml-2 stroke-main-content hover:cursor-pointer" />
                         </Button>
-                        <Button class="eye" title="Show link" on:click={() => (show_link = true)}>
+                        <Button class="eye !rounded-3xl" title="Show link" on:click={() => (show_link = true)}>
                             <Eye class="stroke-main-content hover:cursor-pointer" />
                         </Button>
                     </div>
@@ -854,6 +854,10 @@
     }
 
     :global(.client_card) {
+        > div {
+            @apply flex flex-row justify-between items-center;
+        }
+
         * {
             @apply dark:text-main-color-clear text-main-content;
         }
