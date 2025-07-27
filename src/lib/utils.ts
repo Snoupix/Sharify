@@ -23,6 +23,10 @@ export type SpotifyTokens = {
 
 type StorageType<T> = T extends keyof LocalStorage ? LocalStorage[T] : never;
 
+const ZERO_CHAR = "0".charCodeAt(0);
+const [MIN_CHAR, MAX_CHAR] = ["-".charCodeAt(0), "z".charCodeAt(0)];
+const AUTHORIZED_BYTES = [ ZERO_CHAR, ...Array.from({ length: MAX_CHAR - MIN_CHAR + 1 }, (_, i) => MIN_CHAR + i) ];
+
 /**
  * Can throw if localStorage and window.localStorage are not available
  */
@@ -64,22 +68,20 @@ export function string_to_hex_uuid(email: string, uuid_len: number) {
     const hex_values = [];
     const split = email.split("");
 
-    const [MIN_CHAR, MAX_CHAR] = ["-".charCodeAt(0), "z".charCodeAt(0)];
-    const authorized_bytes = Array.from({ length: MAX_CHAR - MIN_CHAR + 1 }, (_, i) => MIN_CHAR + i);
-
     for (let i = 0; i < split.length; i += 1) {
-        if ((i & 1) == 1 || i + 1 >= split.length) {
+        // Allows the last char to be handled even
+        // if the index is odd, the left byte will be a 0
+        // so the email can be recontructed from the UUID
+        if (((i & 1) == 1 && i !== split.length - 1)) {
             continue;
         }
 
-        const byte_one = split.at(i)?.charCodeAt(0);
-        const byte_two = split.at(i + 1)?.charCodeAt(0);
+        const byte_one = split.at(i)?.charCodeAt(0) ?? ZERO_CHAR;
+        const byte_two = split.at(i + 1)?.charCodeAt(0) ?? ZERO_CHAR;
 
         if (
-            byte_one == undefined ||
-            !authorized_bytes.includes(byte_one) ||
-            byte_two == undefined ||
-            !authorized_bytes.includes(byte_one)
+            !AUTHORIZED_BYTES.includes(byte_one) ||
+            !AUTHORIZED_BYTES.includes(byte_two)
         ) {
             continue;
         }
@@ -103,6 +105,31 @@ export function string_to_hex_uuid(email: string, uuid_len: number) {
     }
 
     return hex_values.join(":");
+}
+
+export function hex_uuid_to_string(hex: string) {
+    return hex.split(':').reduce((res, byte) => {
+        const b1 = parseInt(byte.slice(0, 2), 16);
+        const b2 = parseInt(byte.slice(2, 4), 16);
+
+        res += String.fromCharCode(b1);
+        res += String.fromCharCode(b2);
+        return res;
+    }, "");
+}
+
+export function email_contains_invalid_chars(email: string) {
+    return email.split("").map((b) => !AUTHORIZED_BYTES.includes(b.charCodeAt(0))).some(Boolean);
+}
+
+export function hex_uuid_to_valid_email(hex: string, email_length: number) {
+    // HEX UUID is too small to contain the email
+    if (hex.replaceAll(/[^:]/g, "").length < email_length) return null;
+
+    const str = hex_uuid_to_string(hex);
+    if (str.length === email_length) return str;
+
+    return str.slice(0, email_length);
 }
 
 export function set_theme(theme: LocalStorage["theme"]) {

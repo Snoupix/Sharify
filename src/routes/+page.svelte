@@ -8,12 +8,12 @@
     import { Button } from "$/components/ui/button";
     import CustomButton from "$/components/button.svelte";
 
-    let server_i = 0;
-    let server_loaded = false;
-    let server_timed_out = false;
-    let show_retry_button = false;
-    let server_interval: NodeJS.Timeout | null = null;
-    let retry_timeout: NodeJS.Timeout | null = null;
+    let server_i = $state(0);
+    let server_loaded = $state(false);
+    let server_timed_out = $state(false);
+    let show_retry_button = $state(false);
+    let server_interval: number | null = $state(null);
+    let retry_timeout: number | null = $state(null);
 
     onMount(async () => {
         server_interval_fn();
@@ -22,8 +22,8 @@
     });
 
     onDestroy(() => {
-        server_interval != null && clearInterval(server_interval);
-        retry_timeout != null && clearTimeout(retry_timeout);
+        if (server_interval != null) clearInterval(server_interval);
+        if (retry_timeout != null) clearTimeout(retry_timeout);
     });
 
     async function server_interval_fn() {
@@ -61,11 +61,13 @@
         window.location.reload();
     }
 
-    $: if (server_loaded || server_timed_out) {
-        retry_timeout = setTimeout(() => {
-            show_retry_button = true;
-        }, 5000);
-    }
+    $effect(() => {
+        if (server_loaded || server_timed_out) {
+            retry_timeout = setTimeout(() => {
+                show_retry_button = true;
+            }, 5000);
+        }
+    });
 </script>
 
 <section>

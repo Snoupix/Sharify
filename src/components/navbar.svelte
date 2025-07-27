@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
     import { goto } from "$app/navigation";
     import { SquareArrowOutUpRight } from "lucide-svelte";
     import type { Session } from "@auth/sveltekit";
@@ -13,20 +13,24 @@
     import { get_storage_value, set_theme } from "$/lib/utils";
 
     const hidden_routes = ["/", "/auth_spotify", "/host", "/join"];
+    // eslint-disable-next-line
     const login_methods = ["github", "discord", "google", "spotify", "reddit", "twitch"] as const;
 
-    let path = "/";
-    let profile = "";
-    let spotify_interval: NodeJS.Timeout | null = null;
-    let theme = "system";
-    let login_method: (typeof login_methods)[number] | undefined;
-    export let session: (Session & { user_uuid: string | null }) | null = null;
+    let session: (Session & { user_uuid: string | null }) | null = $props();
 
-    $: if ($page != null && $page.route.id != null) {
-        path = $page.route.id;
-    }
+    let path = $state("/");
+    let profile = $state("");
+    let spotify_interval: number | null = $state(null);
+    let theme = $state("system");
+    let login_method: (typeof login_methods)[number] | undefined = $state(undefined);
 
-    $: is_logged_in = () => session != null && new Date(session.expires).getTime() > Date.now();
+    const is_logged_in = $derived(() => session != null && new Date(session.expires).getTime() > Date.now());
+
+    $effect(() => {
+        if (page != null && page.route.id != null) {
+            path = page.route.id;
+        }
+    });
 
     onMount(() => {
         theme = get_storage_value("theme") ?? "system";
@@ -177,7 +181,7 @@
 <style lang="postcss">
     nav {
         // @apply fixed z-50 right-0 top-0 w-auto h-16;
-        @apply p-4 border-b border-purple-500/30 bg-gradient-to-br from-purple-800/40 to-purple-900/40 backdrop-blur-sm relative z-10 transition-all duration-500;
+        @apply p-4 border-b border-purple-500/30 bg-linear-to-br from-purple-800/40 to-purple-900/40 backdrop-blur-sm relative z-10 transition-all duration-500;
 
         div {
             @apply w-auto flex flex-row gap-6 justify-between items-center p-4;
@@ -194,7 +198,7 @@
     }
 
     :global(.login_btns .select_item) {
-        @apply !px-0 py-1 w-full;
+        @apply px-0! py-1 w-full;
     }
 
     :global(.login_btns .select_item > svg) {

@@ -421,7 +421,7 @@
         <div>
             <header>
                 <CustomButton
-                    class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-[2px]"
+                    class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-2"
                     on:click={leave_room}>
                     {#if current_user && current_user.privileges == Privileges.Owner}
                         {`Close the room`}
@@ -432,7 +432,7 @@
                 {#if show_link}
                     <div>
                         <Input readonly value={get_party_link()} />
-                        <Button class="eye !rounded-3xl" title="Hide link" on:click={() => (show_link = false)}>
+                        <Button class="eye rounded-3xl!" title="Hide link" on:click={() => (show_link = false)}>
                             <EyeOff class="stroke-main-content hover:cursor-pointer" />
                         </Button>
                     </div>
@@ -442,7 +442,7 @@
                             {"Copy party link "}
                             <Link class="w-5 ml-2 stroke-main-content hover:cursor-pointer" />
                         </Button>
-                        <Button class="eye !rounded-3xl" title="Show link" on:click={() => (show_link = true)}>
+                        <Button class="eye rounded-3xl!" title="Show link" on:click={() => (show_link = true)}>
                             <Eye class="stroke-main-content hover:cursor-pointer" />
                         </Button>
                     </div>

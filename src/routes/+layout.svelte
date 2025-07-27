@@ -5,7 +5,6 @@
     import { env } from "$env/dynamic/public";
     import { ApolloClient, InMemoryCache, type NormalizedCacheObject } from "@apollo/client/core";
     import { SvelteToast, toast } from "@zerodevx/svelte-toast";
-    import colors from "tailwindcss/colors";
 
     import Spotify from "$/lib/spotify";
     import { get_storage_value, set_storage_value } from "$/lib/utils";
@@ -57,27 +56,11 @@
     const spotify_data_store = writable<SpotifyData | null>(null);
     setContext("SpotifyData", spotify_data_store);
 
-    export let data: LayoutData;
+    const data: LayoutData = $props();
     const session = data.session;
-    let user_id: Nullable<string> = null;
+    let user_id: Nullable<string> = $state(null);
 
     onMount(() => {
-        // TDD As they say
-        /* const x = (i: string) => {
-            return i.split(':').reduce((res, str) => {
-                let b1 = parseInt(str.slice(0, 2), 16);
-                let b2 = parseInt(str.slice(2, 4), 16);
-
-                res += String.fromCharCode(b1);
-                res += String.fromCharCode(b2);
-                return res;
-            }, "");
-        };
-        const a = string_to_hex_uuid("test@hotmail.fr", 10);
-        const b = string_to_hex_uuid("thisistestdrivendev@gmail.com", 10);
-        console.log(a, x(a));
-        console.log(b, x(b)); */
-
         (() => {
             const tokens = get_storage_value("spotify_tokens");
             if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
@@ -85,6 +68,7 @@
             $Spotify.ProcessTokens(tokens);
         })();
         (() => {
+            // TODO: adapt to new theme
             const theme = get_storage_value("theme");
             if (
                 (theme != null && theme == "dark") ||
@@ -149,8 +133,8 @@
         --toastify-font-family: "Montserrat", sans-serif;
         --toastify-color-progress-light: linear-gradient(
             to right,
-            theme("colors.bg-color"),
-            theme("colors.main-color")
+            var(--color-bg),
+            var(--color-main)
         );
         --toastContainerTop: 2vh;
         --toastContainerRight: auto;
@@ -159,9 +143,9 @@
         --toastBorderRadius: 0.5rem;
         --toastWidth: 25vw;
         --toastPadding: 0.25rem 1.25rem;
-        --toastColor: theme("colors.neutral.200");
-        --toastBackground: theme("colors.purple.400");
-        --toastBarBackground: theme("colors.purple.200");
+        --toastColor: var(--color-neutral-200);
+        --toastBackground: var(--color-purple-400);
+        --toastBarBackground: var(--color-purple-200);
     }
 
     :global(._toastContainer) {
@@ -176,8 +160,8 @@
     }
 
     :global(*) {
-        color: theme("colors.main-color");
-        font-family: theme("fontFamily.montserrat");
+        color: var(--color-main);
+        font-family: var(--font-montserrat);
     }
 
     main {
