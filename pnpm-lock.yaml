@@ -38,6 +38,9 @@ importers:
       '@zerodevx/svelte-toast':
         specifier: ^0.9.6
         version: 0.9.6(svelte@5.36.10)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       eslint:
         specifier: ^9.31.0
         version: 9.31.0(jiti@2.4.2)
@@ -71,6 +74,9 @@ importers:
       svelte-check:
         specifier: ^4.3.0
         version: 4.3.0(picomatch@4.0.3)(svelte@5.36.10)(typescript@5.8.3)
+      tailwind-merge:
+        specifier: ^3.3.1
+        version: 3.3.1
       tailwindcss:
         specifier: ^4.1.11
         version: 4.1.11
@@ -1608,6 +1614,9 @@ packages:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
     engines: {node: '>=0.10'}
 
+  tailwind-merge@3.3.1:
+    resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
+
   tailwindcss@4.1.11:
     resolution: {integrity: sha512-2E9TBm6MDD/xKYe+dvJZAmg3yxIEDNRc0jwlNyDg/4Fil2QcSLjFKGVff0lAf1jjeaArlG/M75Ey/EYr/OJtBA==}
 
@@ -3134,6 +3143,8 @@ snapshots:
       zimmerframe: 1.1.2
 
   symbol-observable@4.0.0: {}
+
+  tailwind-merge@3.3.1: {}
 
   tailwindcss@4.1.11: {}
 

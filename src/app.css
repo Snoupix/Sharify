@@ -1,1 +1,6 @@
 @import 'tailwindcss';
+
+/* purple is default and implicit whatever prefers-color-scheme */
+@custom-variant neon (&:where(.neon, .neon *));
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
