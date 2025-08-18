@@ -2,12 +2,11 @@
     import { onDestroy, onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
-    import { Select } from "bits-ui";
-    import { Settings } from "lucide-svelte";
+    import { Select, Button } from "bits-ui";
+    import { SquareArrowOutUpRight } from "lucide-svelte";
     import type { Session } from "@auth/sveltekit";
     import { signIn, signOut } from "@auth/sveltekit/client";
 
-    import Button from "$/components/button.svelte";
     import Logo from "$/components/logo.svelte";
     import Spotify from "$/lib/spotify";
     import { get_storage_value, set_theme, type LocalStorage } from "$/lib/utils";
@@ -55,64 +54,65 @@
 
     <div>
         {#if profile != ""}
-            <Button onclick={disconnect}>
+            <Button.Root onclick={disconnect}>
                 <svg class="w-5 mr-2 fill-main-content" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"
                     ><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
                         d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z" /></svg>
                 Disconnect from {profile}
-            </Button>
+            </Button.Root>
         {/if}
-        <Select.Root type="single">
+        <Select.Root
+            items={[{ label: "Theme", value: theme }]}
+            type="single"
+            onValueChange={e => {
+                set_theme(e as LocalStorage["theme"] ?? null);
+            }}>
             <Select.Trigger class="xl:w-32">
-                <Settings />
+                <span class="text-main-content text-base font-montserrat font-medium">Theme</span>
             </Select.Trigger>
             <Select.Content class="select_content">
-                <Select.Item class="select_item" value="theme">
-                    <Select.Root
-                        items={[{ label: "Theme", value: theme }]}
-                        type="single"
-                        onValueChange={e => {
-                            set_theme(e as LocalStorage["theme"] ?? null);
-                        }}>
-                        <Select.Trigger class="xl:w-32">
-                            <span class="text-main-content text-base font-montserrat font-medium">theme</span>
-                        </Select.Trigger>
-                        <Select.Content class="select_content">
-                            <Select.Item class="select_item" value="purple">purple</Select.Item>
-                            <Select.Item class="select_item" value="light">light</Select.Item>
-                            <Select.Item class="select_item" value="dark">dark</Select.Item>
-                            <Select.Item class="select_item" value="neon">neon</Select.Item>
-                        </Select.Content>
-                    </Select.Root>
-                </Select.Item>
-                <Select.Item>about</Select.Item>
+                <Select.Item class="select_item" value="purple">Purple</Select.Item>
+                <Select.Item class="select_item" value="light">Light</Select.Item>
+                <Select.Item class="select_item" value="dark">Dark</Select.Item>
+                <Select.Item class="select_item" value="neon">Neon</Select.Item>
             </Select.Content>
         </Select.Root>
+        <Button.Root>
+            <a href="https://github.com/Snoupix/Sharify" target="_blank"
+                >GitHub <SquareArrowOutUpRight class="ml-2 w-4 stroke-main-content" /></a>
+        </Button.Root>
+        <Button.Root>About</Button.Root>
+        <Button.Root>Contact</Button.Root>
         {#if is_logged_in()}
-            <Button onclick={() => signOut()}>Logout</Button>
+            <Button.Root onclick={() => signOut()}>Logout</Button.Root>
         {:else}
             <Select.Root
                 items={[{ label: "Login", value: login_method ?? "" }]}
                 type="single"
                 onValueChange={e => {
-                    switch (e) {
-                        case "github":
-                            signIn("github");
-                            break;
-                        case "google":
-                            signIn("google");
-                            break;
-                        case "discord":
-                            signIn("discord");
-                            break;
-                        case "spotify":
-                            signIn("spotify");
-                            break;
-                        case "twitch":
-                            signIn("twitch");
-                            break;
-                        default:
-                            break;
+                    if (e != undefined) {
+                        switch (e) {
+                            case "github":
+                                signIn("github");
+                                break;
+                            case "google":
+                                signIn("google");
+                                break;
+                            case "discord":
+                                signIn("discord");
+                                break;
+                            case "spotify":
+                                signIn("spotify");
+                                break;
+                            case "reddit":
+                                signIn("reddit");
+                                break;
+                            case "twitch":
+                                signIn("twitch");
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }}>
                 <Select.Trigger class="xl:w-32">
@@ -151,6 +151,11 @@
                             ><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
                                 d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z" /></svg
                         ></Select.Item>
+                    <Select.Item title="Sign in with Reddit" class="select_item" value="reddit">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                            ><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
+                                d="M373 138.6c-25.2 0-46.3-17.5-51.9-41l0 0c-30.6 4.3-54.2 30.7-54.2 62.4l0 .2c47.4 1.8 90.6 15.1 124.9 36.3c12.6-9.7 28.4-15.5 45.5-15.5c41.3 0 74.7 33.4 74.7 74.7c0 29.8-17.4 55.5-42.7 67.5c-2.4 86.8-97 156.6-213.2 156.6S45.5 410.1 43 323.4C17.6 311.5 0 285.7 0 255.7c0-41.3 33.4-74.7 74.7-74.7c17.2 0 33 5.8 45.7 15.6c34-21.1 76.8-34.4 123.7-36.4l0-.3c0-44.3 33.7-80.9 76.8-85.5C325.8 50.2 347.2 32 373 32c29.4 0 53.3 23.9 53.3 53.3s-23.9 53.3-53.3 53.3zM157.5 255.3c-20.9 0-38.9 20.8-40.2 47.9s17.1 38.1 38 38.1s36.6-9.8 37.8-36.9s-14.7-49.1-35.7-49.1zM395 303.1c-1.2-27.1-19.2-47.9-40.2-47.9s-36.9 22-35.7 49.1c1.2 27.1 16.9 36.9 37.8 36.9s39.3-11 38-38.1zm-60.1 70.8c1.5-3.6-1-7.7-4.9-8.1c-23-2.3-47.9-3.6-73.8-3.6s-50.8 1.3-73.8 3.6c-3.9 .4-6.4 4.5-4.9 8.1c12.9 30.8 43.3 52.4 78.7 52.4s65.8-21.6 78.7-52.4z" /></svg>
+                    </Select.Item>
                     <Select.Item title="Sign in with Twitch" class="select_item" value="twitch">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
                             ><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
@@ -175,6 +180,10 @@
             :global(> *:not(.custom_btn)) {
                 @apply font-montserrat text-base text-main-content bg-secondary;
                 display: block ruby; /* needed to align text & svg on "a" tag */
+            }
+
+            a {
+                @apply no-underline;
             }
         }
     }

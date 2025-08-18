@@ -1,12 +1,11 @@
 <script lang="ts">
-    import * as HoverCard from "$/components/ui/hover-card";
 </script>
 
-<HoverCard.Root>
-    <HoverCard.Trigger>
+<div>
+    <div>
         <slot name="trigger" />
-    </HoverCard.Trigger>
-    <HoverCard.Content class="bg-secondary-color border-main-color">
+    </div>
+    <div class="bg-secondary-color border-main-color">
         <slot name="content" />
-    </HoverCard.Content>
-</HoverCard.Root>
+    </div>
+</div>

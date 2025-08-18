@@ -1,212 +1,219 @@
 <script lang="ts">
-    import { getContext, hasContext, onMount } from "svelte";
-    import { SquareArrowOutUpRight } from "lucide-svelte";
-    import type { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
-    import type { Writable } from "svelte/store";
-    import { toast } from "@zerodevx/svelte-toast";
-    import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
+	import { SquareArrowOutUpRight } from "lucide-svelte";
+	import { goto } from "$app/navigation";
+	import { Label, Button } from "bits-ui";
+	import { toast } from "svelte-sonner";
 
-    import { Input } from "$/components/ui/input";
-    import { Label } from "$/components/ui/label";
-    import { Button } from "$/components/ui/button";
-    import CustomButton from "$/components/button.svelte";
-    import Spotify from "$/lib/spotify";
-    import { CREATE_PARTY } from "$/lib/queries";
-    import { get_storage_value, set_storage_value } from "$/lib/utils";
-    import Logo from "$/components/logo.svelte";
-    import type { Party } from "$/lib/types";
+	import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
+	import CustomButton from "$/components/button.svelte";
+	import Spotify from "$/lib/spotify";
+	import { bytes_to_uuid_str, get_storage_value, set_storage_value } from "$/lib/utils";
+	import Logo from "$/components/logo.svelte";
+	import { CommandResponse, HttpCommand } from "$/lib/proto/cmd";
 
-    if (!hasContext("GQL_Client")) {
-        throw new Error("Unexpected error: Unable to get GraphQL client, please contact Snoupix");
-    }
+	let autoname = $state(true);
+	let room = $state({
+		username: "",
+		room_name: "",
+	});
+	let spotify_link: Promise<string | Error> | undefined = $state();
 
-    const client: Writable<ApolloClient<NormalizedCacheObject> | null> = getContext("GQL_Client");
+	$effect(() => {
+		if (autoname && room.username.trim() != "") {
+			room.room_name = `${room.username}'s party`;
+		} else if (autoname && room.username.trim() == "") {
+			room.room_name = "";
+		}
+	});
 
-    if ($client == null) {
-        throw new Error("Unexpected error: Unable to initiate GraphQL client, please contact Snoupix");
-    }
+	onMount(async () => {
+		spotify_link = $Spotify?.GenerateAuthLink();
+	});
 
-    let autoname = true;
-    let party = {
-        username: "",
-        party_name: "",
-    };
-    let spotify_link: Promise<string | Error> | undefined;
+	async function create_room(e: SubmitEvent) {
+		e.preventDefault();
 
-    $: if (autoname && party.username.trim() != "") {
-        party.party_name = `${party.username}'s party`;
-    } else if (autoname && party.username.trim() == "") {
-        party.party_name = "";
-    }
+		if (room.username.trim() == "" || room.room_name.trim() == "") {
+			toast.error("Error: Invalid username or room name (they must not be empty)");
+            return;
+		}
 
-    onMount(async () => {
-        spotify_link = $Spotify?.GenerateAuthLink();
-    });
+		if (!$Spotify || !$Spotify.is_ready) {
+			toast.error("Unexpected error: Spotify isn't (properly) linked to Sharify, please contact Snoupix");
+            return;
+		}
 
-    async function create_room() {
-        if (party.username.trim() == "" || party.party_name.trim() == "") {
-            throw new Error("Error: Invalid username or room name (they must not be empty)");
-        }
+		const user_id = get_storage_value("user_id");
 
-        if (!$Spotify || !$Spotify.is_ready) {
-            throw new Error("Unexpected error: Spotify isn't (properly) linked to Sharify, please contact Snoupix");
-        }
+		if (user_id == null) {
+			throw new Error(
+				"Unexpected error: You are not logged in and/or you don't have a UUID set on your localstorage",
+			);
+		}
 
-        const user_id = get_storage_value("user_id");
+		const tokens = $Spotify.GetTokens();
 
-        if (user_id == null) {
-            throw new Error(
-                "Unexpected error: You are not logged in and/or you don't have a UUID set on your localstorage",
-            );
-        }
-
-        const tokens = $Spotify.GetTokens();
-
-        const gql_state = await $client?.mutate({
-            mutation: CREATE_PARTY,
-            variables: {
-                username: party.username,
-                user_id,
-                party_name: party.party_name,
-                creds: {
+		const command: HttpCommand = {
+            createRoom: {
+                username: room.username,
+                userId: user_id,
+                name: room.room_name,
+                credentials: {
                     accessToken: tokens.access_token,
                     refreshToken: tokens.refresh_token,
-                    expiresIn: tokens.expires_in.toString(), // Important: these are scalar values (Timestamp => String wrapper of numbers)
-                    createdAt: tokens.created_at.toString(), // and since I didn't make any resolver for it, Stringify them
+                    expiresIn: tokens.expires_in.toString(),
+                    createdAt: tokens.created_at.toString(),
                 },
+            }
+		};
+
+		const bytes = HttpCommand.encode(command).finish();
+
+		const res = await fetch(`${PUBLIC_SERVER_ADDR_DEV}/v1`, {
+			method: "POST",
+            headers: {
+                "Content-Type": "application/protobuf",
             },
-        });
+			body: bytes as BodyInit,
+		});
 
-        const data: Party & { __typename: "Party" | "PartyError" | string; error: string } =
-            gql_state?.data?.createParty;
+		if (res.status !== 201 || res.body === null) {
+			console.error(res);
+		}
 
-        switch (data?.__typename) {
-            case "Party":
-                set_storage_value({ user: data.clients[0], current_room: data! });
-                toast.push(`Successfully created party ${data.name}!`);
-                await goto(`/room/${data.id}`);
-                break;
-            case "PartyError":
-                toast.push("Error: " + data?.error);
-                break;
-            default:
-                console.error(gql_state);
+        const res_bytes = await res.bytes();
+
+        try {
+            let res_cmd = CommandResponse.decode(res_bytes);
+
+            if (res_cmd.room === undefined) {
+                console.error(res_cmd);
+                toast(`An error occured while creating the room. ${res_cmd.genericError}`);
+                return;
+            }
+
+            set_storage_value({ user: res_cmd.room.users[0], current_room: res_cmd.room });
+
+            toast(`Successfully created party ${res_cmd.room.name}!`);
+
+            await goto(`/room/${bytes_to_uuid_str(res_cmd.room.id)}`);
+        } catch (e: unknown) {
+            console.error(e);
+            toast(`An error occured while creating the room. ${e}`);
         }
-    }
+	}
 </script>
 
 <section>
-    {#if $Spotify != null && $Spotify.is_ready}
-        <form on:submit|preventDefault={create_room}>
-            <Logo />
-            <div>
-                <Label for="username">Username</Label>
-                <Input
-                    class="px-2 text-main-content placeholder:text-main-content focus-visible:ring-main-color border-main-color bg-main-color-hover"
-                    type="text"
-                    id="username"
-                    placeholder="Username"
-                    bind:value={party.username} />
-            </div>
-            <div>
-                <Label for="party_name">Party name</Label>
-                <div class="w-full flex flex-row gap-4">
-                    <Input
-                        class="px-2 text-main-content placeholder:text-main-content focus-visible:ring-main-color border-main-color bg-main-color-hover"
-                        disabled={autoname}
-                        type="text"
-                        id="party_name"
-                        placeholder="Party name"
-                        bind:value={party.party_name} />
-                    {#if autoname}
-                        <Button
-                            class="text-main-content border-main-color bg-main-color-hover"
-                            on:click={() => (autoname = false)}>Rename</Button>
-                    {:else}
-                        <Button
-                            class="text-main-content border-main-color bg-main-color-hover"
-                            on:click={() => (autoname = true)}>Auto name</Button>
-                    {/if}
-                </div>
-            </div>
-            <div>
-                <CustomButton type="submit">Create the room</CustomButton>
-            </div>
-        </form>
-    {:else}
-        <div>
-            <Logo />
-            <p>First, you need to link Spotify to Sharify !</p>
-            {#await spotify_link then link}
-                {#if typeof link == "string"}
-                    <a href={link}>Here you go <SquareArrowOutUpRight class="ml-2 w-5 stroke-neutral-200" /></a>
-                {:else}
-                    <h2>Generated link error: {link} please contact Snoupix</h2>
-                {/if}
-            {:catch e}
-                <h2>Unexpected error: {e} please contact Snoupix</h2>
-            {/await}
-        </div>
-    {/if}
+	{#if $Spotify != null && $Spotify.is_ready}
+		<form onsubmit={create_room}>
+			<Logo />
+			<div>
+				<Label.Root for="username">Username</Label.Root>
+				<input
+					class="focus-visible:ring-main-color border-main-color bg-main-color-hover px-2 text-main-content placeholder:text-main-content"
+					type="text"
+					id="username"
+					placeholder="Username"
+					bind:value={room.username} />
+			</div>
+			<div>
+				<Label.Root for="party_name">Party name</Label.Root>
+				<div class="flex w-full flex-row gap-4">
+					<input
+						class="focus-visible:ring-main-color border-main-color bg-main-color-hover px-2 text-main-content placeholder:text-main-content"
+						disabled={autoname}
+						type="text"
+						id="party_name"
+						placeholder="Party name"
+						bind:value={room.room_name} />
+					{#if autoname}
+						<Button.Root
+							class="border-main-color bg-main-color-hover text-main-content"
+							onclick={() => (autoname = false)}>Rename</Button.Root>
+					{:else}
+						<Button.Root
+							class="border-main-color bg-main-color-hover text-main-content"
+							onclick={() => (autoname = true)}>Auto name</Button.Root>
+					{/if}
+				</div>
+			</div>
+			<div>
+				<CustomButton type="submit">Create the room</CustomButton>
+			</div>
+		</form>
+	{:else}
+		<div>
+			<Logo />
+			<p>First, you need to link Spotify to Sharify !</p>
+			{#await spotify_link then link}
+				{#if typeof link == "string"}
+					<a href={link}>Here you go <SquareArrowOutUpRight class="ml-2 w-5 stroke-neutral-200" /></a>
+				{:else}
+					<h2>Generated link error: {link} please contact Snoupix</h2>
+				{/if}
+			{:catch e}
+				<h2>Unexpected error: {e} please contact Snoupix</h2>
+			{/await}
+		</div>
+	{/if}
 </section>
 
 <style lang="postcss">
-    section {
-        @apply w-full;
+	@reference "$/app.css";
 
-        form {
-            @apply m-auto w-3/12 h-screen flex flex-col justify-center items-center gap-8;
+	section {
+		@apply w-full;
 
-            > div {
-                @apply w-full flex flex-col justify-center items-start gap-2;
+		form {
+			@apply m-auto flex h-screen w-3/12 flex-col items-center justify-center gap-8;
 
-                :global(> *) {
-                    @apply font-content text-xl;
-                }
+			> div {
+				@apply flex w-full flex-col items-start justify-center gap-2;
 
-                :global(> :first-child) {
-                    @apply text-lg;
-                }
-            }
+				:global(> *) {
+					@apply font-content text-xl;
+				}
 
-            > div:last-child {
-                @apply w-auto;
-            }
-        }
+				:global(> :first-child) {
+					@apply text-lg;
+				}
+			}
 
-        > div {
-            @apply m-auto w-4/12 h-screen flex flex-col justify-center items-center gap-8;
+			> div:last-child {
+				@apply w-auto;
+			}
+		}
 
-            p,
-            a {
-                @apply relative flex flex-row justify-center items-center font-bold text-xl;
-            }
+		> div {
+			@apply m-auto flex h-screen w-4/12 flex-col items-center justify-center gap-8;
 
-            :global(a > *) {
-                @apply stroke-main-color;
-            }
+			p,
+			a {
+				@apply relative flex flex-row items-center justify-center text-xl font-bold;
+			}
 
-            a::after {
-                content: "";
-                display: block;
-                position: absolute;
-                bottom: -2px;
-                left: auto;
-                width: 95%;
-                height: 2px;
-                background: linear-gradient(
-                    to right,
-                    theme("colors.bg-color"),
-                    theme("colors.main-color"),
-                    theme("colors.bg-color")
-                );
-                border-radius: 1.25rem;
+			:global(a > *) {
+				@apply stroke-main;
+			}
 
-                &:hover {
-                    display: none;
-                    background: theme("colors.main-color") !important;
-                }
-            }
-        }
-    }
+			a::after {
+				content: "";
+				display: block;
+				position: absolute;
+				bottom: -2px;
+				left: auto;
+				width: 95%;
+				height: 2px;
+				background: linear-gradient(to right, var(--color-bg), var(--color-main), var(--color-bg));
+				border-radius: 1.25rem;
+
+				&:hover {
+					display: none;
+					background: var(--color-main) !important;
+				}
+			}
+		}
+	}
 </style>

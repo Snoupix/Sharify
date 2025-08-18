@@ -49,18 +49,18 @@
     --shadow-around: 0 0 25px;
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
-    --font-kaushan: "Kaushan Script Montserrat cursive sans-serif";
-    --font-content: "Sriracha Montserrat cursive sans-serif";
-    --font-montserrat: "Montserrat cursive sans-serif";
+    --font-kaushan: Kaushan Script, Montserrat, cursive, sans-serif;
+    --font-content: Sriracha, Montserrat, cursive, sans-serif;
+    --font-montserrat: Montserrat, cursive, sans-serif;
 }
 
 @layer base {
     * {
-        @apply border-border;
+        @apply border-main-clear;
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-bg text-secondary;
     }
 }
 
@@ -94,25 +94,24 @@
 
 ::-webkit-input-placeholder {
     text-align: center;
-    color: var(--color-main-color");
     color: var(--color-main);
 }
 
 :-moz-placeholder {
     /* Firefox 18- */
     text-align: center;
-    color: theme("colors.main-color");
+    color: var(--color-main);
 }
 
 ::-moz-placeholder {
     /* Firefox 19+ */
     text-align: center;
-    color: theme("colors.main-color");
+    color: var(--color-main);
 }
 
 :-ms-input-placeholder {
     text-align: center;
-    color: theme("colors.main-color");
+    color: var(--color-main);
 }
 
 .loader {

@@ -1,35 +1,63 @@
 import { redirect } from "@sveltejs/kit";
+import * as uuid from "uuid";
 
+import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
+import { CommandResponse, HttpCommand } from "$/lib/proto/cmd";
 import type { PageServerLoad } from "./$types";
-import client from "$/lib/server/apollo_client";
-import { GET_PARTY } from "$/lib/queries";
-import type { CookieSession, Party } from "$/lib/types";
+import type { CookieSession } from "$/lib/types";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-    const party_id = params.slug;
+    const room_id = params.slug;
     const session = (await locals.auth()) as CookieSession;
 
     if (session == null) {
         return redirect(300, "/");
     }
 
-    const client_id = session.user_uuid;
+    const user_id = session.user_uuid;
 
-    if (client_id == null) {
+    if (user_id == null || !uuid.validate(room_id)) {
         return redirect(300, "/");
     }
 
-    const result = await client.query({ query: GET_PARTY, variables: { id: parseInt(party_id) } });
+    const command: HttpCommand = { getRoom: { roomId: uuid.parse(room_id) }};
 
-    if (result.error || (result.errors && result.errors.length > 0)) {
-        console.error("Party doesn't exists anymore", result.error, result.errors, party_id);
+    const bytes = HttpCommand.encode(command).finish();
+
+    const res = await fetch(`${PUBLIC_SERVER_ADDR_DEV}/v1`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/protobuf",
+        },
+        body: bytes as BodyInit,
+    });
+
+    if (res.status === 404) {
+        console.error("Room doesn't exists anymore", room_id, await res.text());
         return redirect(301, "/");
     }
 
-    const party: Party | null = result.data?.getParty;
+    if (res.status !== 200 || res.body === null) {
+        console.error(res);
+        return redirect(500, "/");
+    }
 
-    if (party == null || party.clients.find(c => c.id == client_id) == undefined) {
-        console.error("Client isn't in party anymore", result.data, party_id, client_id);
-        return redirect(301, "/");
+    const res_bytes = await res.bytes();
+
+    try {
+        const res_cmd = CommandResponse.decode(res_bytes);
+
+        if (res_cmd.room === undefined) {
+            console.error(`An error occured while creating the room. ${res_cmd.genericError}`);
+            return redirect(500, "/");
+        }
+
+        if (res_cmd.room.users.find(u => u.id === user_id) === undefined) {
+            console.error("RoomUser isn't in room anymore", res_cmd.room, room_id, user_id);
+            return redirect(301, "/");
+        }
+    } catch (e: unknown) {
+        console.error(e);
+        return redirect(500, "/");
     }
 };

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 
     import Logo from "$/components/logo.svelte";
     import CustomButton from "$/components/button.svelte";
@@ -13,8 +13,8 @@
     let spotify_is_ready = false;
 
     onMount(async () => {
-        const code = $page.url.searchParams.get("code");
-        const error = $page.url.searchParams.get("error");
+        const code = page.url.searchParams.get("code");
+        const error = page.url.searchParams.get("error");
 
         if (error) {
             spotify_error = error;
@@ -40,14 +40,14 @@
     <Logo />
     {#if code_missing}
         <h3>ERROR: There is no Spotify code provided, please try again or contact Snoupix</h3>
-        <CustomButton on:click={click_link}>
+        <CustomButton onclick={click_link}>
             <a href="/host" data-cy="auth-text">Go back</a>
         </CustomButton>
     {:else if spotify_error != ""}
         <h3>
             ERROR: There was an error getting your Spotify token ({spotify_error}), please try again or contact Snoupix
         </h3>
-        <CustomButton on:click={click_link}>
+        <CustomButton onclick={click_link}>
             <a href="/host" data-cy="auth-text">Go back</a>
         </CustomButton>
     {:else if !spotify_is_ready}
@@ -57,7 +57,7 @@
         {#await $Spotify && $Spotify.GetProfile() then profile}
             {#if profile instanceof Error}
                 <h3>ERROR: There was an error getting your profile, please contact Snoupix {profile}</h3>
-                <CustomButton on:click={click_link}>
+                <CustomButton onclick={click_link}>
                     <a href="/host" data-cy="auth-text">Go back</a>
                 </CustomButton>
             {:else}
@@ -71,7 +71,7 @@
             {/if}
         {:catch e}
             <h3>ERROR: There was an error getting your profile, please contact Snoupix {e}</h3>
-            <CustomButton on:click={click_link}>
+            <CustomButton onclick={click_link}>
                 <a href="/host" data-cy="auth-text">Go back</a>
             </CustomButton>
         {/await}
@@ -79,6 +79,8 @@
 </section>
 
 <style lang="postcss">
+    @reference "$/app.css";
+
     section {
         @apply flex flex-col items-center justify-center content-center gap-8 h-screen;
 

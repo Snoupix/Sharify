@@ -24,10 +24,11 @@
 <!-- prettier-ignore -->
 <Button.Root
     class={
-        `bg-secondary hover:shadow-main custom_btn rounded-md px-4
-        py-2 text-center not-disabled:cursor-pointer !text-main-content
+        `bg-bg border-main-hover hover:shadow-main hover:border-bg w-32 rounded-3xl
+        border-3 border-solid py-1 text-center cursor-pointer custom_btn
         font-content text-base decoration-0 transition-all duration-300
-        not-disabled:hover:font-bold xl:text-lg ${class_extended}`
+        hover:font-bold hover:shadow-around
+        xl:w-52 xl:text-2xl ${class_extended}`
     }
     {type}
     {title}

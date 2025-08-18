@@ -2,83 +2,38 @@
     import { onMount, setContext } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
     import { writable } from "svelte/store";
-    import { env } from "$env/dynamic/public";
-    import { ApolloClient, InMemoryCache, type NormalizedCacheObject } from "@apollo/client/core";
-    import { SvelteToast, toast } from "@zerodevx/svelte-toast";
+    import { Toaster, toast } from 'svelte-sonner';
 
     import Spotify from "$/lib/spotify";
-    import { get_storage_value, set_storage_value } from "$/lib/utils";
-    import Navbar from "$/components/navbar.svelte";
-    import type { Party, SpotifyData, Nullable } from "$/lib/types";
-    import type { LayoutData } from "./$types";
+    import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$/lib/utils";
+    import Navbar from "$/components/oldnavbar.svelte";
+    import type { Room } from "$/lib/proto/room";
+    import type { Nullable, SpotifyData } from "$/lib/types";
+    import type { LayoutProps } from "./$types";
 
-    import "$/style.css";
+    import "$/app.css";
 
     const dont_redirect_on_paths = [/\/room*/];
     const unauthorized_paths = [/\/host*/, /\/join*/];
 
-    // https://github.com/zerodevx/svelte-toast?tab=readme-ov-file#toast-options
-    const toast_default_options = {
-        pausable: true,
-        dismissable: true,
-        duration: 5000,
-        reversed: true,
-        intro: { y: -150 },
-    };
-
-    const apollo_store = writable<ApolloClient<NormalizedCacheObject> | null>();
-    apollo_store.update(client => {
-        if (client != null) return client;
-
-        return new ApolloClient({
-            cache: new InMemoryCache(),
-            uri: `${env.PUBLIC_SERVER_ADDR_DEV}/sharify`, // TODO: Handle public addr on prod
-            name: "sharify-apollo-web-client",
-            queryDeduplication: true, // TODO: Be carefull using that, it may break my gql logic sv side
-            defaultOptions: {
-                watchQuery: {
-                    fetchPolicy: "cache-and-network",
-                },
-                query: {
-                    errorPolicy: "all",
-                },
-                mutate: {
-                    errorPolicy: "all",
-                },
-            },
-        });
-    });
-    setContext("GQL_Client", apollo_store);
-
-    const room_data_store = writable<Party | null>(null);
-    setContext("RoomData", room_data_store);
-
+    const room_data_store = writable<Room | null>(null);
     const spotify_data_store = writable<SpotifyData | null>(null);
-    setContext("SpotifyData", spotify_data_store);
 
-    const data: LayoutData = $props();
+    const { data, children }: LayoutProps = $props();
     const session = data.session;
+
     let user_id: Nullable<string> = $state(null);
 
     onMount(() => {
-        (() => {
-            const tokens = get_storage_value("spotify_tokens");
-            if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
+        setContext("RoomData", room_data_store);
+        setContext("SpotifyData", spotify_data_store);
 
-            $Spotify.ProcessTokens(tokens);
-        })();
-        (() => {
-            // TODO: adapt to new theme
-            const theme = get_storage_value("theme");
-            if (
-                (theme != null && theme == "dark") ||
-                (theme == null && window.matchMedia("(prefers-color-scheme: dark)").matches)
-            ) {
-                document.documentElement.classList.add("dark");
-            } else {
-                document.documentElement.classList.remove("dark");
-            }
-        })();
+        set_theme(get_storage_value("theme") ?? "purple");
+
+        const tokens = get_storage_value("spotify_tokens");
+        if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
+
+        $Spotify.ProcessTokens(tokens);
     });
 
     afterNavigate(async navigate => {
@@ -92,12 +47,12 @@
         })();
 
         if (session == null && unauthorized_paths.find(r => navigate.to?.url.pathname.match(r))) {
-            toast.push("You need to be connected to do that, please log in first");
+            toast("You need to be connected to do that, please log in first");
             return await goto("/");
         }
 
         // This avoids the redirects and cleans the cache on server redirect
-        if (navigate.to && navigate.to.route.id == "/" && navigate.type == "goto") {
+        if (navigate.to?.route?.id == "/" && navigate.type == "goto") {
             set_storage_value({ current_room: null, user: null });
 
             return;
@@ -108,26 +63,30 @@
             console.log("path", navigate.to?.url.pathname, "is in", dont_redirect_on_paths);
             return;
         }
-        const party = get_storage_value("current_room");
-        if (party == null) return;
+        const room = get_storage_value("current_room");
+        if (room == null) return;
 
-        const client = get_storage_value("user");
-        if (client == null) return set_storage_value({ current_room: null });
+        const user = get_storage_value("user");
+        if (user == null) return set_storage_value({ current_room: null });
 
-        const client_id = party.clients.find(c => c.id == client.id);
-        if (!client_id) return set_storage_value({ current_room: null, user: null });
+        const room_user = room.users.find(u => u.id == user.id);
+        if (!room_user) return set_storage_value({ current_room: null, user: null });
 
-        await goto(`/room/${party.id}`);
+        console.log(room)
+
+        await goto(`/room/${bytes_to_uuid_str(room.id)}`);
     });
 </script>
 
 <main>
     <Navbar {session} />
-    <slot />
-    <SvelteToast options={toast_default_options} />
+    {@render children?.()}
+    <Toaster position="top-center" />
 </main>
 
 <style lang="postcss">
+    @reference "$/app.css";
+
     :global(:root) {
         /* TODO: Delete */
         --toastify-font-family: "Montserrat", sans-serif;
@@ -165,6 +124,6 @@
     }
 
     main {
-        @apply relative min-h-screen w-screen bg-bg-color;
+        @apply relative min-h-screen w-screen bg-bg;
     }
 </style>

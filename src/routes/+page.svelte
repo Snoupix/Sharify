@@ -5,15 +5,15 @@
     import LoaderCircle from "lucide-svelte/icons/loader-circle";
 
     import Logo from "$/components/logo.svelte";
-    import { Button } from "$/components/ui/button";
-    import CustomButton from "$/components/button.svelte";
+    import Button from "$/components/button.svelte";
+    import FancyButton from "$/components/fancy_button.svelte";
 
     let server_i = $state(0);
     let server_loaded = $state(false);
     let server_timed_out = $state(false);
     let show_retry_button = $state(false);
-    let server_interval: number | null = $state(null);
-    let retry_timeout: number | null = $state(null);
+    let server_interval: NodeJS.Timeout | null = $state(null);
+    let retry_timeout: NodeJS.Timeout | null = $state(null);
 
     onMount(async () => {
         server_interval_fn();
@@ -76,22 +76,26 @@
         {#if server_i == parseInt(env.PUBLIC_SV_TIMEOUT ?? "0")}
             <span>Failed to reach server, please try again later</span>
             {#if show_retry_button}
-                <CustomButton on:click={reload_page}>Retry</CustomButton>
+                <Button onclick={reload_page}>Retry</Button>
             {/if}
         {:else}
-            <span>Trying to connect to server...{server_i > 1 ? ` (attempt ${server_i})` : ""}</span>
-            <Button disabled>
-                <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+            {#if server_i > 0}
+                <span>Trying to reach server...{server_i > 1 ? ` (attempt ${server_i})` : ""}</span>
+            {/if}
+            <Button disabled={true} class_extended="flex flex-row justify-center items-center gap-4 w-50">
                 Please wait
+                <LoaderCircle class="mr-2 h-4 w-4 animate-spin text-main-content stroke-main-content" />
             </Button>
         {/if}
     {:else}
-        <CustomButton on:click={async () => await goto("/host")}>Host</CustomButton>
-        <CustomButton on:click={async () => await goto("/join")}>Join</CustomButton>
+        <FancyButton onclick={async () => await goto("/host")}>Host</FancyButton>
+        <FancyButton onclick={async () => await goto("/join")}>Join</FancyButton>
     {/if}
 </section>
 
 <style lang="postcss">
+    @reference "$/app.css";
+
     section {
         @apply w-2/12 h-screen m-auto flex flex-col justify-center items-center gap-8;
 

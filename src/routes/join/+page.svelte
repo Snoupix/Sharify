@@ -1,6 +1,5 @@
 <script lang="ts">
     import Logo from "$/components/logo.svelte";
-    import { Input } from "$/components/ui/input";
     import CustomButton from "$/components/button.svelte";
     import { goto } from "$app/navigation";
 
@@ -8,9 +7,9 @@
     let room_password = "";
     let error = "";
 
-    async function join_party() {
+    async function join_room() {
         if (room_id.trim() == "" || room_password.trim() == "") {
-            error = "Party ID and Party password must not be empty";
+            error = "Room ID and Room password must not be empty";
             return;
         }
 
@@ -20,12 +19,12 @@
 
 <section>
     <Logo class_extension="mb-4" />
-    <Input type="text" placeholder="Party ID" bind:value={room_id} />
-    <Input type="text" placeholder="Party password" bind:value={room_password} />
+    <input type="text" placeholder="Room ID" bind:value={room_id} />
+    <input type="text" placeholder="Room password" bind:value={room_password} />
     {#if error != ""}
         <span class="text-red-500">{error}</span>
     {/if}
-    <CustomButton on:click={join_party}>Join party</CustomButton>
+    <CustomButton onclick={join_room}>Join party</CustomButton>
 </section>
 
 <style lang="postcss">
