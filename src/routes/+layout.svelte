@@ -1,14 +1,13 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
-    import { writable } from "svelte/store";
     import { Toaster, toast } from 'svelte-sonner';
 
     import Spotify from "$/lib/spotify";
+    import { room_data, spotify_data } from "$/lib/ws_impl";
     import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$/lib/utils";
     import Navbar from "$/components/oldnavbar.svelte";
-    import type { Room } from "$/lib/proto/room";
-    import type { Nullable, SpotifyData } from "$/lib/types";
+    import type { Nullable } from "$/lib/types";
     import type { LayoutProps } from "./$types";
 
     import "$/app.css";
@@ -16,8 +15,8 @@
     const dont_redirect_on_paths = [/\/room*/];
     const unauthorized_paths = [/\/host*/, /\/join*/];
 
-    const room_data_store = writable<Room | null>(null);
-    const spotify_data_store = writable<SpotifyData | null>(null);
+    setContext("RoomData", room_data);
+    setContext("SpotifyData", spotify_data);
 
     const { data, children }: LayoutProps = $props();
     const session = data.session;
@@ -25,9 +24,6 @@
     let user_id: Nullable<string> = $state(null);
 
     onMount(() => {
-        setContext("RoomData", room_data_store);
-        setContext("SpotifyData", spotify_data_store);
-
         set_theme(get_storage_value("theme") ?? "purple");
 
         const tokens = get_storage_value("spotify_tokens");

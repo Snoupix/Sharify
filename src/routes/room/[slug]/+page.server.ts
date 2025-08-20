@@ -24,22 +24,28 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
     const bytes = HttpCommand.encode(command).finish();
 
-    const res = await fetch(`${PUBLIC_SERVER_ADDR_DEV}/v1`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/protobuf",
-        },
-        body: bytes as BodyInit,
-    });
+    let res;
+    try {
+        res = await fetch(`${PUBLIC_SERVER_ADDR_DEV}/v1`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/protobuf",
+            },
+            body: bytes as BodyInit,
+        });
+    } catch (e: unknown) {
+        console.error("Unreachable API", e);
+        return redirect(307, "/");
+    }
 
     if (res.status === 404) {
         console.error("Room doesn't exists anymore", room_id, await res.text());
-        return redirect(301, "/");
+        return redirect(307, "/");
     }
 
     if (res.status !== 200 || res.body === null) {
         console.error(res);
-        return redirect(500, "/");
+        return redirect(307, "/");
     }
 
     const res_bytes = await res.bytes();
@@ -49,15 +55,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
         if (res_cmd.room === undefined) {
             console.error(`An error occured while creating the room. ${res_cmd.genericError}`);
-            return redirect(500, "/");
+            return redirect(307, "/");
         }
 
         if (res_cmd.room.users.find(u => u.id === user_id) === undefined) {
             console.error("RoomUser isn't in room anymore", res_cmd.room, room_id, user_id);
-            return redirect(301, "/");
+            return redirect(307, "/");
         }
     } catch (e: unknown) {
         console.error(e);
-        return redirect(500, "/");
+        return redirect(307, "/");
     }
 };

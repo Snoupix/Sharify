@@ -1,7 +1,10 @@
-import * as uuid from "uuid";
 import type { Device, UserProfile } from "@spotify/web-api-ts-sdk";
 
 import type { Room, RoomUser } from "$lib/proto/room";
+import type { Nullable } from "$lib/types";
+import type { Role } from "$lib/proto/role";
+
+// TODO Change $/lib to $lib everywhere
 
 export interface LocalStorage {
 	spotify_tokens: SpotifyTokens | null;
@@ -146,6 +149,20 @@ export function bytes_to_uuid_str(bytes: Uint8Array<ArrayBufferLike>) {
 	];
 
 	return parts.join("-");
+}
+
+export function get_user_role(room_data: Nullable<Room>, user_role_id: RoomUser["roleId"]): Nullable<Role> {
+    if (!user_role_id) return null;
+
+    const sum_bytes = (arr: Uint8Array<ArrayBufferLike>) => arr.reduce((acc, byte) => acc + byte, 0);
+
+    return room_data?.roleManager?.roles.find((r) => {
+        if (typeof r.id?.reduce !== "function" || typeof user_role_id?.reduce !== "function") {
+            return false;
+        }
+
+        return sum_bytes(r.id) === sum_bytes(user_role_id);
+    }) ?? null;
 }
 
 export function set_theme(theme: LocalStorage["theme"]) {

@@ -1,0 +1,264 @@
+<script lang="ts">
+	import { getContext } from "svelte";
+	import type { Writable } from "svelte/store";
+	import {
+		Pause,
+		Play,
+		SkipBack,
+		SkipForward,
+		Volume1,
+		Volume2,
+		VolumeX,
+        Mic,
+	} from "lucide-svelte";
+	import { toast } from "svelte-sonner";
+    import { Skeleton } from "$/components/ui/skeleton";
+
+    import { send_ws_command } from "$/lib/ws_impl";
+	import CustomButton from "$/components/button.svelte";
+	import {
+		format_time,
+		get_user_role,
+		write_to_clipboard,
+	} from "$/lib/utils";
+	import type { Nullable, SpotifyData } from "$/lib/types";
+	import type { Room, RoomUser } from "$/lib/proto/room";
+
+	const room_data: Writable<Nullable<Room>> = getContext("RoomData");
+	const spotify_data: Writable<Nullable<SpotifyData>> = getContext("SpotifyData");
+
+    const {
+        is_skeleton,
+        current_user,
+        song_progress_ms,
+        set_song_progress_ms,
+        volume,
+        set_volume,
+        on_cmd_send_error,
+    }: {
+        is_skeleton: boolean;
+        current_user: RoomUser;
+        song_progress_ms: number;
+        set_song_progress_ms: (progress: number) => void;
+        volume: number;
+        set_volume: (percentage: number) => void;
+        on_cmd_send_error: () => Promise<void>;
+    } = $props();
+
+	let _seek_debounce: NodeJS.Timeout | null = $state(null);
+	let _volume_debounce: NodeJS.Timeout | null = $state(null);
+	let show_volume = $state(false);
+
+	function seek_debounce(value: number, delay: number = 400) {
+		if (_seek_debounce !== null) {
+			clearTimeout(_seek_debounce);
+		}
+
+		_seek_debounce = setTimeout(async () => {
+			set_song_progress_ms(value);
+
+			if (song_progress_ms !== -1 && song_progress_ms !== $spotify_data?.playback_state?.progressMs) {
+                await send_ws_command({ seekToPos: song_progress_ms }, on_cmd_send_error);
+
+                $spotify_data!.playback_state!.progressMs = song_progress_ms;
+			}
+		}, delay);
+	}
+
+	function volume_debounce(value: number, delay: number = 400) {
+		if (_volume_debounce !== null) {
+			clearTimeout(_volume_debounce);
+		}
+
+		_volume_debounce = setTimeout(() => {
+			set_volume(value);
+		}, delay);
+	}
+
+	async function play_resume() {
+		await send_ws_command({ playResume: false }, on_cmd_send_error);
+
+        toast("Track resumed");
+        $spotify_data!.playback_state!.isPlaying = true;
+	}
+
+	async function pause() {
+		await send_ws_command({ pause: false }, on_cmd_send_error);
+
+        toast("Track paused");
+        $spotify_data!.playback_state!.isPlaying = false;
+	}
+
+	async function skip_next() {
+		await send_ws_command({ skipNext: false }, on_cmd_send_error);
+	}
+
+	async function skip_previous() {
+		await send_ws_command({ skipPrevious: false }, on_cmd_send_error);
+	}
+</script>
+
+{#if is_skeleton}
+<div class="state-controls">
+    <div class="title">
+        <Skeleton class="h1 w-2/12 h-4 mt-4 ml-4" />
+    </div>
+    <div class="currently-playing">
+        <Skeleton class="img" />
+        <div class="track">
+            <Skeleton class="w-32 h-4" />
+            <Skeleton class="w-60 h-4" />
+        </div>
+        <div class="spotify-links">
+            <Skeleton class="w-24 h-6" />
+            <Skeleton class="w-24 h-6" />
+        </div>
+    </div>
+    <Skeleton class="w-7/12 h-2" />
+    <Skeleton class="w-1/12 h-6" />
+    <div class="player-controls">
+        <Skeleton class="w-10 h-10 rounded-full" />
+        <Skeleton class="w-10 h-10 rounded-full" />
+        <Skeleton class="w-10 h-10 rounded-full" />
+        <Skeleton class="w-10 h-10 rounded-full" />
+    </div>
+</div>
+{:else}
+<div class="state-controls">
+    <div class="title">
+        <h1><Mic /> Now playing</h1>
+    </div>
+    <div class="currently-playing">
+        <img src={$spotify_data!.playback_state?.albumImageSrc} alt="album cover" />
+        <div class="track">
+            <span class="main-color text-xl">{$spotify_data!.playback_state?.trackName}</span>
+            <span class="main-color text-lg">{$spotify_data!.playback_state?.artistName}</span>
+        </div>
+        <div class="spotify-links">
+            <a
+                href={`https://open.spotify.com/track/${$spotify_data!.playback_state?.trackId}`}
+                target="_blank">
+                <CustomButton class_extended="xl:text-sm hover:text-main-content"
+                    >Spotify link</CustomButton>
+            </a>
+            <CustomButton
+                title="Copy Spotify URI to clipboard"
+                onclick={() =>
+                    write_to_clipboard(
+                        `spotify:track:${$spotify_data?.playback_state?.trackId}`,
+                        () => {
+                            toast("Spotify URI copied to clipboard!");
+                        },
+                        console.error,
+                    )}
+                class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+        </div>
+    </div>
+    <span class="main-color italic"
+        >{format_time(song_progress_ms, $spotify_data!.playback_state?.durationMs ?? song_progress_ms*2)}</span>
+    {#key current_user}
+        {#if current_user !== null && get_user_role($room_data, current_user?.roleId)?.permissions?.canUseControls}
+            <input
+                class="accent-main-color w-2/4 cursor-grab"
+                min={0}
+                max={$spotify_data!.playback_state?.durationMs}
+                value={song_progress_ms}
+                onchange={(e) => seek_debounce(parseInt(e.currentTarget.value))}
+                type="range" />
+            <div class="player-controls">
+                <CustomButton
+                    class_extended="round"
+                    title="Skip back to previous track"
+                    onclick={skip_previous}><SkipBack /></CustomButton>
+                <CustomButton
+                    class_extended="round"
+                    title="Play/Pause the currently playing track"
+                    onclick={() =>
+                        $spotify_data!.playback_state?.isPlaying ? pause() : play_resume()}>
+                    {#if $spotify_data!.playback_state?.isPlaying}
+                        <Pause />
+                    {:else}
+                        <Play />
+                    {/if}
+                </CustomButton>
+                <CustomButton class_extended="round" title="Skip to next track" onclick={skip_next}
+                    ><SkipForward /></CustomButton>
+                <CustomButton
+                    class_extended="round"
+                    title="Toggle volume slider"
+                    onclick={() => (show_volume = !show_volume)}
+                    ><!-- TODO: Handle scroll up/down to set volume -->
+                    {#if volume >= 50}
+                        <Volume2 />
+                    {:else if volume == 0}
+                        <VolumeX />
+                    {:else}
+                        <Volume1 />
+                    {/if}
+                </CustomButton>
+                {#if show_volume}
+                    <input
+                        class="accent-main-color w-2/6 cursor-grab"
+                        min={0}
+                        max={100}
+                        value={$spotify_data!.playback_state?.deviceVolume}
+                        onchange={(e) => volume_debounce(parseInt(e.currentTarget.value))}
+                        title="change volume"
+                        type="range" />
+                {/if}
+            </div>
+        {/if}
+    {/key}
+    <div class="bg-main h-[2px] w-full rounded-full"></div>
+</div>
+{/if}
+
+<style lang="postcss">
+    @reference "$/app.css";
+
+    .state-controls {
+        @apply m-auto h-full w-full py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold border border-secondary rounded-xl;
+
+        .title {
+            @apply w-full h-2/12;
+
+            h1, :global(.h1) {
+                @apply mt-4 ml-4 flex flex-row justify-start items-center gap-4 uppercase;
+            }
+        }
+
+        .currently-playing {
+            @apply h-6/12 relative flex w-full flex-row items-center justify-center gap-6;
+
+            img, :global(.img) {
+                @apply absolute top-0 left-0 h-28 w-28 ml-4 mt-2;
+            }
+
+            .track {
+                @apply flex flex-col items-center justify-center gap-2 text-center;
+            }
+
+            .spotify-links {
+                @apply absolute top-0 right-0 flex flex-col items-center justify-center gap-4 mr-4 mt-2;
+            }
+        }
+
+        .player-controls {
+            @apply h-4/12 flex flex-row items-center justify-center gap-4;
+
+            :global(.round) {
+                @apply border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
+
+                :global(svg) {
+                    @apply w-full transition-all duration-500;
+                }
+
+                &:hover {
+                    :global(svg) {
+                        @apply stroke-main-content;
+                    }
+                }
+            }
+        }
+    }
+</style>

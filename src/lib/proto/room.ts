@@ -12,6 +12,87 @@ import { RoleManager } from "./role";
 
 export const protobufPackage = "room";
 
+export enum RoomError {
+  ROOM_CREATION_FAIL = 0,
+  ROOM_NOT_FOUND = 1,
+  ROOM_USER_NOT_FOUND = 2,
+  ROLE_NOT_FOUND = 3,
+  UNAUTHORIZED = 4,
+  TRACK_NOT_FOUND = 5,
+  ROOM_FULL = 6,
+  USER_BANNED = 7,
+  USER_ID_EXISTS = 8,
+  UNREACHABLE = 9,
+  UNRECOGNIZED = -1,
+}
+
+export function roomErrorFromJSON(object: any): RoomError {
+  switch (object) {
+    case 0:
+    case "ROOM_CREATION_FAIL":
+      return RoomError.ROOM_CREATION_FAIL;
+    case 1:
+    case "ROOM_NOT_FOUND":
+      return RoomError.ROOM_NOT_FOUND;
+    case 2:
+    case "ROOM_USER_NOT_FOUND":
+      return RoomError.ROOM_USER_NOT_FOUND;
+    case 3:
+    case "ROLE_NOT_FOUND":
+      return RoomError.ROLE_NOT_FOUND;
+    case 4:
+    case "UNAUTHORIZED":
+      return RoomError.UNAUTHORIZED;
+    case 5:
+    case "TRACK_NOT_FOUND":
+      return RoomError.TRACK_NOT_FOUND;
+    case 6:
+    case "ROOM_FULL":
+      return RoomError.ROOM_FULL;
+    case 7:
+    case "USER_BANNED":
+      return RoomError.USER_BANNED;
+    case 8:
+    case "USER_ID_EXISTS":
+      return RoomError.USER_ID_EXISTS;
+    case 9:
+    case "UNREACHABLE":
+      return RoomError.UNREACHABLE;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return RoomError.UNRECOGNIZED;
+  }
+}
+
+export function roomErrorToJSON(object: RoomError): string {
+  switch (object) {
+    case RoomError.ROOM_CREATION_FAIL:
+      return "ROOM_CREATION_FAIL";
+    case RoomError.ROOM_NOT_FOUND:
+      return "ROOM_NOT_FOUND";
+    case RoomError.ROOM_USER_NOT_FOUND:
+      return "ROOM_USER_NOT_FOUND";
+    case RoomError.ROLE_NOT_FOUND:
+      return "ROLE_NOT_FOUND";
+    case RoomError.UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case RoomError.TRACK_NOT_FOUND:
+      return "TRACK_NOT_FOUND";
+    case RoomError.ROOM_FULL:
+      return "ROOM_FULL";
+    case RoomError.USER_BANNED:
+      return "USER_BANNED";
+    case RoomError.USER_ID_EXISTS:
+      return "USER_ID_EXISTS";
+    case RoomError.UNREACHABLE:
+      return "UNREACHABLE";
+    case RoomError.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum LogType {
   OTHER = 0,
   KICK = 1,
@@ -93,10 +174,6 @@ export interface RoomUser {
   isConnected: boolean;
 }
 
-export interface RoomError {
-  error: string;
-}
-
 export interface Log {
   type: LogType;
   details: string;
@@ -143,7 +220,7 @@ export const Room: MessageFns<Room> = {
       Log.encode(v!, writer.uint32(66).fork()).join();
     }
     if (message.maxUsers !== 0) {
-      writer.uint32(72).uint32(message.maxUsers);
+      writer.uint32(72).uint64(message.maxUsers);
     }
     return writer;
   },
@@ -224,7 +301,7 @@ export const Room: MessageFns<Room> = {
             break;
           }
 
-          message.maxUsers = reader.uint32();
+          message.maxUsers = longToNumber(reader.uint64());
           continue;
         }
       }
@@ -742,64 +819,6 @@ export const RoomUser: MessageFns<RoomUser> = {
   },
 };
 
-function createBaseRoomError(): RoomError {
-  return { error: "" };
-}
-
-export const RoomError: MessageFns<RoomError> = {
-  encode(message: RoomError, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.error !== "") {
-      writer.uint32(10).string(message.error);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): RoomError {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoomError();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.error = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): RoomError {
-    return { error: isSet(object.error) ? globalThis.String(object.error) : "" };
-  },
-
-  toJSON(message: RoomError): unknown {
-    const obj: any = {};
-    if (message.error !== "") {
-      obj.error = message.error;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<RoomError>, I>>(base?: I): RoomError {
-    return RoomError.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<RoomError>, I>>(object: I): RoomError {
-    const message = createBaseRoomError();
-    message.error = object.error ?? "";
-    return message;
-  },
-};
-
 function createBaseLog(): Log {
   return { type: 0, details: "" };
 }
@@ -933,6 +952,17 @@ function fromJsonTimestamp(o: any): Date {
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));
   }
+}
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
 }
 
 function isSet(value: any): boolean {

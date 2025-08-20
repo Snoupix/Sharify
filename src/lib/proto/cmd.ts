@@ -6,7 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Room } from "./room";
+import { Room, RoomError, roomErrorFromJSON, roomErrorToJSON } from "./room";
 import { PlaybackState, TrackArray } from "./spotify";
 
 export const protobufPackage = "cmd";
@@ -80,8 +80,7 @@ export interface Command_AddTrackToQueue {
 }
 
 export interface CommandResponse {
-  /** Useless bool value */
-  unauthorized?: boolean | undefined;
+  roomError?: RoomError | undefined;
   room?: Room | undefined;
   genericError?: string | undefined;
   kick?: CommandResponse_Kick | undefined;
@@ -925,7 +924,7 @@ export const Command_AddTrackToQueue: MessageFns<Command_AddTrackToQueue> = {
 
 function createBaseCommandResponse(): CommandResponse {
   return {
-    unauthorized: undefined,
+    roomError: undefined,
     room: undefined,
     genericError: undefined,
     kick: undefined,
@@ -937,8 +936,8 @@ function createBaseCommandResponse(): CommandResponse {
 
 export const CommandResponse: MessageFns<CommandResponse> = {
   encode(message: CommandResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.unauthorized !== undefined) {
-      writer.uint32(8).bool(message.unauthorized);
+    if (message.roomError !== undefined) {
+      writer.uint32(8).int32(message.roomError);
     }
     if (message.room !== undefined) {
       Room.encode(message.room, writer.uint32(18).fork()).join();
@@ -973,7 +972,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
             break;
           }
 
-          message.unauthorized = reader.bool();
+          message.roomError = reader.int32() as any;
           continue;
         }
         case 2: {
@@ -1035,7 +1034,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
 
   fromJSON(object: any): CommandResponse {
     return {
-      unauthorized: isSet(object.unauthorized) ? globalThis.Boolean(object.unauthorized) : undefined,
+      roomError: isSet(object.roomError) ? roomErrorFromJSON(object.roomError) : undefined,
       room: isSet(object.room) ? Room.fromJSON(object.room) : undefined,
       genericError: isSet(object.genericError) ? globalThis.String(object.genericError) : undefined,
       kick: isSet(object.kick) ? CommandResponse_Kick.fromJSON(object.kick) : undefined,
@@ -1051,8 +1050,8 @@ export const CommandResponse: MessageFns<CommandResponse> = {
 
   toJSON(message: CommandResponse): unknown {
     const obj: any = {};
-    if (message.unauthorized !== undefined) {
-      obj.unauthorized = message.unauthorized;
+    if (message.roomError !== undefined) {
+      obj.roomError = roomErrorToJSON(message.roomError);
     }
     if (message.room !== undefined) {
       obj.room = Room.toJSON(message.room);
@@ -1080,7 +1079,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<CommandResponse>, I>>(object: I): CommandResponse {
     const message = createBaseCommandResponse();
-    message.unauthorized = object.unauthorized ?? undefined;
+    message.roomError = object.roomError ?? undefined;
     message.room = (object.room !== undefined && object.room !== null) ? Room.fromPartial(object.room) : undefined;
     message.genericError = object.genericError ?? undefined;
     message.kick = (object.kick !== undefined && object.kick !== null)
