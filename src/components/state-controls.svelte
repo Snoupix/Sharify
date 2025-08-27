@@ -77,16 +77,10 @@
 
 	async function play_resume() {
 		await send_ws_command({ playResume: false }, on_cmd_send_error);
-
-        toast("Track resumed");
-        $spotify_data!.playback_state!.isPlaying = true;
 	}
 
 	async function pause() {
 		await send_ws_command({ pause: false }, on_cmd_send_error);
-
-        toast("Track paused");
-        $spotify_data!.playback_state!.isPlaying = false;
 	}
 
 	async function skip_next() {
@@ -159,7 +153,7 @@
     {#key current_user}
         {#if current_user !== null && get_user_role($room_data, current_user?.roleId)?.permissions?.canUseControls}
             <input
-                class="accent-main-color w-2/4 cursor-grab"
+                class="accent-main w-2/4 cursor-grab"
                 min={0}
                 max={$spotify_data!.playback_state?.durationMs}
                 value={song_progress_ms}
@@ -209,7 +203,6 @@
             </div>
         {/if}
     {/key}
-    <div class="bg-main h-[2px] w-full rounded-full"></div>
 </div>
 {/if}
 
@@ -217,13 +210,13 @@
     @reference "$/app.css";
 
     .state-controls {
-        @apply m-auto h-full w-full py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold border border-secondary rounded-xl;
+        @apply m-auto py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold !overflow-y-scroll;
 
         .title {
             @apply w-full h-2/12;
 
             h1, :global(.h1) {
-                @apply mt-4 ml-4 flex flex-row justify-start items-center gap-4 uppercase;
+                @apply mt-2 ml-4 flex flex-row justify-start items-center gap-4 uppercase font-bold;
             }
         }
 
@@ -231,7 +224,7 @@
             @apply h-6/12 relative flex w-full flex-row items-center justify-center gap-6;
 
             img, :global(.img) {
-                @apply absolute top-0 left-0 h-28 w-28 ml-4 mt-2;
+                @apply absolute top-0 left-0 h-40 w-40 ml-4 mt-2 border-4 border-secondary rounded-xl;
             }
 
             .track {
@@ -239,7 +232,7 @@
             }
 
             .spotify-links {
-                @apply absolute top-0 right-0 flex flex-col items-center justify-center gap-4 mr-4 mt-2;
+                @apply absolute top-0 right-0 flex flex-col items-end justify-center gap-4 mr-4 mt-2;
             }
         }
 

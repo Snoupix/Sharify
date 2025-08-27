@@ -164,10 +164,10 @@
 	@reference "$/app.css";
 
 	section {
-		@apply w-full;
+		@apply w-full h-[calc(10/12*100vh)];
 
 		form {
-			@apply m-auto flex h-screen w-3/12 flex-col items-center justify-center gap-8;
+			@apply m-auto flex h-full w-3/12 flex-col items-center justify-center gap-8;
 
 			> div {
 				@apply flex w-full flex-col items-start justify-center gap-2;

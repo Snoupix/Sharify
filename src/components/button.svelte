@@ -2,7 +2,7 @@
 	import { Button } from "bits-ui";
 
 	import type { Snippet } from "svelte";
-	import type { MouseEventHandler } from "svelte/elements";
+	import type { ClassValue, MouseEventHandler } from "svelte/elements";
 
 	let {
 		class_extended = "",
@@ -12,7 +12,7 @@
         children,
         disabled = false,
 	}: {
-		class_extended?: string;
+		class_extended?: ClassValue;
 		type?: "button" | "submit" | "reset" | null;
 		title?: string;
 		onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
@@ -27,7 +27,7 @@
         `bg-secondary hover:shadow-main custom_btn rounded-md px-4
         py-2 text-center not-disabled:cursor-pointer !text-main-content
         font-content text-base decoration-0 transition-all duration-300
-        not-disabled:hover:font-bold xl:text-lg ${class_extended}`
+        xl:text-lg ${class_extended}`
     }
     {type}
     {title}

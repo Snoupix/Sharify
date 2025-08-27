@@ -6,7 +6,7 @@
     import Spotify from "$/lib/spotify";
     import { room_data, spotify_data } from "$/lib/ws_impl";
     import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$/lib/utils";
-    import Navbar from "$/components/oldnavbar.svelte";
+    import Navbar from "$/components/navbar.svelte";
     import type { Nullable } from "$/lib/types";
     import type { LayoutProps } from "./$types";
 
@@ -77,7 +77,7 @@
 <main>
     <Navbar {session} />
     {@render children?.()}
-    <Toaster position="top-center" />
+    <Toaster closeButton position="top-center" />
 </main>
 
 <style lang="postcss">
@@ -120,6 +120,6 @@
     }
 
     main {
-        @apply relative min-h-screen w-screen bg-bg;
+        @apply relative h-screen w-screen bg-bg;
     }
 </style>

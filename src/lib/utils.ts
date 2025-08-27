@@ -1,3 +1,4 @@
+import { goto } from "$app/navigation";
 import type { Device, UserProfile } from "@spotify/web-api-ts-sdk";
 
 import type { Room, RoomUser } from "$lib/proto/room";
@@ -15,7 +16,7 @@ export interface LocalStorage {
 	user_id: string | null;
 	current_room: Room | null;
 	// purple is default whatever prefers-color-scheme
-	theme: "purple" | "neon" | "light" | "dark" | null; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
+	theme: Nullable<typeof themes[number]>; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
 export type SpotifyTokens = {
@@ -26,6 +27,8 @@ export type SpotifyTokens = {
 };
 
 type StorageType<T> = T extends keyof LocalStorage ? LocalStorage[T] : never;
+
+export const themes = ["purple", "neon", "light", "dark"] as const;
 
 const ZERO_CHAR = "0".charCodeAt(0);
 const [MIN_CHAR, MAX_CHAR] = ["-".charCodeAt(0), "z".charCodeAt(0)];
@@ -151,10 +154,13 @@ export function bytes_to_uuid_str(bytes: Uint8Array<ArrayBufferLike>) {
 	return parts.join("-");
 }
 
+/// Most likely used to make UUIDs (RoleID, RoomID...) unique and compare them
+export function sum_bytes(arr: Uint8Array<ArrayBufferLike>) {
+    return arr.reduce((acc, byte) => acc + byte, 0);
+}
+
 export function get_user_role(room_data: Nullable<Room>, user_role_id: RoomUser["roleId"]): Nullable<Role> {
     if (!user_role_id) return null;
-
-    const sum_bytes = (arr: Uint8Array<ArrayBufferLike>) => arr.reduce((acc, byte) => acc + byte, 0);
 
     return room_data?.roleManager?.roles.find((r) => {
         if (typeof r.id?.reduce !== "function" || typeof user_role_id?.reduce !== "function") {
@@ -268,4 +274,28 @@ function is_object(object: unknown) {
 export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | HTMLDivElement }) {
 	// @ts-expect-error This is a hack to make the button click the link
 	e.currentTarget.children[0].click();
+}
+
+export function custom_promise() {
+    let resolve_ptr: (_: unknown) => void;
+    let reject_ptr: (reason: string) => void;
+
+    const promise = new Promise((res, rej) => {
+        resolve_ptr = res;
+        reject_ptr = rej;
+    });
+
+    // @ts-expect-error This is not beautiful, I know
+    return { promise, resolve_ptr, reject_ptr };
+}
+
+export function with_timeout<T>(promise: Promise<T>, timeout_error: string, ms: number) {
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(timeout_error), ms));
+
+    return Promise.race([promise, timeout]);
+}
+
+export async function leave_room() {
+    set_storage_value({ current_room: null, user: null });
+    await goto("/");
 }

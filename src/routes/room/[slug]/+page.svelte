@@ -13,32 +13,28 @@
 		LoaderCircle,
 		Swords,
 		User,
-		Volume1,
-		Volume2,
-		VolumeX,
 	} from "lucide-svelte";
 	import { toast } from "svelte-sonner";
 	import * as uuid from "uuid";
-	import { Tabs } from "bits-ui";
 
 	import { ws, init_ws } from "$/lib/ws_store";
-	import { send_ws_command } from "$/lib/ws_impl";
+	import { send_ws_command, leave_room_cmd } from "$/lib/ws_impl";
     import StateControls from "$/components/state-controls.svelte";
+    import SongQueue from "$/components/song-queue.svelte";
+    import TrackSearch from "$/components/add-track.svelte";
+    import MemberList from "$/components/member-list.svelte";
 	import CustomButton from "$/components/button.svelte";
-	import Card from "$/components/card.svelte";
 	import {
 		are_objects_equal,
-		bytes_to_uuid_str,
-		format_time,
+		custom_promise,
 		get_storage_value,
 		set_storage_value,
-		write_to_clipboard,
-		zip_iter,
+		with_timeout,
+        leave_room,
 	} from "$/lib/utils";
-	import { Command, CommandResponse } from "$/lib/proto/cmd";
+	import { CommandResponse } from "$/lib/proto/cmd";
 	import { RoomError, type Room, type RoomUser } from "$lib/proto/room";
 	import type { Track } from "$lib/proto/spotify";
-	import { Role } from "$/lib/proto/role";
 	import type { Nullable, SpotifyData } from "$/lib/types";
 
     if (!hasContext("RoomData")) {
@@ -54,18 +50,35 @@
 
     let ws_conn_tries = $state(0);
     let is_ws_connected = $derived($ws !== null && $ws.readyState === websocket.w3cwebsocket.OPEN);
-    let _search_debounce: NodeJS.Timeout | null = $state(null);
+    let data_is_ready_promise: ReturnType<typeof custom_promise> | null = $state(null);
 	let leaving = $state(false);
-	let show_link = $state(false);
 	let song_progress_ms = $state(-1);
 	let song_loop: NodeJS.Timeout | null = $state(null);
     let volume = $state(-1);
 	let search_input = $state("");
 	let search_results: Array<Track> = $state([]);
-	let url_uri_input = $state("");
 	let current_user: RoomUser | null = $state(null);
 
 	onMount(async () => {
+        data_is_ready_promise = custom_promise();
+
+        toast.promise(
+            with_timeout(data_is_ready_promise.promise, "Timeout: Server didn't responded in time, try again later.", 5000),
+            {
+                duration: 10 * 1000,
+                loading: "Waiting for server data...",
+                success: "Room loaded, have fun",
+                error: (error) => {
+                    if (typeof error === "string" && error.startsWith("Timeout")) {
+                        leave_room();
+                        return error;
+                    }
+
+                    return error as string;
+                }
+            }
+        );
+
         await connect_to_ws();
 
 		song_loop = setInterval(() => {
@@ -102,7 +115,6 @@
 		const pathname_split = page.url.pathname.split("/");
 
 		if (pathname_split.length != 3) {
-			toast("Error: Bad pathname", { duration: 2500 });
 			return await goto("/");
 		}
 
@@ -125,6 +137,23 @@
 		init_ws(room_id, user_id, () => undefined, on_ws_close, on_ws_error, on_ws_message);
     }
 
+	async function on_ws_error(e: Error) {
+		console.error("Unable to connect to server WebSocket, redirecting...", e);
+		await goto("/");
+	}
+
+    async function on_ws_close(close_event: websocket.ICloseEvent) {
+        console.log("[DEBUG WS] Closed", close_event);
+
+        if (ws_conn_tries >= 2) {
+            return await on_ws_error(new Error("Failed to connect to server Websocket after 3 tries"));
+        }
+
+		await connect_to_ws();
+
+        ws_conn_tries += 1;
+    }
+
 	async function on_ws_message({ data }: websocket.IMessageEvent) {
 		try {
             let bytes = data as Uint8Array<ArrayBufferLike>;
@@ -137,6 +166,8 @@
 
             for (const key of Object.keys(cmd) as Array<keyof CommandResponse>) {
                 if (cmd[key] === undefined) continue;
+
+                console.log(`[DEBUG WS] Command "${key}" recieved`);
 
                 switch (key) {
                     case "room":
@@ -167,10 +198,23 @@
                         );
                         break; */
                     case "spotifyPlaybackState":
+                        // First playback recieved
+                        if (data_is_ready_promise !== null) {
+                            if (cmd.spotifyPlaybackState?.state !== undefined) {
+                                data_is_ready_promise.resolve_ptr(null);
+                            } else {
+                                data_is_ready_promise.reject_ptr(
+                                    "It looks like your Spotify isn't playing anything. Please use Spotify to play a song and wait a bit !"
+                                );
+                            }
+
+                            data_is_ready_promise = null;
+                        }
+
                         $spotify_data = {
-                            playback_state: cmd.spotifyPlaybackState?.state ?? null,
-                            recent_tracks: cmd.spotifyPlaybackState?.previousTracks?.tracks ?? [],
-                            next_tracks: cmd.spotifyPlaybackState?.nextTracks?.tracks ?? [],
+                            playback_state: cmd.spotifyPlaybackState?.state ?? $spotify_data?.playback_state ?? null,
+                            recent_tracks: cmd.spotifyPlaybackState?.previousTracks?.tracks ?? $spotify_data?.recent_tracks ?? [],
+                            next_tracks: cmd.spotifyPlaybackState?.nextTracks?.tracks ?? $spotify_data?.next_tracks ?? [],
                         };
                         console.log($spotify_data);
 
@@ -187,11 +231,11 @@
                         break;
                     case "kick":
                         toast(`You have been kicked out of the room. Reason: ${cmd.kick?.reason}`);
-                        _leave_room();
+                        leave_room();
                         break;
                     case "ban":
                         toast(`You have been banned from the room. Reason: ${cmd.ban?.reason}`);
-                        _leave_room();
+                        leave_room();
                         break;
                     case "roomError": {
                         let error_msg = "";
@@ -241,6 +285,9 @@
 
                         break;
                     }
+                    case "spotifyRateLimited":
+                        toast.error(`Too much Spotify requests, wait ${cmd.spotifyRateLimited}s and try again`);
+                        break;
                     case "genericError":
                         console.error("Error on WS CommandResponse: ", cmd.genericError);
                         toast.error(`Server error on WS Command ${cmd.genericError}`);
@@ -255,64 +302,6 @@
 		} catch (e) {
 			console.error("Cannot decode WS CommandReponse", e, data);
 		}
-	}
-
-	async function on_ws_error(e: Error) {
-		console.error("Unable to connect to server WebSocket, redirecting...", e);
-		await goto("/");
-	}
-
-    async function on_ws_close(close_event: websocket.ICloseEvent) {
-        console.log("[DEBUG WS] Closed", close_event);
-
-        if (ws_conn_tries >= 2) {
-            return await on_ws_error(new Error("Failed to connect to server Websocket after 3 tries"));
-        }
-
-		await connect_to_ws();
-
-        ws_conn_tries += 1;
-    }
-
-	function get_party_link() {
-		return `${location.origin}/join/${bytes_to_uuid_str($room_data!.id)}/${$room_data!.password}`;
-	}
-
-	async function copy_party_link() {
-		await write_to_clipboard(
-			get_party_link(),
-			() => {
-				toast("Party link copied successfully to your clipboard !");
-			},
-			(error) => {
-				console.error(
-					"Unable to write to clipboard (probably unsupported on your browser), please copy the link yourself",
-					error,
-				);
-				toast.error(
-					"Unable to write to clipboard (probably unsupported on your browser), please copy the link yourself",
-				);
-			},
-		);
-	}
-
-	async function leave_room() {
-		leaving = true;
-
-		const { room_id, user_id } = {
-			room_id: get_storage_value("current_room")?.id ?? null,
-			user_id: get_storage_value("user_id"),
-		};
-		if (room_id !== null && user_id !== null && $ws !== null) {
-            send_ws_command({ leaveRoom: false }, on_cmd_send_error);
-		}
-
-		await _leave_room();
-	}
-
-	async function _leave_room() {
-		set_storage_value({ current_room: null, user: null });
-		await goto("/");
 	}
 
 	/* async function promote_client(c: RoomUser) {
@@ -347,81 +336,10 @@
         }
     } */
 
-	function search_debounce(value: string, delay: number = 600) {
-		if (_search_debounce !== null) {
-			clearTimeout(_search_debounce);
-		}
-
-		_search_debounce = setTimeout(() => {
-			search_input = value;
-		}, delay);
-	}
-
-	async function add_track_to_queue(track_id: Track["trackId"]) {
-		search_input = "";
-
-		const user = get_storage_value("user");
-
-		if (user == null) {
-			toast("Unexpected error: Unable to get your user data on local storage, please try again");
-			return await leave_room();
-		}
-
-        send_ws_command({ addToQueue: { trackId: track_id }}, on_cmd_send_error);
-
-        toast(`Track added to the owner's queue`);
-	}
-
-	async function add_track_to_queue_by_track(track: Track) {
-		return await add_track_to_queue(track.trackId);
-	}
-
-	async function add_track_to_queue_by_id(uri_url: string) {
-		const result = get_track_id_by_uri_url(uri_url);
-
-		console.log(uri_url, result);
-
-		if (result == null) {
-			toast("Error: Cannot parse URL/Spotify URI to track ID");
-			return;
-		}
-
-		return await add_track_to_queue(result);
-	}
-
-	function get_track_id_by_uri_url(s: string): string | null {
-		if (s.startsWith("spotify")) {
-			return s.split(":").pop() || null;
-		}
-
-		return s.split("/").pop()?.split("?").shift() || null;
-	}
-
-	async function kick_user(u: RoomUser) {
-		await send_ws_command({
-            kick: {
-                userId: u.id,
-                reason: "Unknown",
-            }
-        }, on_cmd_send_error);
-
-        toast("User kicked out of the room");
-	}
-
-	async function ban_user(u: RoomUser) {
-		await send_ws_command({
-            ban: {
-                userId: u.id,
-                reason: "Unknown",
-            }
-        }, on_cmd_send_error);
-
-        toast("User banned from the room");
-	}
-
     async function on_cmd_send_error() {
         toast("Unexpected error: WS is not connected");
-        return await leave_room();
+        leaving = true;
+        return await leave_room_cmd();
     }
 
 	$effect(() => {
@@ -437,8 +355,6 @@
             }, on_cmd_send_error);
 		}
 	});
-
-    $inspect(is_ws_connected)
 </script>
 
 <svelte:head>
@@ -515,9 +431,7 @@
                     <div>
                         <!-- <div class="x controls">Controls</div> -->
                         <StateControls
-                            is_skeleton={$spotify_data === null}
-                            spotify_data={$spotify_data!}
-                            room_data={$room_data!}
+                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
                             current_user={current_user!}
                             {volume}
                             set_volume={(percentage) => volume = percentage}
@@ -525,11 +439,26 @@
                             set_song_progress_ms={(progress) => song_progress_ms = progress}
                             {on_cmd_send_error}
                         />
-                        <div class="x queue">son queue / song history</div>
+                        <SongQueue is_skeleton={$spotify_data === null || $spotify_data.playback_state === null} />
                     </div>
                     <div>
-                        <div class="x track-search">track search</div>
-                        <div class="x member-list">member list</div>
+                        <TrackSearch
+                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
+                            {search_input}
+                            set_search_input={(input) => search_input = input}
+                            {search_results}
+                            clear_search_results={() => {
+                                search_input = "";
+                                search_results = [];
+                            }}
+                            set_leaving={(b) => leaving = b}
+                            {on_cmd_send_error}
+                        />
+                        <MemberList
+                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
+                            current_user={current_user!}
+                            {on_cmd_send_error}
+                        />
                     </div>
                 </div>
 			<!-- {/if} -->
@@ -541,37 +470,39 @@
     @reference "$/app.css";
 
     .layout-wrapper {
-        @apply w-full h-[calc(100vh-90px)] flex flex-row items-stretch justify-stretch gap-4 p-6;
+        @apply w-full h-[calc(11/12*100vh)] flex flex-row items-stretch justify-stretch gap-4 p-6;
 
+        /* Left col */
         > :first-child {
             @apply w-9/12;
+
+            :global(> :first-child) {
+                @apply h-7/12;
+            }
+
+            :global(> :last-child) {
+                @apply h-5/12;
+            }
         }
 
+        /* Right col */
         > :last-child {
             @apply w-3/12;
+
+            :global(> :first-child) {
+                @apply h-3/12;
+            }
+
+            :global(> :last-child) {
+                @apply h-9/12;
+            }
         }
 
         > * {
             @apply flex flex-col gap-4;
 
-            > * {
-                @apply rounded-xl;
-            }
-
-            > :first-child {
-                @apply h-7/12;
-            }
-
-            > :last-child {
-                @apply h-5/12;
-            }
-
-            > :first-child {
-                @apply h-3/12;
-            }
-
-            > :last-child {
-                @apply h-9/12;
+            :global(> *) {
+                @apply w-full h-full border border-secondary rounded-xl overflow-hidden;
             }
         }
     }

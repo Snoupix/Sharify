@@ -1,14 +1,22 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
+
     const { class_extension = "", animate = true } = $props();
 </script>
 
-<a href="/" data-cy="home-btn" class={`${animate && "neon "}${class_extension}`}>Sharify</a>
+<button
+    type="button"
+    onclick={async () => await goto("/")}
+    data-cy="home-btn"
+    class:neon={animate}
+    class={`${class_extension}`}
+>Sharify</button>
 
 <style lang="postcss">
     @reference "$/app.css";
 
-    a {
-        @apply z-50 text-main font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl transition-all duration-300;
+    button {
+        @apply cursor-pointer z-50 text-main font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl transition-all duration-300;
 
         &:hover {
             text-shadow: var(--shadow-around) var(--color-main);
