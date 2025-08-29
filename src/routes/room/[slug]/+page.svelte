@@ -426,10 +426,9 @@
 					<h1 class="text-xl font-bold">Please use Spotify to play a song and wait a bit !</h1>
 				</div>
 			:else} -->
-                <!-- Layout wrapper -->
+                <!-- TODO: Create a button to refetch Spotify Data when player hasn't played a song (yet) -->
                 <div class="layout-wrapper">
                     <div>
-                        <!-- <div class="x controls">Controls</div> -->
                         <StateControls
                             is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
                             current_user={current_user!}

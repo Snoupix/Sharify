@@ -6,7 +6,6 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Duration } from "./google/protobuf/duration";
 import { Timestamp } from "./google/protobuf/timestamp";
 import { RoleManager } from "./role";
 
@@ -148,14 +147,7 @@ export interface Room {
 export interface CredentialsInput {
   accessToken: string;
   refreshToken: string;
-  expiresIn: Duration | undefined;
-  createdAt: Date | undefined;
-}
-
-export interface SpotifyTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: Duration | undefined;
+  expiresIn: number;
   createdAt: Date | undefined;
 }
 
@@ -384,7 +376,7 @@ export const Room: MessageFns<Room> = {
 };
 
 function createBaseCredentialsInput(): CredentialsInput {
-  return { accessToken: "", refreshToken: "", expiresIn: undefined, createdAt: undefined };
+  return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: undefined };
 }
 
 export const CredentialsInput: MessageFns<CredentialsInput> = {
@@ -395,8 +387,8 @@ export const CredentialsInput: MessageFns<CredentialsInput> = {
     if (message.refreshToken !== "") {
       writer.uint32(18).string(message.refreshToken);
     }
-    if (message.expiresIn !== undefined) {
-      Duration.encode(message.expiresIn, writer.uint32(26).fork()).join();
+    if (message.expiresIn !== 0) {
+      writer.uint32(24).uint32(message.expiresIn);
     }
     if (message.createdAt !== undefined) {
       Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
@@ -428,11 +420,11 @@ export const CredentialsInput: MessageFns<CredentialsInput> = {
           continue;
         }
         case 3: {
-          if (tag !== 26) {
+          if (tag !== 24) {
             break;
           }
 
-          message.expiresIn = Duration.decode(reader, reader.uint32());
+          message.expiresIn = reader.uint32();
           continue;
         }
         case 4: {
@@ -456,7 +448,7 @@ export const CredentialsInput: MessageFns<CredentialsInput> = {
     return {
       accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
       refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
-      expiresIn: isSet(object.expiresIn) ? Duration.fromJSON(object.expiresIn) : undefined,
+      expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
     };
   },
@@ -469,8 +461,8 @@ export const CredentialsInput: MessageFns<CredentialsInput> = {
     if (message.refreshToken !== "") {
       obj.refreshToken = message.refreshToken;
     }
-    if (message.expiresIn !== undefined) {
-      obj.expiresIn = Duration.toJSON(message.expiresIn);
+    if (message.expiresIn !== 0) {
+      obj.expiresIn = Math.round(message.expiresIn);
     }
     if (message.createdAt !== undefined) {
       obj.createdAt = message.createdAt.toISOString();
@@ -485,119 +477,7 @@ export const CredentialsInput: MessageFns<CredentialsInput> = {
     const message = createBaseCredentialsInput();
     message.accessToken = object.accessToken ?? "";
     message.refreshToken = object.refreshToken ?? "";
-    message.expiresIn = (object.expiresIn !== undefined && object.expiresIn !== null)
-      ? Duration.fromPartial(object.expiresIn)
-      : undefined;
-    message.createdAt = object.createdAt ?? undefined;
-    return message;
-  },
-};
-
-function createBaseSpotifyTokens(): SpotifyTokens {
-  return { accessToken: "", refreshToken: "", expiresIn: undefined, createdAt: undefined };
-}
-
-export const SpotifyTokens: MessageFns<SpotifyTokens> = {
-  encode(message: SpotifyTokens, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
-    }
-    if (message.refreshToken !== "") {
-      writer.uint32(18).string(message.refreshToken);
-    }
-    if (message.expiresIn !== undefined) {
-      Duration.encode(message.expiresIn, writer.uint32(26).fork()).join();
-    }
-    if (message.createdAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): SpotifyTokens {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSpotifyTokens();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.accessToken = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.refreshToken = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.expiresIn = Duration.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): SpotifyTokens {
-    return {
-      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
-      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
-      expiresIn: isSet(object.expiresIn) ? Duration.fromJSON(object.expiresIn) : undefined,
-      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
-    };
-  },
-
-  toJSON(message: SpotifyTokens): unknown {
-    const obj: any = {};
-    if (message.accessToken !== "") {
-      obj.accessToken = message.accessToken;
-    }
-    if (message.refreshToken !== "") {
-      obj.refreshToken = message.refreshToken;
-    }
-    if (message.expiresIn !== undefined) {
-      obj.expiresIn = Duration.toJSON(message.expiresIn);
-    }
-    if (message.createdAt !== undefined) {
-      obj.createdAt = message.createdAt.toISOString();
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<SpotifyTokens>, I>>(base?: I): SpotifyTokens {
-    return SpotifyTokens.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<SpotifyTokens>, I>>(object: I): SpotifyTokens {
-    const message = createBaseSpotifyTokens();
-    message.accessToken = object.accessToken ?? "";
-    message.refreshToken = object.refreshToken ?? "";
-    message.expiresIn = (object.expiresIn !== undefined && object.expiresIn !== null)
-      ? Duration.fromPartial(object.expiresIn)
-      : undefined;
+    message.expiresIn = object.expiresIn ?? 0;
     message.createdAt = object.createdAt ?? undefined;
     return message;
   },

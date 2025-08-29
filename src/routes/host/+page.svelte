@@ -7,10 +7,11 @@
 
 	import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
 	import CustomButton from "$/components/button.svelte";
-	import Spotify from "$/lib/spotify";
-	import { bytes_to_uuid_str, get_storage_value, set_storage_value } from "$/lib/utils";
-	import Logo from "$/components/logo.svelte";
-	import { CommandResponse, HttpCommand } from "$/lib/proto/cmd";
+    import Logo from "$/components/logo.svelte";
+	import Spotify from "$lib/spotify";
+	import { bytes_to_uuid_str, get_storage_value, set_storage_value } from "$lib/utils";
+	import { CommandResponse, HttpCommand } from "$lib/proto/cmd";
+	import { roomErrorFromJSON, roomErrorToJSON } from "$lib/proto/room";
 
 	let autoname = $state(true);
 	let room = $state({
@@ -62,7 +63,7 @@
                 credentials: {
                     accessToken: tokens.access_token,
                     refreshToken: tokens.refresh_token,
-                    expiresIn: tokens.expires_in.toString(),
+                    expiresIn: tokens.expires_in,
                     createdAt: tokens.created_at.toString(),
                 },
             }
@@ -89,7 +90,8 @@
 
             if (res_cmd.room === undefined) {
                 console.error(res_cmd);
-                toast(`An error occured while creating the room. ${res_cmd.genericError}`);
+                // TODO: Switch on FromJSON for proper string error
+                toast(`An error occured while creating the room. ${res_cmd.genericError ?? roomErrorToJSON(roomErrorFromJSON(res_cmd.roomError))}`);
                 return;
             }
 

@@ -32,7 +32,7 @@ export interface HttpCommand_GetRoom {
 export interface HttpCommand_Credentials {
   accessToken: string;
   refreshToken: string;
-  expiresIn: string;
+  expiresIn: number;
   createdAt: string;
 }
 
@@ -72,6 +72,7 @@ export interface Command {
   /** Useless bool value */
   leaveRoom?: boolean | undefined;
   createRole?: Command_CreateRole | undefined;
+  renameRole?: Command_RenameRole | undefined;
 }
 
 export interface Command_Kick {
@@ -91,6 +92,11 @@ export interface Command_AddTrackToQueue {
 export interface Command_CreateRole {
   name: string;
   permissions: RolePermission | undefined;
+}
+
+export interface Command_RenameRole {
+  roleId: Uint8Array;
+  name: string;
 }
 
 export interface CommandResponse {
@@ -386,7 +392,7 @@ export const HttpCommand_GetRoom: MessageFns<HttpCommand_GetRoom> = {
 };
 
 function createBaseHttpCommand_Credentials(): HttpCommand_Credentials {
-  return { accessToken: "", refreshToken: "", expiresIn: "", createdAt: "" };
+  return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: "" };
 }
 
 export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
@@ -397,8 +403,8 @@ export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
     if (message.refreshToken !== "") {
       writer.uint32(18).string(message.refreshToken);
     }
-    if (message.expiresIn !== "") {
-      writer.uint32(26).string(message.expiresIn);
+    if (message.expiresIn !== 0) {
+      writer.uint32(24).uint32(message.expiresIn);
     }
     if (message.createdAt !== "") {
       writer.uint32(34).string(message.createdAt);
@@ -430,11 +436,11 @@ export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
           continue;
         }
         case 3: {
-          if (tag !== 26) {
+          if (tag !== 24) {
             break;
           }
 
-          message.expiresIn = reader.string();
+          message.expiresIn = reader.uint32();
           continue;
         }
         case 4: {
@@ -458,7 +464,7 @@ export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
     return {
       accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
       refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
-      expiresIn: isSet(object.expiresIn) ? globalThis.String(object.expiresIn) : "",
+      expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
       createdAt: isSet(object.createdAt) ? globalThis.String(object.createdAt) : "",
     };
   },
@@ -471,8 +477,8 @@ export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
     if (message.refreshToken !== "") {
       obj.refreshToken = message.refreshToken;
     }
-    if (message.expiresIn !== "") {
-      obj.expiresIn = message.expiresIn;
+    if (message.expiresIn !== 0) {
+      obj.expiresIn = Math.round(message.expiresIn);
     }
     if (message.createdAt !== "") {
       obj.createdAt = message.createdAt;
@@ -487,7 +493,7 @@ export const HttpCommand_Credentials: MessageFns<HttpCommand_Credentials> = {
     const message = createBaseHttpCommand_Credentials();
     message.accessToken = object.accessToken ?? "";
     message.refreshToken = object.refreshToken ?? "";
-    message.expiresIn = object.expiresIn ?? "";
+    message.expiresIn = object.expiresIn ?? 0;
     message.createdAt = object.createdAt ?? "";
     return message;
   },
@@ -600,6 +606,7 @@ function createBaseCommand(): Command {
     ban: undefined,
     leaveRoom: undefined,
     createRole: undefined,
+    renameRole: undefined,
   };
 }
 
@@ -643,6 +650,9 @@ export const Command: MessageFns<Command> = {
     }
     if (message.createRole !== undefined) {
       Command_CreateRole.encode(message.createRole, writer.uint32(106).fork()).join();
+    }
+    if (message.renameRole !== undefined) {
+      Command_RenameRole.encode(message.renameRole, writer.uint32(114).fork()).join();
     }
     return writer;
   },
@@ -758,6 +768,14 @@ export const Command: MessageFns<Command> = {
           message.createRole = Command_CreateRole.decode(reader, reader.uint32());
           continue;
         }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.renameRole = Command_RenameRole.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -782,6 +800,7 @@ export const Command: MessageFns<Command> = {
       ban: isSet(object.ban) ? Command_Ban.fromJSON(object.ban) : undefined,
       leaveRoom: isSet(object.leaveRoom) ? globalThis.Boolean(object.leaveRoom) : undefined,
       createRole: isSet(object.createRole) ? Command_CreateRole.fromJSON(object.createRole) : undefined,
+      renameRole: isSet(object.renameRole) ? Command_RenameRole.fromJSON(object.renameRole) : undefined,
     };
   },
 
@@ -826,6 +845,9 @@ export const Command: MessageFns<Command> = {
     if (message.createRole !== undefined) {
       obj.createRole = Command_CreateRole.toJSON(message.createRole);
     }
+    if (message.renameRole !== undefined) {
+      obj.renameRole = Command_RenameRole.toJSON(message.renameRole);
+    }
     return obj;
   },
 
@@ -852,6 +874,9 @@ export const Command: MessageFns<Command> = {
     message.leaveRoom = object.leaveRoom ?? undefined;
     message.createRole = (object.createRole !== undefined && object.createRole !== null)
       ? Command_CreateRole.fromPartial(object.createRole)
+      : undefined;
+    message.renameRole = (object.renameRole !== undefined && object.renameRole !== null)
+      ? Command_RenameRole.fromPartial(object.renameRole)
       : undefined;
     return message;
   },
@@ -1141,6 +1166,82 @@ export const Command_CreateRole: MessageFns<Command_CreateRole> = {
     message.permissions = (object.permissions !== undefined && object.permissions !== null)
       ? RolePermission.fromPartial(object.permissions)
       : undefined;
+    return message;
+  },
+};
+
+function createBaseCommand_RenameRole(): Command_RenameRole {
+  return { roleId: new Uint8Array(0), name: "" };
+}
+
+export const Command_RenameRole: MessageFns<Command_RenameRole> = {
+  encode(message: Command_RenameRole, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.roleId.length !== 0) {
+      writer.uint32(10).bytes(message.roleId);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Command_RenameRole {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommand_RenameRole();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.roleId = reader.bytes();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Command_RenameRole {
+    return {
+      roleId: isSet(object.roleId) ? bytesFromBase64(object.roleId) : new Uint8Array(0),
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+    };
+  },
+
+  toJSON(message: Command_RenameRole): unknown {
+    const obj: any = {};
+    if (message.roleId.length !== 0) {
+      obj.roleId = base64FromBytes(message.roleId);
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Command_RenameRole>, I>>(base?: I): Command_RenameRole {
+    return Command_RenameRole.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Command_RenameRole>, I>>(object: I): Command_RenameRole {
+    const message = createBaseCommand_RenameRole();
+    message.roleId = object.roleId ?? new Uint8Array(0);
+    message.name = object.name ?? "";
     return message;
   },
 };
