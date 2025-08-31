@@ -42,13 +42,13 @@
             set_storage_value({ user_id: null });
         }
 
-        if (session == null && unauthorized_paths.find(r => navigate.to?.url.pathname.match(r))) {
+        if (session === null && unauthorized_paths.find(r => navigate.to?.url.pathname.match(r))) {
             toast("You need to be connected to do that, please log in first");
             return await goto("/");
         }
 
         // This avoids the redirects and cleans the cache on server redirect
-        if (navigate.to?.route?.id == "/" && navigate.type == "goto") {
+        if (navigate.to?.route?.id === "/" && navigate.type === "goto") {
             set_storage_value({ current_room: null, user: null });
 
             return;
@@ -60,12 +60,12 @@
             return;
         }
         const room = get_storage_value("current_room");
-        if (room == null) return;
+        if (room === null) return;
 
         const user = get_storage_value("user");
-        if (user == null) return set_storage_value({ current_room: null });
+        if (user === null) return set_storage_value({ current_room: null });
 
-        const room_user = room.users.find(u => u.id == user.id);
+        const room_user = room.users.find(u => u.id === user.id);
         if (!room_user) return set_storage_value({ current_room: null, user: null });
 
         console.log(room)

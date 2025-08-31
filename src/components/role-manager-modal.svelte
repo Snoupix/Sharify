@@ -3,7 +3,7 @@
 	import type { Snippet } from "svelte";
 	import type { Writable } from "svelte/store";
 	import { toast } from "svelte-sonner";
-	import { Check } from "lucide-svelte";
+	import { Check, ChevronDown } from "lucide-svelte";
     import { Select } from "bits-ui";
 
     import Button from "$/components/button.svelte";
@@ -163,17 +163,14 @@
 {#snippet new_role_perms_trigger()}
     <Button
         title={new_role_perms}
-        class_extended="text-main-content w-full overflow-x-hidden text-ellipsis text-nowrap">
-        {#if new_role_perms.length === 0}
-            Permissions
-        {:else}
-            Perms: {new_role_perms}
-        {/if}
+        class_extended="block-ruby text-main-content w-full overflow-x-hidden text-ellipsis text-nowrap">
+        Permissions {new_role_perms}
+        <ChevronDown class="stroke-main-content" />
     </Button>
 {/snippet}
 
 {#snippet role_perms_trigger()}
-    <Button>Permissions</Button>
+    <Button class_extended="flex flex-row justify-center items-center gap-2">Permissions<ChevronDown class="stroke-main-content" /></Button>
 {/snippet}
 
 <div class="roles">

@@ -135,39 +135,6 @@
                 <p>{get_user_role($room_data, user.roleId)?.name ?? "Role not found"}</p>
             </div>
         </div>
-        <div class="client_card">
-            <div>
-                <span>Username:</span>
-                <span>{user.username}</span>
-            </div>
-            <div>
-                <span>Status:</span>
-                <span>{user.isConnected ? "Online" : "Offline"}</span>
-            </div>
-            <div>
-                <span>Privileges:</span>
-                <span>
-                    {get_user_role($room_data, user.roleId)?.name ?? "Role not found"}
-                </span>
-            </div>
-            <!-- TODO: Compare user role perms -->
-            {#if current_user != null && user.id != current_user.id && (get_user_role($room_data, current_user.roleId)?.permissions?.canManageUsers ?? false)}
-                <div>
-                    <CustomButton onclick={() => kick_user(user)}
-                        >Kick</CustomButton>
-                    <CustomButton onclick={() => ban_user(user)}
-                        >Ban</CustomButton>
-                    <!-- {#if user.privileges == Privileges.User}
-                        <CustomButton on:click={() => promote_client(user)}
-                            >Promote to Moderator</CustomButton>
-                    {/if}
-                    {#if user.privileges == Privileges.Moderator}
-                        <CustomButton on:click={() => demote_client(user)}
-                            >Demote to User</CustomButton>
-                    {/if} -->
-                </div>
-            {/if}
-        </div>
     {/each}
 
     {#if show_modal}

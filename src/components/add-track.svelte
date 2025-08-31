@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toast } from "svelte-sonner";
-	import { X, Search, Plus } from "lucide-svelte";
+	import { X, Plus } from "lucide-svelte";
 
     import CustomButton from "$/components/button.svelte";
     import { leave_room_cmd, send_ws_command } from "$/lib/ws_impl";
@@ -101,7 +101,7 @@
     <hr />
     <div class="search_input_wrapper">
         <input
-            class="input"
+            class="input px-2"
             title="Example: spotify:track:4PTG3Z6ehGkBFwjybzWkR8 or https://open.spotify.com/..."
             placeholder="Add a song by Spotify URI"
             bind:value={url_uri_input} />

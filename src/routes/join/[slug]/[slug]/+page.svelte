@@ -7,7 +7,7 @@
 
 	import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
     import type { PageProps } from "./$types";
-    import { bytes_to_uuid_str, get_storage_value, set_storage_value } from "$lib/utils";
+    import { bytes_to_uuid_str, get_storage_value, leave_room, set_storage_value } from "$lib/utils";
 	import { CommandResponse, HttpCommand } from "$lib/proto/cmd";
 	import { roomErrorFromJSON, roomErrorToJSON } from "$lib/proto/room";
 
@@ -21,7 +21,7 @@
         if (!data || !data.room) {
             console.log(data);
             toast.error("Error: Room not found");
-            return await goto("/");
+            return await leave_room();
         }
 
         if (data.session?.user?.name) {
@@ -42,7 +42,7 @@
 
         if (user_id === null) {
             toast("Unexpected error: You're not logged in");
-            return await goto("/");
+            return await leave_room();
         }
 
 		const command: HttpCommand = {
@@ -78,12 +78,6 @@
                 toast.error(`An error occured while joining the room. ${res_cmd.genericError ?? roomErrorToJSON(roomErrorFromJSON(res_cmd.roomError))}`);
                 return;
             }
-
-            /* set_storage_value({ user: res_cmd.room.users[0], current_room: res_cmd.room });
-
-            toast(`Successfully created party ${res_cmd.room.name}!`);
-
-            await goto(`/room/${bytes_to_uuid_str(res_cmd.room.id)}`); */
 
             set_storage_value({ user: res_cmd.room.users.find(u => u.username === username)!, current_room: res_cmd.room });
 

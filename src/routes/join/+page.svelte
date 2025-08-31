@@ -3,12 +3,12 @@
     import CustomButton from "$/components/button.svelte";
     import { goto } from "$app/navigation";
 
-    let room_id = "";
-    let room_password = "";
-    let error = "";
+    let room_id = $state("");
+    let room_password = $state("");
+    let error = $state("");
 
     async function join_room() {
-        if (room_id.trim() == "" || room_password.trim() == "") {
+        if (room_id.trim().length !== 0 || room_password.trim().length !== 0) {
             error = "Room ID and Room password must not be empty";
             return;
         }
@@ -19,20 +19,22 @@
 
 <section>
     <Logo class_extension="mb-4" />
-    <input type="text" placeholder="Room ID" bind:value={room_id} />
-    <input type="text" placeholder="Room password" bind:value={room_password} />
-    {#if error != ""}
+    <input class="input" type="text" placeholder="Room ID" bind:value={room_id} />
+    <input class="input" type="text" placeholder="Room password" bind:value={room_password} />
+    {#if error !== ""}
         <span class="text-red-500">{error}</span>
     {/if}
     <CustomButton onclick={join_room}>Join party</CustomButton>
 </section>
 
 <style lang="postcss">
+    @reference "$/app.css";
+
     section {
         @apply m-auto w-4/12 h-screen flex flex-col gap-6 justify-center items-center;
 
-        :global(> input) {
-            @apply font-content text-base placeholder:text-main-content text-main-content bg-main-color-hover ring-main-color border-none outline-none w-[25rem];
+        input {
+            @apply font-content text-base placeholder:text-main-content text-main-content bg-main-hover ring-main border-none outline-none w-[25rem];
         }
     }
 </style>

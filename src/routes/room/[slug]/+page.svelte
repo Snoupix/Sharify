@@ -1,6 +1,5 @@
 <script lang="ts">
 	import websocket from "websocket";
-	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { getContext, hasContext, onDestroy, onMount } from "svelte";
 	import type { Writable } from "svelte/store";
@@ -112,7 +111,7 @@
 		const pathname_split = page.url.pathname.split("/");
 
 		if (pathname_split.length !== 3) {
-			return await goto("/");
+            return await leave_room();
 		}
 
 		const path_room_id = pathname_split[pathname_split.length - 1];
@@ -120,7 +119,7 @@
 
 		if (user_id === null) {
 			toast("Unexpected error: You're not logged in", { duration: 2500 });
-			return await goto("/");
+            return await leave_room();
 		}
 
 		let room_id;
@@ -128,7 +127,7 @@
 			room_id = uuid.parse(path_room_id);
 		} catch {
 			toast("Unexpected error: Malformated Room UUID", { duration: 2500 });
-			return await goto("/");
+            return await leave_room();
 		}
 
 		init_ws(room_id, user_id, () => undefined, on_ws_close, on_ws_error, on_ws_message);
@@ -136,15 +135,15 @@
 
 	async function on_ws_error(e: Error) {
 		console.error("Unable to connect to server WebSocket, redirecting...", e);
-		await goto("/");
+        return await leave_room();
 	}
 
     async function on_ws_close(close_event: websocket.ICloseEvent) {
         console.log("[DEBUG WS] Closed", close_event);
 
-        if (!!close_event.reason && close_event.reason.length !== 0) {
+        if (close_event.reason?.length !== 0) {
             toast.error(close_event.reason);
-            await goto("/");
+            return await leave_room();
         }
 
         if (ws_conn_tries >= 2) {
@@ -266,6 +265,7 @@
                             case RoomError.ROOM_NOT_FOUND:
                                 error_msg = "Unexpected error: Room not found";
                                 // TODO goto("/") ?
+                                // return await leave_room();
                                 break;
                             case RoomError.ROOM_USER_NOT_FOUND:
                                 error_msg = "Room user not found";

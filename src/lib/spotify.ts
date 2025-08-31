@@ -94,9 +94,6 @@ export class SpotifyHandler {
         }
     }
 
-    /**
-     * Can throw Error on failed request, bad status code or empty body
-     */
     private async CallAuthorizationAPI(body: URLSearchParams) {
         try {
             const res = await fetch("https://accounts.spotify.com/api/token", {
@@ -108,17 +105,14 @@ export class SpotifyHandler {
             });
 
             if (res.status !== 200) {
-                const error = new Error(
+                throw new Error(
                     `[CallAuthorizationAPI ${res.status}] Error: ${res.statusText} Response text: ${await res.text()}; Body supplied: ${body}`,
                 );
-                console.error(error);
-                throw error;
             }
 
             const json: SpotifyTokens = await res.json();
 
             if (!json || !json.access_token) {
-                console.error(res);
                 throw new Error(
                     `[CallAuthorizationAPI] Error: empty body. Response json: ${json}; Body supplied: ${body}`,
                 );
@@ -127,6 +121,7 @@ export class SpotifyHandler {
             this.ProcessTokens(json);
         } catch (error) {
             console.error(error);
+            this.Disconnect();
         }
     }
 

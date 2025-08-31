@@ -1,35 +1,36 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { SquareArrowOutUpRight } from "lucide-svelte";
+	import { LoaderCircle, SquareArrowOutUpRight } from "lucide-svelte";
 	import { goto } from "$app/navigation";
-	import { Label, Button } from "bits-ui";
 	import { toast } from "svelte-sonner";
 
 	import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
-	import CustomButton from "$/components/button.svelte";
+	import Button from "$/components/button.svelte";
     import Logo from "$/components/logo.svelte";
 	import Spotify from "$lib/spotify";
 	import { bytes_to_uuid_str, get_storage_value, set_storage_value } from "$lib/utils";
 	import { CommandResponse, HttpCommand } from "$lib/proto/cmd";
 	import { roomErrorFromJSON, roomErrorToJSON } from "$lib/proto/room";
+    import type { Nullable } from "$lib/types";
+	import { tick } from "svelte";
 
 	let autoname = $state(true);
 	let room = $state({
 		username: "",
 		room_name: "",
 	});
-	let spotify_link: Promise<string | Error> | undefined = $state();
+    // TODO FIXME: If user loads its page on /host, it won't show the form
+    // even if s.he is connected to Spotify. Because it reacts on the $Spotify store
+    // that can be either the class instance or null. But the inner is_ready is not
+    // reactive. Maybe wrap it in a .svelte.ts to use $state rune ?
+	let spotify_link = $derived($Spotify?.GenerateAuthLink?.bind($Spotify));
+    let room_name_el: Nullable<HTMLInputElement> = $state(null);
 
 	$effect(() => {
-		if (autoname && room.username.trim() != "") {
-			room.room_name = `${room.username}'s party`;
-		} else if (autoname && room.username.trim() == "") {
+		if (autoname && room.username.trim().length !== 0) {
+			room.room_name = `${room.username}'s room`;
+		} else if (autoname && room.username.trim().length === 0) {
 			room.room_name = "";
 		}
-	});
-
-	onMount(async () => {
-		spotify_link = $Spotify?.GenerateAuthLink();
 	});
 
 	async function create_room(e: SubmitEvent) {
@@ -108,56 +109,66 @@
 </script>
 
 <section>
-	{#if $Spotify != null && $Spotify.is_ready}
+	{#if $Spotify !== null && $Spotify.is_ready}
 		<form onsubmit={create_room}>
 			<Logo animate={false} />
 			<div>
-				<Label.Root for="username">Username</Label.Root>
+				<label for="username">Username</label>
 				<input
-					class="focus-visible:ring-main-color border-main-color bg-main-color-hover px-2 text-main-content placeholder:text-main-content"
+					class="input border-main px-2 !text-main placeholder:text-main"
 					type="text"
 					id="username"
 					placeholder="Username"
 					bind:value={room.username} />
 			</div>
 			<div>
-				<Label.Root for="party_name">Party name</Label.Root>
+				<label for="room-name">Room name</label>
 				<div class="flex w-full flex-row gap-4">
 					<input
-						class="focus-visible:ring-main-color border-main-color bg-main-color-hover px-2 text-main-content placeholder:text-main-content"
+                        bind:this={room_name_el}
+						class="input border-main px-2 !text-main placeholder:text-main"
 						disabled={autoname}
 						type="text"
-						id="party_name"
-						placeholder="Party name"
+						id="room-name"
+						placeholder="Room name"
 						bind:value={room.room_name} />
 					{#if autoname}
-						<Button.Root
-							class="border-main-color bg-main-color-hover text-main-content"
-							onclick={() => (autoname = false)}>Rename</Button.Root>
+						<Button
+							class_extended="border-main-color bg-main-color-hover text-main-content"
+							onclick={async () => {
+                                autoname = false;
+                                await tick();
+                                room_name_el?.focus();
+                            }}>Rename</Button>
 					{:else}
-						<Button.Root
-							class="border-main-color bg-main-color-hover text-main-content"
-							onclick={() => (autoname = true)}>Auto name</Button.Root>
+						<Button
+							class_extended="border-main-color bg-main-color-hover text-main-content"
+							onclick={() => (autoname = true)}>Auto name</Button>
 					{/if}
 				</div>
 			</div>
 			<div>
-				<CustomButton type="submit">Create the room</CustomButton>
+				<Button type="submit">Create the room</Button>
 			</div>
 		</form>
 	{:else}
 		<div>
 			<Logo />
 			<p>First, you need to link Spotify to Sharify !</p>
-			{#await spotify_link then link}
-				{#if typeof link == "string"}
-					<a href={link}>Here you go <SquareArrowOutUpRight class="ml-2 w-5 stroke-neutral-200" /></a>
-				{:else}
-					<h2>Generated link error: {link} please contact Snoupix</h2>
-				{/if}
-			{:catch e}
-				<h2>Unexpected error: {e} please contact Snoupix</h2>
-			{/await}
+            {#await spotify_link?.()}
+                <Button disabled={true} class_extended="flex flex-row justify-center items-center gap-4 w-50">
+                    Loading
+                    <LoaderCircle class="mr-2 h-4 w-4 animate-spin text-main-content stroke-main-content" />
+                </Button>
+            {:then link}
+                {#if typeof link === "string"}
+                    <a href={link}>Here you go <SquareArrowOutUpRight class="ml-2 w-5 stroke-main-content" /></a>
+                {:else}
+                    <h2>Generated link error: {link} please contact Snoupix</h2>
+                {/if}
+            {:catch e}
+                <h2>Unexpected error: {e} please contact Snoupix</h2>
+            {/await}
 		</div>
 	{/if}
 </section>
@@ -174,11 +185,11 @@
 			> div {
 				@apply flex w-full flex-col items-start justify-center gap-2;
 
-				:global(> *) {
+				* {
 					@apply font-content text-xl;
 				}
 
-				:global(> :first-child) {
+				> :first-child {
 					@apply text-lg;
 				}
 			}

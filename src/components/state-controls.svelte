@@ -10,13 +10,17 @@
 		Volume2,
 		VolumeX,
         Mic,
+		EllipsisVertical,
+		SquareArrowOutUpRight,
 	} from "lucide-svelte";
 	import { toast } from "svelte-sonner";
     import { Skeleton } from "$/components/ui/skeleton";
+	import { DropdownMenu } from "bits-ui";
 
     import { send_ws_command } from "$/lib/ws_impl";
 	import CustomButton from "$/components/button.svelte";
 	import {
+	click_link,
 		format_time,
 		get_user_role,
 		write_to_clipboard,
@@ -104,8 +108,7 @@
             <Skeleton class="w-60 h-4" />
         </div>
         <div class="spotify-links">
-            <Skeleton class="w-24 h-6" />
-            <Skeleton class="w-24 h-6" />
+            <Skeleton class="w-6 h-6" />
         </div>
     </div>
     <Skeleton class="w-7/12 h-2" />
@@ -129,23 +132,41 @@
             <span class="main-color text-lg">{$spotify_data!.playback_state?.artistName}</span>
         </div>
         <div class="spotify-links">
-            <a
-                href={`https://open.spotify.com/track/${$spotify_data!.playback_state?.trackId}`}
-                target="_blank">
-                <CustomButton class_extended="xl:text-sm hover:text-main-content"
-                    >Spotify link</CustomButton>
-            </a>
-            <CustomButton
-                title="Copy Spotify URI to clipboard"
-                onclick={() =>
-                    write_to_clipboard(
-                        `spotify:track:${$spotify_data?.playback_state?.trackId}`,
-                        () => {
-                            toast("Spotify URI copied to clipboard!");
-                        },
-                        console.error,
-                    )}
-                class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger
+                    class="round"
+                >
+                    <EllipsisVertical />
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content>
+                        <DropdownMenu.Item>
+                            <button class="flex flex-row justify-center items-center gap-2 h-8" onclick={click_link}>
+                                <a
+                                    class="xl:text-sm hover:text-main-content"
+                                    href={`https://open.spotify.com/track/${$spotify_data!.playback_state?.trackId}`}
+                                    target="_blank">
+                                    Spotify link
+                                </a>
+                                <SquareArrowOutUpRight class="cursor-pointer w-5 stroke-main" />
+                            </button>
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item>
+                            <button
+                                class="cursor-pointer xl:text-sm hover:text-main-content h-8"
+                                title="Copy Spotify URI to clipboard"
+                                onclick={() =>
+                                    write_to_clipboard(
+                                        `spotify:track:${$spotify_data?.playback_state?.trackId}`,
+                                        () => {
+                                            toast("Spotify URI copied to clipboard!");
+                                        },
+                                        console.error,
+                                    )}>Spotify uri</button>
+                        </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
         </div>
     </div>
     <span class="main-color italic"
@@ -210,7 +231,7 @@
     @reference "$/app.css";
 
     .state-controls {
-        @apply m-auto py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold !overflow-y-scroll;
+        @apply relative m-auto py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold !overflow-y-scroll;
 
         .title {
             @apply w-full h-2/12;
@@ -232,25 +253,25 @@
             }
 
             .spotify-links {
-                @apply absolute top-0 right-0 flex flex-col items-end justify-center gap-4 mr-4 mt-2;
+                @apply absolute top-0 right-0 flex flex-col items-end justify-center gap-4 mr-4;
             }
         }
 
         .player-controls {
             @apply h-4/12 flex flex-row items-center justify-center gap-4;
+        }
+    }
 
-            :global(.round) {
-                @apply border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
+    :global(.round) {
+        @apply cursor-pointer border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
 
-                :global(svg) {
-                    @apply w-full transition-all duration-500;
-                }
+        :global(svg) {
+            @apply w-full transition-all duration-500;
+        }
 
-                &:hover {
-                    :global(svg) {
-                        @apply stroke-main-content;
-                    }
-                }
+        &:hover {
+            :global(svg) {
+                @apply stroke-main-content;
             }
         }
     }
