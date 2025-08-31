@@ -110,7 +110,7 @@
 <section>
 	{#if $Spotify != null && $Spotify.is_ready}
 		<form onsubmit={create_room}>
-			<Logo />
+			<Logo animate={false} />
 			<div>
 				<Label.Root for="username">Username</Label.Root>
 				<input

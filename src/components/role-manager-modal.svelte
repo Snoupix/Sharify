@@ -115,7 +115,7 @@
             r.name = name;
         });
 
-        // await send_ws_command({ renameRole: name });
+        await send_ws_command({ renameRole: { name, roleId: role.id } });
     }
 
     async function delete_role() {
@@ -147,7 +147,7 @@
                 {#each perms_iter(perm_obj_ptr) as perm, i (i)}
                     <Select.Item
                         value={perm}
-                        class="cursor-pointer w-full px-4 py-2 flex flex-row justify-start items-center gap-2 hover:font-bold">
+                        class="cursor-pointer w-full px-4 py-2 flex flex-row justify-start items-center gap-2 hover:scale-105">
                         {#if perm_obj_ptr[perm]}
                             <Check />
                         {/if}

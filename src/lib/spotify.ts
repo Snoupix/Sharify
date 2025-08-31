@@ -1,16 +1,11 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
-import type { UserProfile, Device } from "@spotify/web-api-ts-sdk";
+import type { UserProfile } from "@spotify/web-api-ts-sdk";
 import { env } from "$env/dynamic/public";
 import { writable } from "svelte/store";
 
-import { get_storage_value, set_storage_value, type SpotifyTokens } from "$/lib/utils";
+import { get_storage_value, set_storage_value, type SpotifyTokens } from "$lib/utils";
 
-type MaxInt<T extends number> = number extends T ? number : _Range<T, []>;
-type _Range<T extends number, R extends unknown[]> = R["length"] extends T
-    ? R[number] | T
-    : _Range<T, [R["length"], ...R]>;
-
-const tokens_default: SpotifyTokens = {
+const TOKENS_DEFAULT: SpotifyTokens = {
     access_token: "",
     refresh_token: "",
     expires_in: 0,
@@ -21,7 +16,7 @@ export class SpotifyHandler {
     public static readonly BACK_API = `${env.PUBLIC_SERVER_ADDR_DEV}/v1`; // TODO: handle public server addr
 
     private sdk: SpotifyApi | null = null;
-    private tokens = tokens_default;
+    private tokens = TOKENS_DEFAULT;
     private client_id = "";
     private redirectURI = env.PUBLIC_SPOTIFY_REDIRECT;
     private scopes = [
@@ -39,12 +34,11 @@ export class SpotifyHandler {
     private code_verifier = "";
     private code_challenge = "";
 
-    public current_device: Device | null = null;
     public current_profile: UserProfile | null = null;
     public is_ready = false;
 
     constructor(client_id: string) {
-        if (client_id == "") {
+        if (client_id.length === 0) {
             throw new Error("No client id provided");
         }
 
@@ -68,7 +62,7 @@ export class SpotifyHandler {
     public async GenerateAuthLink() {
         try {
             let res = await fetch(`${SpotifyHandler.BACK_API}/code_verifier`, { method: "GET" });
-            if (res.status == 429) {
+            if (res.status === 429) {
                 throw new Error("Error: Too many tries, please try again later");
             }
             this.code_verifier = await res.text();
@@ -76,7 +70,7 @@ export class SpotifyHandler {
             set_storage_value({ code_verifier: this.code_verifier });
 
             res = await fetch(`${SpotifyHandler.BACK_API}/code_challenge/${this.code_verifier}`, { method: "GET" });
-            if (res.status == 429) {
+            if (res.status === 429) {
                 throw new Error("Error: Too many tries, please try again later");
             }
             this.code_challenge = await res.text();
@@ -94,9 +88,9 @@ export class SpotifyHandler {
             }).toString();
 
             return url.toString();
-        } catch (error: any) {
+        } catch (error) {
             console.error(error);
-            return new Error(error);
+            return new Error(error as string);
         }
     }
 
@@ -113,7 +107,7 @@ export class SpotifyHandler {
                 body,
             });
 
-            if (res.status != 200) {
+            if (res.status !== 200) {
                 const error = new Error(
                     `[CallAuthorizationAPI ${res.status}] Error: ${res.statusText} Response text: ${await res.text()}; Body supplied: ${body}`,
                 );
@@ -136,15 +130,17 @@ export class SpotifyHandler {
         }
     }
 
-    // TODO: Fix refresh token trigger
     public ProcessTokens(data: Partial<SpotifyTokens>) {
         if (this.timeout) {
             clearTimeout(this.timeout);
         }
 
-        this.tokens = { ...tokens_default, ...data };
+        this.tokens = { ...TOKENS_DEFAULT, ...data };
         this.tokens.created_at = data.created_at ?? Date.now();
 
+        // Only handle the Refresh Token at first load, then if it's old, get a new, if its valid,
+        // let the backend handle it
+        //
         // expires_in (usually 3k6s, so) 3600 * 1000 in ms => 1h ; (1000 * 60 * 60) 60 min => 1h as default
         const expires_in =
             this.tokens.expires_in && this.tokens.expires_in > 0 ? this.tokens.expires_in * 1000 : 1000 * 60 * 60;
@@ -154,14 +150,13 @@ export class SpotifyHandler {
             return this.RefreshAccessToken();
         }
 
-        this.timeout = setTimeout(this.RefreshAccessToken, msDiff);
         this.TokenFetchingEnded();
     }
 
     public FetchAccessToken(code: string) {
         const code_verifier = get_storage_value("code_verifier");
 
-        if (code_verifier == null) {
+        if (code_verifier === null) {
             throw new Error("No code verifier on local storage");
         }
 
@@ -187,54 +182,53 @@ export class SpotifyHandler {
     }
 
     public async TokenFetchingEnded() {
-        if (this.tokens.access_token != tokens_default.access_token) {
+        if (this.tokens.access_token !== TOKENS_DEFAULT.access_token) {
             set_storage_value({ spotify_tokens: this.tokens });
         }
 
         this.InitSdk();
         this.is_ready = true;
 
-        const current_device = get_storage_value("spotify_device");
-
         try {
-            const [{ devices }, user] = await Promise.all([
-                this.sdk!.player.getAvailableDevices(),
-                this.sdk!.currentUser.profile(),
-            ]);
+            const user = await 
+                this.sdk!.currentUser.profile();
 
-            this.current_device =
-                (current_device
-                    ? devices.find(device => device.id == current_device.id)
-                    : devices.find(device => device.is_active)) ?? null;
             this.current_profile = user;
-
-            if (this.current_device) {
-                set_storage_value({ spotify_device: this.current_device });
-            }
 
             set_storage_value({ spotify_profile: user });
         } catch (error) {
             //location.replace(this.GetAuthLink());
-            console.error(error);
+            console.warn(error);
+
+            this.Disconnect();
+
             return;
         }
     }
 
     private LinkToURI(link: string) {
-        return `spotify:track:${link.split("/").pop()}`.split("?").length > 1
-            ? `spotify:track:${link.split("/").pop()?.split("?").shift()}`
-            : `spotify:track:${link.split("/").pop()}`;
+        const id = link.split("/").pop();
+
+        return `spotify:track:${id}`.split("?").length > 1
+            // Has query
+            ? `spotify:track:${id?.split("?").shift()}`
+            : `spotify:track:${id}`;
     }
 
     public GetTokens() {
         return this.tokens;
     }
 
-    private SetTokens() {
+    public SetTokens() {
+        if (this.is_ready) {
+            return;
+        }
+
         const tokens = get_storage_value("spotify_tokens");
 
-        if (tokens == null) {
-            throw new Error("No Spotify tokens on local storage");
+        if (tokens === null) {
+            console.warn("No Spotify tokens on local storage");
+            return;
         }
 
         this.ProcessTokens(tokens);
@@ -248,152 +242,6 @@ export class SpotifyHandler {
         this.SetTokens();
     }
 
-    static ExceededQota<T extends { status: number }>(request: T): boolean {
-        // Handle retry-after HEADER
-
-        return request.status == 429;
-    }
-
-    private HandleRequests(_url: string, _options: RequestInit, response: Response) {
-        if (SpotifyHandler.ExceededQota(response)) {
-            throw new Error("Spotify API Quota excedeed, be patient");
-        }
-    }
-
-    Disconnect() {
-        this.is_ready = false;
-        this.tokens = tokens_default;
-        this.current_device = null;
-        this.current_profile = null;
-        this.sdk = null;
-        this.code_verifier = "";
-        this.code_challenge = "";
-
-        set_storage_value({ spotify_tokens: null, code_verifier: null, spotify_profile: null, spotify_device: null });
-    }
-
-    async Pause() {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.pausePlayback(this.current_device?.id ?? "");
-
-            return this;
-        } catch (error) {
-            throw new Error(`There was an error pausing track. (${error})`);
-        }
-    }
-
-    async Resume() {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.startResumePlayback(this.current_device?.id ?? "");
-
-            return this;
-        } catch (error) {
-            throw new Error(`There was an error resuming track. (${error})`);
-        }
-    }
-
-    async AddNextTrack(link: string) {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.addItemToPlaybackQueue(this.LinkToURI(link), this.current_device?.id ?? "");
-
-            return;
-        } catch (error) {
-            throw new Error(`There was an error adding track to the queue. (${error})`);
-        }
-    }
-
-    async SkipToPrevious() {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.skipToPrevious(this.current_device?.id ?? "");
-
-            return this;
-        } catch (error) {
-            throw new Error(`There was an error skiping to previous track. (${error})`);
-        }
-    }
-
-    async SkipToNext() {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.skipToNext(this.current_device?.id ?? "");
-
-            return this;
-        } catch (error) {
-            throw new Error(`There was an error skiping to next track. (${error})`);
-        }
-    }
-
-    async GetRecentlyPlayedTracks(limit: MaxInt<50>) {
-        this.EnsureInitialized();
-        try {
-            const { items } = await this.sdk!.player.getRecentlyPlayedTracks(limit);
-
-            return items;
-        } catch (error) {
-            throw new Error(`There was an error showing the ${limit} recently played tracks. (${error})`);
-        }
-    }
-
-    async SetVolume(value: number) {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.setPlaybackVolume(value, this.current_device?.id ?? "");
-
-            return;
-        } catch (error) {
-            throw new Error(`There was an error setting volume to ${value}. (${error})`);
-        }
-    }
-
-    async GetCurrentTrackData() {
-        this.EnsureInitialized();
-        try {
-            const state = await this.sdk!.player.getPlaybackState();
-
-            return state;
-        } catch (error) {
-            throw new Error(`There was an error getting current playback response (${error})`);
-        }
-    }
-
-    async SearchTracks(input: string) {
-        this.EnsureInitialized();
-        try {
-            // @ts-expect-ignore
-            const res = await this.sdk!.search(input, ["tracks"], undefined, 10);
-
-            return res;
-        } catch (error) {
-            throw new Error(`There was an error searching for tracks with ${input} (${error})`);
-        }
-    }
-
-    async GetDevices() {
-        this.EnsureInitialized();
-        try {
-            const { devices } = await this.sdk!.player.getAvailableDevices();
-
-            return devices;
-        } catch (error) {
-            throw new Error(`There was an error searching for devices (${error})`);
-        }
-    }
-
-    async Seek(position: number) {
-        this.EnsureInitialized();
-        try {
-            await this.sdk!.player.seekToPosition(position, this.current_device?.id ?? "");
-
-            return;
-        } catch (error) {
-            throw new Error(`There was an error seeking to ${position} (${error})`);
-        }
-    }
-
     async GetProfile(): Promise<UserProfile | Error> {
         this.EnsureInitialized();
         try {
@@ -405,27 +253,34 @@ export class SpotifyHandler {
         }
     }
 
-    async GetCurrentQueueData() {
-        this.EnsureInitialized();
-        try {
-            const queue = await this.sdk!.player.getUsersQueue();
+    static ExceededQota<T extends { status: number }>(request: T): boolean {
+        // Handle retry-after HEADER
 
-            return queue;
-        } catch (error) {
-            throw new Error(`There was an error getting current queue data (${error})`);
+        return request.status === 429;
+    }
+
+    private HandleRequests(_url: string, _options: RequestInit, response: Response) {
+        if (SpotifyHandler.ExceededQota(response)) {
+            throw new Error("Spotify API Quota excedeed, be patient");
         }
     }
 
-    // TODO
-    SetDevice(device: Device) {
-        this.current_device = device;
+    Disconnect() {
+        this.is_ready = false;
+        this.tokens = TOKENS_DEFAULT;
+        this.current_profile = null;
+        this.sdk = null;
+        this.code_verifier = "";
+        this.code_challenge = "";
+
+        set_storage_value({ spotify_tokens: null, code_verifier: null, spotify_profile: null });
     }
 }
 
 const store = writable<SpotifyHandler | null>(null);
 
 store.update(x => {
-    if (x != null) return x;
+    if (x !== null) return x;
 
     return new SpotifyHandler(env.PUBLIC_SPOTIFY_CLIENT_ID!);
 });

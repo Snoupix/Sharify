@@ -83,7 +83,7 @@
                 <span>Trying to reach server...{server_i > 1 ? ` (attempt ${server_i})` : ""}</span>
             {/if}
             <Button disabled={true} class_extended="flex flex-row justify-center items-center gap-4 w-50">
-                Please wait
+                Loading
                 <LoaderCircle class="mr-2 h-4 w-4 animate-spin text-main-content stroke-main-content" />
             </Button>
         {/if}

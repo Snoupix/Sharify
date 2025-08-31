@@ -64,6 +64,34 @@
     body {
         @apply bg-bg text-secondary;
     }
+
+    /* TODO: Impl proper colors and theme:values specifics */
+    .neon * {
+        --color-main: #27CEEE;
+        --color-main-hover: #EC4899;
+        --color-secondary: #22C55E;
+        --color-main-content: ##5D5965;
+        --color-main-clear: #EC4899;
+        --color-bg: #000000;
+    }
+
+    .light * {
+        --color-main: #450093;
+        --color-main-hover: #407EF5;
+        --color-secondary: #38965b;
+        --color-main-content: #4d5665;
+        --color-main-clear: #071221;
+        --color-bg: #f3f8fe;
+    }
+
+    .dark * {
+        --color-main: #ad00ad;
+        --color-main-hover: #8e278ead;
+        --color-secondary: #56285b;
+        --color-main-content: var(--color-neutral-100);
+        --color-main-clear: #8e2c8e;
+        --color-bg: #450093;
+    }
 }
 
 ::-webkit-scrollbar {
@@ -114,6 +142,10 @@
 :-ms-input-placeholder {
     text-align: center;
     color: var(--color-main);
+}
+
+.input {
+    @apply bg-bg text-main-content border border-main-hover rounded-md;
 }
 
 .loader {

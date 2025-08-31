@@ -109,6 +109,7 @@ export interface CommandResponse {
   spotifySearchResult?: TrackArray | undefined;
   spotifyRateLimited?: number | undefined;
   roleError?: RoleError | undefined;
+  newUserJoined?: string | undefined;
 }
 
 export interface CommandResponse_Kick {
@@ -1257,6 +1258,7 @@ function createBaseCommandResponse(): CommandResponse {
     spotifySearchResult: undefined,
     spotifyRateLimited: undefined,
     roleError: undefined,
+    newUserJoined: undefined,
   };
 }
 
@@ -1288,6 +1290,9 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     }
     if (message.roleError !== undefined) {
       writer.uint32(72).int32(message.roleError);
+    }
+    if (message.newUserJoined !== undefined) {
+      writer.uint32(82).string(message.newUserJoined);
     }
     return writer;
   },
@@ -1371,6 +1376,14 @@ export const CommandResponse: MessageFns<CommandResponse> = {
           message.roleError = reader.int32() as any;
           continue;
         }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.newUserJoined = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1395,6 +1408,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
         : undefined,
       spotifyRateLimited: isSet(object.spotifyRateLimited) ? globalThis.Number(object.spotifyRateLimited) : undefined,
       roleError: isSet(object.roleError) ? roleErrorFromJSON(object.roleError) : undefined,
+      newUserJoined: isSet(object.newUserJoined) ? globalThis.String(object.newUserJoined) : undefined,
     };
   },
 
@@ -1427,6 +1441,9 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     if (message.roleError !== undefined) {
       obj.roleError = roleErrorToJSON(message.roleError);
     }
+    if (message.newUserJoined !== undefined) {
+      obj.newUserJoined = message.newUserJoined;
+    }
     return obj;
   },
 
@@ -1452,6 +1469,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
       : undefined;
     message.spotifyRateLimited = object.spotifyRateLimited ?? undefined;
     message.roleError = object.roleError ?? undefined;
+    message.newUserJoined = object.newUserJoined ?? undefined;
     return message;
   },
 };

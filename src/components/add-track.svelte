@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toast } from "svelte-sonner";
-	import { X, Search } from "lucide-svelte";
+	import { X, Search, Plus } from "lucide-svelte";
 
     import CustomButton from "$/components/button.svelte";
     import { leave_room_cmd, send_ws_command } from "$/lib/ws_impl";
@@ -83,7 +83,7 @@
 <!-- TODO: Clear the input on search success -->
 {#snippet _search_input()}
     <input
-        class="bg-main-content"
+        class="input w-9/12"
         placeholder="Search a song by name"
         value={search_input}
         oninput={(e) => search_debounce(e.currentTarget.value)} />
@@ -94,17 +94,21 @@
 </div>
 {:else}
 <div class="search-wrapper">
+    <div class="title">
+        <h1><Plus class="fill-main" /> Add members</h1>
+    </div>
     {@render _search_input()}
+    <hr />
     <div class="search_input_wrapper">
         <input
-            class="bg-main-content"
+            class="input"
             title="Example: spotify:track:4PTG3Z6ehGkBFwjybzWkR8 or https://open.spotify.com/..."
             placeholder="Add a song by Spotify URI"
             bind:value={url_uri_input} />
-        <CustomButton
-            class_extended="font-montserrat text-base text-main-content bg-main-hover hover:bg-main-hover hover:scale-95"
+        <button
+            class="font-montserrat text-base text-main-content bg-main-hover hover:bg-main-hover hover:scale-95"
             title="Add song to the owner's queue"
-            onclick={() => add_track_to_queue_by_id(url_uri_input)}><Search class="stroke-white" /></CustomButton>
+            onclick={() => add_track_to_queue_by_id(url_uri_input)}>Add</button>
     </div>
 
     {#if search_results.length !== 0}
@@ -134,7 +138,19 @@
     @reference "$/app.css";
 
     .search-wrapper {
-        @apply py-4 flex flex-col items-center justify-start gap-2;
+        @apply py-4 flex flex-col items-center justify-center gap-4;
+
+        .title {
+            @apply w-full h-4/12;
+
+            h1, :global(.h1) {
+                @apply mt-2 ml-4 flex flex-row justify-start items-center gap-4 uppercase font-bold;
+            }
+        }
+
+        hr {
+            @apply border-main w-9/12;
+        }
 
         .search_input_wrapper {
             @apply flex w-full flex-row items-center justify-center gap-4;

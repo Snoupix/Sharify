@@ -4,16 +4,7 @@
 	import { page } from "$app/state";
 	import { getContext, hasContext, onDestroy, onMount } from "svelte";
 	import type { Writable } from "svelte/store";
-	import {
-		Circle,
-		Crown,
-		Eye,
-		EyeOff,
-		Link,
-		LoaderCircle,
-		Swords,
-		User,
-	} from "lucide-svelte";
+	import { LoaderCircle } from "lucide-svelte";
 	import { toast } from "svelte-sonner";
 	import * as uuid from "uuid";
 
@@ -45,6 +36,8 @@
         throw new Error("Unexpected error: Unable to get spotify data context, please contact Snoupix");
     }
 
+    const SPOTIFY_DATA_TIMEOUT_MS = 1000 * 20;
+
 	const room_data: Writable<Nullable<Room>> = getContext("RoomData");
 	const spotify_data: Writable<Nullable<SpotifyData>> = getContext("SpotifyData");
 
@@ -63,7 +56,11 @@
         data_is_ready_promise = custom_promise();
 
         toast.promise(
-            with_timeout(data_is_ready_promise.promise, "Timeout: Server didn't responded in time, try again later.", 5000),
+            with_timeout(
+                data_is_ready_promise.promise,
+                "Timeout: Server didn't responded in time, try again later.",
+                SPOTIFY_DATA_TIMEOUT_MS
+            ),
             {
                 duration: 10 * 1000,
                 loading: "Waiting for server data...",
@@ -114,14 +111,14 @@
 
 		const pathname_split = page.url.pathname.split("/");
 
-		if (pathname_split.length != 3) {
+		if (pathname_split.length !== 3) {
 			return await goto("/");
 		}
 
 		const path_room_id = pathname_split[pathname_split.length - 1];
 		const user_id = get_storage_value("user_id");
 
-		if (user_id == null) {
+		if (user_id === null) {
 			toast("Unexpected error: You're not logged in", { duration: 2500 });
 			return await goto("/");
 		}
@@ -144,6 +141,11 @@
 
     async function on_ws_close(close_event: websocket.ICloseEvent) {
         console.log("[DEBUG WS] Closed", close_event);
+
+        if (!!close_event.reason && close_event.reason.length !== 0) {
+            toast.error(close_event.reason);
+            await goto("/");
+        }
 
         if (ws_conn_tries >= 2) {
             return await on_ws_error(new Error("Failed to connect to server Websocket after 3 tries"));
@@ -175,6 +177,11 @@
                         // console.log($room_data);
                         if (current_user !== null && $room_data !== null) {
                             const user = $room_data.users.find((u) => u.id == current_user!.id)!;
+
+                            if (user === undefined) {
+                                console.error("Unexpected error: User not found in the room");
+                                return;
+                            }
 
                             if (!are_objects_equal(current_user, user)) {
                                 current_user = user;
@@ -293,6 +300,9 @@
                         toast.error(`Server error on WS Command ${cmd.genericError}`);
 
                         break;
+                    case "newUserJoined":
+                        toast(`User "${cmd.newUserJoined}" joined the room !`);
+                        break;
                     default:
                         console.error(`Unhandled case on WS CommandResponse "${key}": ${JSON.stringify(cmd)}`);
                 }
@@ -377,90 +387,39 @@
 			</CustomButton>
 		</div>
 	{:else}
-		<div>
-			<!-- TODO MOVE THIS TO NAVBAR ? <header>
-				<CustomButton
-					class_extended="xl:text-base text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-2"
-					onclick={leave_room}>
-					{#if current_user && get_user_role(current_user?.id)?.permissions?.canManageRoom}
-						Close the room
-					{:else}
-						Leave the room
-					{/if}
-				</CustomButton>
-				{#if show_link}
-					<div>
-						<input readonly value={get_party_link()} />
-						<CustomButton
-							class_extended="eye rounded-3xl!"
-							title="Hide link"
-							onclick={() => (show_link = false)}>
-							<EyeOff class="stroke-main-content hover:cursor-pointer" />
-						</CustomButton>
-					</div>
-				{:else}
-					<div>
-						<CustomButton onclick={copy_party_link}>
-							{"Copy party link "}
-							<Link class="ml-2 w-5 stroke-main-content hover:cursor-pointer" />
-						</CustomButton>
-						<CustomButton
-							class_extended="eye rounded-3xl!"
-							title="Show link"
-							onclick={() => (show_link = true)}>
-							<Eye class="stroke-main-content hover:cursor-pointer" />
-						</CustomButton>
-					</div>
-				{/if}
-			</header> -->
-            <!-- handle spotify data null
-			#if $spotify_data === null}
-				TODO: Instead of waiting for server WS data, load a https://www.shadcn-svelte.com/docs/components/skeleton and maybe a toast ?
-				<div class="player_container">
-					<h1 class="text-2xl font-bold">Retrieving data from server...</h1>
-					<div class="loader"></div>
-				</div>
-			:else if $spotify_data.playback_state === null}
-				<div class="player_container">
-					<h1 class="text-2xl font-bold">It looks like your Spotify isn't playing anything.</h1>
-					<h1 class="text-xl font-bold">Please use Spotify to play a song and wait a bit !</h1>
-				</div>
-			:else} -->
-                <!-- TODO: Create a button to refetch Spotify Data when player hasn't played a song (yet) -->
-                <div class="layout-wrapper">
-                    <div>
-                        <StateControls
-                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
-                            current_user={current_user!}
-                            {volume}
-                            set_volume={(percentage) => volume = percentage}
-                            {song_progress_ms}
-                            set_song_progress_ms={(progress) => song_progress_ms = progress}
-                            {on_cmd_send_error}
-                        />
-                        <SongQueue is_skeleton={$spotify_data === null || $spotify_data.playback_state === null} />
-                    </div>
-                    <div>
-                        <TrackSearch
-                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
-                            {search_input}
-                            set_search_input={(input) => search_input = input}
-                            {search_results}
-                            clear_search_results={() => {
-                                search_input = "";
-                                search_results = [];
-                            }}
-                            set_leaving={(b) => leaving = b}
-                            {on_cmd_send_error}
-                        />
-                        <MemberList
-                            is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
-                            current_user={current_user!}
-                            {on_cmd_send_error}
-                        />
-                    </div>
-                </div>
-			<!-- {/if} -->
+        <!-- TODO: Create a button to refetch Spotify Data when player hasn't played a song (yet) -->
+        <div class="layout-wrapper">
+            <div>
+                <StateControls
+                    is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
+                    current_user={current_user!}
+                    {volume}
+                    set_volume={(percentage) => volume = percentage}
+                    {song_progress_ms}
+                    set_song_progress_ms={(progress) => song_progress_ms = progress}
+                    {on_cmd_send_error}
+                />
+                <SongQueue is_skeleton={$spotify_data === null || $spotify_data.playback_state === null} />
+            </div>
+            <div>
+                <TrackSearch
+                    is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
+                    {search_input}
+                    set_search_input={(input) => search_input = input}
+                    {search_results}
+                    clear_search_results={() => {
+                        search_input = "";
+                        search_results = [];
+                    }}
+                    set_leaving={(b) => leaving = b}
+                    {on_cmd_send_error}
+                />
+                <MemberList
+                    is_skeleton={$spotify_data === null || $spotify_data.playback_state === null}
+                    current_user={current_user!}
+                    {on_cmd_send_error}
+                />
+            </div>
 		</div>
 	{/if}
 </section>
@@ -504,9 +463,5 @@
                 @apply w-full h-full border border-secondary rounded-xl overflow-hidden;
             }
         }
-    }
-
-    .x {
-        @apply flex items-center justify-center text-center border border-secondary;
     }
 </style>

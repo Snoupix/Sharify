@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, setContext } from "svelte";
     import { afterNavigate, goto } from "$app/navigation";
-    import { Toaster, toast } from 'svelte-sonner';
+    import { Toaster, toast, type ToasterProps } from 'svelte-sonner';
 
     import Spotify from "$/lib/spotify";
     import { room_data, spotify_data } from "$/lib/ws_impl";
@@ -11,6 +11,11 @@
     import type { LayoutProps } from "./$types";
 
     import "$/app.css";
+
+    const toaster_props: ToasterProps = {
+        closeButton: true,
+        position: "top-center",
+    };
 
     const dont_redirect_on_paths = [/\/room*/];
     const unauthorized_paths = [/\/host*/, /\/join*/];
@@ -26,21 +31,16 @@
     onMount(() => {
         set_theme(get_storage_value("theme") ?? "purple");
 
-        const tokens = get_storage_value("spotify_tokens");
-        if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
-
-        $Spotify.ProcessTokens(tokens);
+        $Spotify?.SetTokens();
     });
 
     afterNavigate(async navigate => {
-        (() => {
-            if (session?.user_uuid) {
-                user_id = session.user_uuid;
-                set_storage_value({ user_id });
-            } else {
-                set_storage_value({ user_id: null });
-            }
-        })();
+        if (session?.user_uuid) {
+            user_id = session.user_uuid;
+            set_storage_value({ user_id });
+        } else {
+            set_storage_value({ user_id: null });
+        }
 
         if (session == null && unauthorized_paths.find(r => navigate.to?.url.pathname.match(r))) {
             toast("You need to be connected to do that, please log in first");
@@ -77,7 +77,7 @@
 <main>
     <Navbar {session} />
     {@render children?.()}
-    <Toaster closeButton position="top-center" />
+    <Toaster {...toaster_props} />
 </main>
 
 <style lang="postcss">

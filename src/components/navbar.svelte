@@ -2,9 +2,8 @@
 	import { getContext, onDestroy, onMount } from "svelte";
 	import type { Writable } from "svelte/store";
 	import { page } from "$app/state";
-	import { goto } from "$app/navigation";
 	import { DropdownMenu } from "bits-ui";
-	import { Eye, EyeOff, Link, Settings } from "lucide-svelte";
+	import { Check, Eye, EyeOff, Link, Settings, ChevronLeft } from "lucide-svelte";
 	import type { Session } from "@auth/sveltekit";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { toast } from "svelte-sonner";
@@ -13,8 +12,17 @@
 	import Button from "$/components/button.svelte";
 	import Logo from "$/components/logo.svelte";
 	import Spotify from "$/lib/spotify";
-    import { leave_room_cmd } from "$lib/ws_impl";
-	import { bytes_to_uuid_str, get_storage_value, get_user_role, set_theme, themes, write_to_clipboard, type LocalStorage } from "$lib/utils";
+	import { leave_room_cmd } from "$lib/ws_impl";
+	import {
+		bytes_to_uuid_str,
+		get_storage_value,
+		get_theme,
+		get_user_role,
+		set_theme,
+		themes,
+		write_to_clipboard,
+		type LocalStorage,
+	} from "$lib/utils";
 	import type { Room, RoomUser } from "$/lib/proto/room";
 	import type { Nullable } from "$/lib/types";
 
@@ -24,7 +32,7 @@
 	// eslint-disable-next-line
 	const login_methods = ["github", "discord", "google", "spotify", "twitch"] as const;
 
-	let session: (Session & { user_uuid: string | null }) | null = $props();
+	const { session }: { session: Nullable<(Session & { user_uuid: string | null })> } = $props();
 
 	let path = $state("/");
 	let profile = $state("");
@@ -34,7 +42,7 @@
 	let current_user: RoomUser | null = $state(null);
 	let show_link = $state(false);
 
-	const is_logged_in = $derived(() => session !== null && new Date(session.expires).getTime() > Date.now());
+	let is_logged_in = $derived(session !== null && new Date(session.expires).getTime() > Date.now());
 
 	$effect(() => {
 		if (page !== null && page.route.id !== null) {
@@ -42,9 +50,7 @@
 		}
 	});
 
-	$effect(() => {
-		set_theme(theme ?? null);
-	});
+	$effect(() => set_theme(theme ?? null));
 
 	onMount(() => {
 		theme = get_storage_value("theme") ?? "purple";
@@ -60,8 +66,13 @@
 
 	async function disconnect() {
 		$Spotify?.Disconnect();
-		await goto("/");
+		toast.success("Successfully disconnected from Spotify");
 	}
+
+    async function logout() {
+        await signOut();
+		toast.success("Successfully logged out");
+    }
 
 	function get_party_link() {
 		return `${location.origin}/join/${bytes_to_uuid_str($room_data!.id)}/${$room_data!.password}`;
@@ -84,67 +95,73 @@
 			},
 		);
 	}
+
+    function upper_first_char(theme: string) {
+        return theme.split("").map((c, i) => {
+            if (i !== 0) return c;
+
+            return c.toUpperCase();
+        }).join("");
+    }
 </script>
 
 <nav>
 	{#if !hidden_routes.includes(path)}
-		<Logo animate={false} class_extension="fixed left-0 top-0 px-8 py-4" />
+		<Logo animate={false} top_left={true} />
 	{/if}
 
-    {#if path.match(/\/room\/[0-9a-f]*/) !== null}
-        <div class="room-btns">
-            <FancyButton
-                class_extended="xl:text-base !text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-2"
-                onclick={() => leave_room_cmd()}>
-                {#if current_user && get_user_role($room_data, current_user?.roleId)?.permissions?.canManageRoom}
-                    Close the room
+	{#if path.match(/\/room\/[0-9a-f]*/) !== null}
+		<div class="room-btns">
+			<FancyButton
+				class_extended="xl:text-base !text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-2"
+				onclick={() => leave_room_cmd()}>
+				{#if current_user && get_user_role($room_data, current_user?.roleId)?.permissions?.canManageRoom}
+					Close the room
+				{:else}
+					Leave the room
+				{/if}
+			</FancyButton>
+            {#if $room_data !== null}
+                {#if show_link}
+                    <div>
+                        <input readonly value={get_party_link()} />
+                        <Button class_extended="eye rounded-3xl!" title="Hide link" onclick={() => (show_link = false)}>
+                            <EyeOff class="stroke-main-content hover:cursor-pointer" />
+                        </Button>
+                    </div>
                 {:else}
-                    Leave the room
+                    <div>
+                        <FancyButton onclick={copy_party_link}>
+                            Copy party link
+                            <Link class="ml-2 w-5 stroke-main-content hover:cursor-pointer" />
+                        </FancyButton>
+                        <Button class_extended="rounded-3xl!" title="Show link" onclick={() => (show_link = true)}>
+                            <Eye class="stroke-main-content hover:cursor-pointer" />
+                        </Button>
+                    </div>
                 {/if}
-            </FancyButton>
-            {#if show_link}
-                <div>
-                    <input readonly value={get_party_link()} />
-                    <Button
-                        class_extended="eye rounded-3xl!"
-                        title="Hide link"
-                        onclick={() => (show_link = false)}>
-                        <EyeOff class="stroke-main-content hover:cursor-pointer" />
-                    </Button>
-                </div>
-            {:else}
-                <div>
-                    <FancyButton onclick={copy_party_link}>
-                        Copy party link 
-                        <Link class="ml-2 w-5 stroke-main-content hover:cursor-pointer" />
-                    </FancyButton>
-                    <Button
-                        class_extended="rounded-3xl!"
-                        title="Show link"
-                        onclick={() => (show_link = true)}>
-                        <Eye class="stroke-main-content hover:cursor-pointer" />
-                    </Button>
-                </div>
             {/if}
-        </div>
-    {/if}
+		</div>
+	{/if}
 
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger>
-			<Settings />
+			<Settings class="cursor-pointer" />
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Portal>
-			<DropdownMenu.Content>
+			<DropdownMenu.Content class="mt-2 mr-2">
 				<DropdownMenu.Sub>
 					<DropdownMenu.SubTrigger>
-						<div class="flex items-center">Theme</div>
+						<button><ChevronLeft />Theme</button>
 					</DropdownMenu.SubTrigger>
 					<DropdownMenu.Portal>
 						<DropdownMenu.SubContent>
 							<DropdownMenu.RadioGroup
 								value={theme ?? undefined}
-								onchange={(e) => console.log(e.currentTarget.nodeValue)}>
-								<DropdownMenu.GroupHeading>Theme</DropdownMenu.GroupHeading>
+								onValueChange={(s) => {
+									set_theme(s as LocalStorage["theme"]);
+									theme = get_theme();
+								}}>
 								{#each themes as value, i (i)}
 									<DropdownMenu.RadioItem {value}>
 										{@render theme_item({
@@ -160,39 +177,37 @@
 				<DropdownMenu.Item>
 					{#if profile !== ""}
 						<DropdownMenu.Item>
-							<Button onclick={disconnect}>
-								<svg
-									class="mr-2 w-5 fill-main-content"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 496 512"
-									><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-										d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z" /></svg>
+							<button onclick={disconnect}>
+                                <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                                </svg>
 								Disconnect from {profile}
-							</Button>
+							</button>
 						</DropdownMenu.Item>
 					{/if}
 				</DropdownMenu.Item>
 				<DropdownMenu.Item>
-					<Button>How to</Button>
+					<button>How to</button>
 				</DropdownMenu.Item>
 				<DropdownMenu.Item>
-					<Button>about</Button>
+					<button>About</button>
 				</DropdownMenu.Item>
-				{#if is_logged_in()}
+				{#if is_logged_in}
 					<DropdownMenu.Item>
-						<Button onclick={() => signOut()}>Logout</Button>
+						<button onclick={logout}>Logout</button>
 					</DropdownMenu.Item>
 				{:else}
 					<DropdownMenu.Sub>
 						<DropdownMenu.SubTrigger>
-                            <div class="flex items-center">Login</div>
+							<button><ChevronLeft />Login</button>
 						</DropdownMenu.SubTrigger>
 						<DropdownMenu.Portal>
 							<DropdownMenu.SubContent>
 								<DropdownMenu.RadioGroup
 									value={login_method ?? undefined}
-									onchange={(e) => {
-										switch (e.currentTarget.nodeValue) {
+									onValueChange={(v) => {
+										switch (v) {
 											case "github":
 												signIn("github");
 												break;
@@ -212,56 +227,51 @@
 												break;
 										}
 									}}>
-									<DropdownMenu.RadioItem
-										title="Sign in with GitHub"
-										class="select_item"
-										value="github"
-										><svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="lucide lucide-github"
-											><path
-												d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path
-												d="M9 18c-4.51 2-5-2-7-2" /></svg
-										></DropdownMenu.RadioItem>
-									<DropdownMenu.RadioItem
-										title="Sign in with Google"
-										class="select_item"
-										value="google"
-										><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"
-											><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-												d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" /></svg
-										></DropdownMenu.RadioItem>
-									<DropdownMenu.RadioItem
-										title="Sign in with Discord"
-										class="select_item"
-										value="discord"
-										><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"
-											><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-												d="M524.5 69.8a1.5 1.5 0 0 0 -.8-.7A485.1 485.1 0 0 0 404.1 32a1.8 1.8 0 0 0 -1.9 .9 337.5 337.5 0 0 0 -14.9 30.6 447.8 447.8 0 0 0 -134.4 0 309.5 309.5 0 0 0 -15.1-30.6 1.9 1.9 0 0 0 -1.9-.9A483.7 483.7 0 0 0 116.1 69.1a1.7 1.7 0 0 0 -.8 .7C39.1 183.7 18.2 294.7 28.4 404.4a2 2 0 0 0 .8 1.4A487.7 487.7 0 0 0 176 479.9a1.9 1.9 0 0 0 2.1-.7A348.2 348.2 0 0 0 208.1 430.4a1.9 1.9 0 0 0 -1-2.6 321.2 321.2 0 0 1 -45.9-21.9 1.9 1.9 0 0 1 -.2-3.1c3.1-2.3 6.2-4.7 9.1-7.1a1.8 1.8 0 0 1 1.9-.3c96.2 43.9 200.4 43.9 295.5 0a1.8 1.8 0 0 1 1.9 .2c2.9 2.4 6 4.9 9.1 7.2a1.9 1.9 0 0 1 -.2 3.1 301.4 301.4 0 0 1 -45.9 21.8 1.9 1.9 0 0 0 -1 2.6 391.1 391.1 0 0 0 30 48.8 1.9 1.9 0 0 0 2.1 .7A486 486 0 0 0 610.7 405.7a1.9 1.9 0 0 0 .8-1.4C623.7 277.6 590.9 167.5 524.5 69.8zM222.5 337.6c-29 0-52.8-26.6-52.8-59.2S193.1 219.1 222.5 219.1c29.7 0 53.3 26.8 52.8 59.2C275.3 311 251.9 337.6 222.5 337.6zm195.4 0c-29 0-52.8-26.6-52.8-59.2S388.4 219.1 417.9 219.1c29.7 0 53.3 26.8 52.8 59.2C470.7 311 447.5 337.6 417.9 337.6z" /></svg
-										></DropdownMenu.RadioItem>
-									<DropdownMenu.RadioItem
-										title="Sign in with Spotify"
-										class="select_item"
-										value="spotify"
-										><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"
-											><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-												d="M248 8C111.1 8 0 119.1 0 256s111.1 248 248 248 248-111.1 248-248S384.9 8 248 8zm100.7 364.9c-4.2 0-6.8-1.3-10.7-3.6-62.4-37.6-135-39.2-206.7-24.5-3.9 1-9 2.6-11.9 2.6-9.7 0-15.8-7.7-15.8-15.8 0-10.3 6.1-15.2 13.6-16.8 81.9-18.1 165.6-16.5 237 26.2 6.1 3.9 9.7 7.4 9.7 16.5s-7.1 15.4-15.2 15.4zm26.9-65.6c-5.2 0-8.7-2.3-12.3-4.2-62.5-37-155.7-51.9-238.6-29.4-4.8 1.3-7.4 2.6-11.9 2.6-10.7 0-19.4-8.7-19.4-19.4s5.2-17.8 15.5-20.7c27.8-7.8 56.2-13.6 97.8-13.6 64.9 0 127.6 16.1 177 45.5 8.1 4.8 11.3 11 11.3 19.7-.1 10.8-8.5 19.5-19.4 19.5zm31-76.2c-5.2 0-8.4-1.3-12.9-3.9-71.2-42.5-198.5-52.7-280.9-29.7-3.6 1-8.1 2.6-12.9 2.6-13.2 0-23.3-10.3-23.3-23.6 0-13.6 8.4-21.3 17.4-23.9 35.2-10.3 74.6-15.2 117.5-15.2 73 0 149.5 15.2 205.4 47.8 7.8 4.5 12.9 10.7 12.9 22.6 0 13.6-11 23.3-23.2 23.3z" /></svg
-										></DropdownMenu.RadioItem>
-									<DropdownMenu.RadioItem
-										title="Sign in with Twitch"
-										class="select_item"
-										value="twitch">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
-											><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-												d="M391.2 103.5H352.5v109.7h38.6zM285 103H246.4V212.8H285zM120.8 0 24.3 91.4V420.6H140.1V512l96.5-91.4h77.3L487.7 256V0zM449.1 237.8l-77.2 73.1H294.6l-67.6 64v-64H140.1V36.6H449.1z" /></svg>
+									<!-- svg icons are from https://github.com/simple-icons/simple-icons -->
+									<DropdownMenu.RadioItem title="Sign in with GitHub" value="github">
+                                        <button>
+                                            <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                                            </svg>
+                                            Github
+                                        </button>
+									</DropdownMenu.RadioItem>
+									<DropdownMenu.RadioItem title="Sign in with Google" value="google">
+                                        <button>
+                                            <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+                                            </svg>
+                                            Google
+                                        </button>
+									</DropdownMenu.RadioItem>
+									<DropdownMenu.RadioItem title="Sign in with Discord" value="discord">
+                                        <button>
+                                            <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
+                                            </svg>
+                                            Discord
+                                        </button>
+									</DropdownMenu.RadioItem>
+									<DropdownMenu.RadioItem title="Sign in with Spotify" value="spotify">
+                                        <button>
+                                            <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                                            </svg>
+                                            Spotify
+                                        </button>
+									</DropdownMenu.RadioItem>
+									<DropdownMenu.RadioItem title="Sign in with Twitch" value="twitch">
+                                        <button>
+                                            <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
+                                            </svg>
+                                            Twitch
+                                        </button>
 									</DropdownMenu.RadioItem>
 								</DropdownMenu.RadioGroup>
 							</DropdownMenu.SubContent>
@@ -273,42 +283,62 @@
 	</DropdownMenu.Root>
 
 	{#snippet theme_item({ value, checked }: { value: string; checked: boolean })}
-		<span>
-			{value}
+		<button class="!justify-center">
 			{#if checked}
-				✅
+				<Check />
 			{/if}
-		</span>
+			{upper_first_char(value)}
+		</button>
 	{/snippet}
 </nav>
 
 <style lang="postcss">
 	@reference "$/app.css";
 
+    :global([data-dropdown-menu-item]) {
+        @apply z-15 w-full px-4 py-2;
+    }
+
+	:global([data-dropdown-menu-content]) {
+		@apply z-14 flex flex-col items-center justify-center rounded-xl border border-main bg-bg max-w-40;
+
+		button {
+			@apply w-full flex cursor-pointer flex-row items-center justify-start gap-2 overflow-hidden text-nowrap text-ellipsis hover:text-shadow-lg hover:text-shadow-main hover:scale-105;
+
+            svg {
+                @apply !w-6 !h-6 fill-main;
+            }
+		}
+
+		button:not(:last) {
+			@apply border-t border-main;
+		}
+	}
+
 	nav {
-		@apply relative z-10 h-[calc(1/12*100vh)] flex w-full flex-row items-center justify-end px-2;
+		@apply relative z-10 flex h-[calc(1/12*100vh)] w-full flex-row items-center justify-end px-2;
 
-        .room-btns {
-            @apply flex w-auto flex-row items-end justify-center gap-4 p-4;
+		.room-btns {
+			@apply flex w-auto flex-row items-end justify-center gap-4 p-4;
 
-            > div {
-                @apply flex w-auto flex-row items-center justify-center gap-4;
-            }
+			> div {
+				@apply flex w-auto flex-row items-center justify-center gap-4;
+			}
 
-            > :last-child {
-                :global(> button) {
-                    @apply bg-secondary font-montserrat text-base text-main-content;
-                    display: block ruby; /* needed to align text & svg on "a" tag */
-                }
+			> :last-child {
+				:global(> button) {
+					@apply bg-secondary font-montserrat text-base text-main-content;
+					display: block ruby; /* needed to align text & svg on "a" tag */
+				}
 
-                :global(> input) {
-                    @apply bg-main-hover w-[25rem] border-none font-montserrat text-base text-main-content outline-none;
-                }
+				:global(> input) {
+					@apply w-[25rem] border-none bg-main-hover font-montserrat text-base text-main-content outline-none;
+				}
 
-                :global(> button:not(.eye)) {
-                    @apply rounded-full;
-                }
-            }
-        }
+				:global(> button:not(.eye)) {
+					@apply rounded-full;
+				}
+			}
+		}
 	}
 </style>

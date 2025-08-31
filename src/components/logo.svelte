@@ -1,25 +1,59 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
 
-    const { class_extension = "", animate = true } = $props();
+    const { class_extension = "", animate = true, top_left = false } = $props();
+
+    let show_badge = $state(!animate);
 </script>
 
-<button
-    type="button"
-    onclick={async () => await goto("/")}
-    data-cy="home-btn"
-    class:neon={animate}
-    class={`${class_extension}`}
->Sharify</button>
+<div class:top-left={top_left} class:pad-tr={!top_left && show_badge}>
+    <button
+        type="button"
+        onclick={async () => await goto("/")}
+        onanimationend={() => show_badge = true}
+        data-cy="home-btn"
+        class:neon={animate}
+        class={`${class_extension}`}
+    >Sharify</button>
+    <!-- TODO: Display badge inline when top right -->
+    <span
+        class:show={top_left || show_badge}
+        class:middle={!top_left}>alpha</span>
+</div>
 
 <style lang="postcss">
     @reference "$/app.css";
 
-    button {
-        @apply cursor-pointer z-50 text-main font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl transition-all duration-300;
+    div {
+        @apply relative transition-all duration-1000 p-0;
 
-        &:hover {
-            text-shadow: var(--shadow-around) var(--color-main);
+        &.pad-tr {
+            @apply pt-6 pr-10;
+        }
+
+        &.top-left {
+            @apply fixed left-0 top-0 px-8 py-4 flex flex-row justify-center items-start gap-4;
+        }
+
+        button {
+            @apply cursor-pointer z-50 text-main font-kaushan font-bold text-2xl md:text-3xl xl:text-5xl transition-all duration-300;
+
+            &:hover {
+                text-shadow: var(--shadow-around) var(--color-main);
+            }
+        }
+
+        span {
+            @apply rounded-full border-2 border-main text-[10px] uppercase font-montserrat font-extrabold px-1 py-1;
+            @apply hidden transition-opacity duration-1000 delay-200 opacity-0;
+
+            &.show {
+                @apply block opacity-100;
+            }
+
+            &.middle {
+                @apply block absolute mb-6 top-0 right-0 z-2;
+            }
         }
     }
 

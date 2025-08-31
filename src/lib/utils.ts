@@ -1,5 +1,5 @@
 import { goto } from "$app/navigation";
-import type { Device, UserProfile } from "@spotify/web-api-ts-sdk";
+import type { UserProfile } from "@spotify/web-api-ts-sdk";
 
 import type { Room, RoomUser } from "$lib/proto/room";
 import type { Nullable } from "$lib/types";
@@ -8,13 +8,12 @@ import type { Role } from "$lib/proto/role";
 // TODO Change $/lib to $lib everywhere
 
 export interface LocalStorage {
-	spotify_tokens: SpotifyTokens | null;
-	spotify_device: Device | null;
-	spotify_profile: UserProfile | null;
-	code_verifier: string | null;
-	user: RoomUser | null;
-	user_id: string | null;
-	current_room: Room | null;
+	spotify_tokens: Nullable<SpotifyTokens>;
+	spotify_profile: Nullable<UserProfile>;
+	code_verifier: Nullable<string>;
+	user: Nullable<RoomUser>;
+	user_id: Nullable<string>;
+	current_room: Nullable<Room>;
 	// purple is default whatever prefers-color-scheme
 	theme: Nullable<typeof themes[number]>; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
 }
@@ -43,14 +42,19 @@ export function set_storage_value(value: Partial<LocalStorage>) {
 
 	const storage = store.getItem("Sharify");
 
-	if (storage == null) {
+	if (storage === null) {
 		store.setItem("Sharify", JSON.stringify(value));
 		return;
 	}
 
-	const parsed_storage = JSON.parse(storage);
+    try {
+        const parsed_storage = JSON.parse(storage);
 
-	store.setItem("Sharify", JSON.stringify({ ...parsed_storage, ...value }));
+        store.setItem("Sharify", JSON.stringify({ ...parsed_storage, ...value }));
+    } catch (e) {
+        console.error("Corrupted storage, wiping...", e);
+        store.clear();
+    }
 
 	return;
 }
@@ -64,9 +68,7 @@ export function get_storage_value<T extends keyof LocalStorage, S extends Storag
 
 	const store_object = JSON.parse(store.getItem("Sharify") || "{}") as LocalStorage;
 
-	const returns = store_object[value] as S;
-
-	return returns == ({} as S) ? null : returns;
+	return store_object[value] as S ?? null;
 }
 
 export function string_to_hex_uuid(email: string, uuid_len: number) {
@@ -173,7 +175,7 @@ export function get_user_role(room_data: Nullable<Room>, user_role_id: RoomUser[
 
 export function set_theme(theme: LocalStorage["theme"]) {
 	const class_name = document.documentElement.className;
-	if (class_name.trim().length != 0) {
+	if (class_name.trim().length !== 0) {
 		document.documentElement.classList.remove(class_name);
 	}
 
