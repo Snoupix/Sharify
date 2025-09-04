@@ -105,11 +105,13 @@ export interface CommandResponse {
   genericError?: string | undefined;
   kick?: CommandResponse_Kick | undefined;
   ban?: CommandResponse_Ban | undefined;
-  spotifyPlaybackState?: CommandResponse_SpotifyPlaybackState | undefined;
+  spotifyAllState?: CommandResponse_SpotifyAllState | undefined;
   spotifySearchResult?: TrackArray | undefined;
   spotifyRateLimited?: number | undefined;
   roleError?: RoleError | undefined;
   newUserJoined?: string | undefined;
+  spotifyPlaybackState?: CommandResponse_SpotifyPlaybackState | undefined;
+  spotifyTracksState?: CommandResponse_SpotifyTracksState | undefined;
 }
 
 export interface CommandResponse_Kick {
@@ -120,8 +122,17 @@ export interface CommandResponse_Ban {
   reason: string;
 }
 
+export interface CommandResponse_SpotifyAllState {
+  state?: PlaybackState | undefined;
+  previousTracks: TrackArray | undefined;
+  nextTracks: TrackArray | undefined;
+}
+
 export interface CommandResponse_SpotifyPlaybackState {
   state?: PlaybackState | undefined;
+}
+
+export interface CommandResponse_SpotifyTracksState {
   previousTracks: TrackArray | undefined;
   nextTracks: TrackArray | undefined;
 }
@@ -1254,11 +1265,13 @@ function createBaseCommandResponse(): CommandResponse {
     genericError: undefined,
     kick: undefined,
     ban: undefined,
-    spotifyPlaybackState: undefined,
+    spotifyAllState: undefined,
     spotifySearchResult: undefined,
     spotifyRateLimited: undefined,
     roleError: undefined,
     newUserJoined: undefined,
+    spotifyPlaybackState: undefined,
+    spotifyTracksState: undefined,
   };
 }
 
@@ -1279,8 +1292,8 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     if (message.ban !== undefined) {
       CommandResponse_Ban.encode(message.ban, writer.uint32(42).fork()).join();
     }
-    if (message.spotifyPlaybackState !== undefined) {
-      CommandResponse_SpotifyPlaybackState.encode(message.spotifyPlaybackState, writer.uint32(50).fork()).join();
+    if (message.spotifyAllState !== undefined) {
+      CommandResponse_SpotifyAllState.encode(message.spotifyAllState, writer.uint32(50).fork()).join();
     }
     if (message.spotifySearchResult !== undefined) {
       TrackArray.encode(message.spotifySearchResult, writer.uint32(58).fork()).join();
@@ -1293,6 +1306,12 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     }
     if (message.newUserJoined !== undefined) {
       writer.uint32(82).string(message.newUserJoined);
+    }
+    if (message.spotifyPlaybackState !== undefined) {
+      CommandResponse_SpotifyPlaybackState.encode(message.spotifyPlaybackState, writer.uint32(90).fork()).join();
+    }
+    if (message.spotifyTracksState !== undefined) {
+      CommandResponse_SpotifyTracksState.encode(message.spotifyTracksState, writer.uint32(98).fork()).join();
     }
     return writer;
   },
@@ -1349,7 +1368,7 @@ export const CommandResponse: MessageFns<CommandResponse> = {
             break;
           }
 
-          message.spotifyPlaybackState = CommandResponse_SpotifyPlaybackState.decode(reader, reader.uint32());
+          message.spotifyAllState = CommandResponse_SpotifyAllState.decode(reader, reader.uint32());
           continue;
         }
         case 7: {
@@ -1384,6 +1403,22 @@ export const CommandResponse: MessageFns<CommandResponse> = {
           message.newUserJoined = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.spotifyPlaybackState = CommandResponse_SpotifyPlaybackState.decode(reader, reader.uint32());
+          continue;
+        }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.spotifyTracksState = CommandResponse_SpotifyTracksState.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1400,8 +1435,8 @@ export const CommandResponse: MessageFns<CommandResponse> = {
       genericError: isSet(object.genericError) ? globalThis.String(object.genericError) : undefined,
       kick: isSet(object.kick) ? CommandResponse_Kick.fromJSON(object.kick) : undefined,
       ban: isSet(object.ban) ? CommandResponse_Ban.fromJSON(object.ban) : undefined,
-      spotifyPlaybackState: isSet(object.spotifyPlaybackState)
-        ? CommandResponse_SpotifyPlaybackState.fromJSON(object.spotifyPlaybackState)
+      spotifyAllState: isSet(object.spotifyAllState)
+        ? CommandResponse_SpotifyAllState.fromJSON(object.spotifyAllState)
         : undefined,
       spotifySearchResult: isSet(object.spotifySearchResult)
         ? TrackArray.fromJSON(object.spotifySearchResult)
@@ -1409,6 +1444,12 @@ export const CommandResponse: MessageFns<CommandResponse> = {
       spotifyRateLimited: isSet(object.spotifyRateLimited) ? globalThis.Number(object.spotifyRateLimited) : undefined,
       roleError: isSet(object.roleError) ? roleErrorFromJSON(object.roleError) : undefined,
       newUserJoined: isSet(object.newUserJoined) ? globalThis.String(object.newUserJoined) : undefined,
+      spotifyPlaybackState: isSet(object.spotifyPlaybackState)
+        ? CommandResponse_SpotifyPlaybackState.fromJSON(object.spotifyPlaybackState)
+        : undefined,
+      spotifyTracksState: isSet(object.spotifyTracksState)
+        ? CommandResponse_SpotifyTracksState.fromJSON(object.spotifyTracksState)
+        : undefined,
     };
   },
 
@@ -1429,8 +1470,8 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     if (message.ban !== undefined) {
       obj.ban = CommandResponse_Ban.toJSON(message.ban);
     }
-    if (message.spotifyPlaybackState !== undefined) {
-      obj.spotifyPlaybackState = CommandResponse_SpotifyPlaybackState.toJSON(message.spotifyPlaybackState);
+    if (message.spotifyAllState !== undefined) {
+      obj.spotifyAllState = CommandResponse_SpotifyAllState.toJSON(message.spotifyAllState);
     }
     if (message.spotifySearchResult !== undefined) {
       obj.spotifySearchResult = TrackArray.toJSON(message.spotifySearchResult);
@@ -1443,6 +1484,12 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     }
     if (message.newUserJoined !== undefined) {
       obj.newUserJoined = message.newUserJoined;
+    }
+    if (message.spotifyPlaybackState !== undefined) {
+      obj.spotifyPlaybackState = CommandResponse_SpotifyPlaybackState.toJSON(message.spotifyPlaybackState);
+    }
+    if (message.spotifyTracksState !== undefined) {
+      obj.spotifyTracksState = CommandResponse_SpotifyTracksState.toJSON(message.spotifyTracksState);
     }
     return obj;
   },
@@ -1461,8 +1508,8 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     message.ban = (object.ban !== undefined && object.ban !== null)
       ? CommandResponse_Ban.fromPartial(object.ban)
       : undefined;
-    message.spotifyPlaybackState = (object.spotifyPlaybackState !== undefined && object.spotifyPlaybackState !== null)
-      ? CommandResponse_SpotifyPlaybackState.fromPartial(object.spotifyPlaybackState)
+    message.spotifyAllState = (object.spotifyAllState !== undefined && object.spotifyAllState !== null)
+      ? CommandResponse_SpotifyAllState.fromPartial(object.spotifyAllState)
       : undefined;
     message.spotifySearchResult = (object.spotifySearchResult !== undefined && object.spotifySearchResult !== null)
       ? TrackArray.fromPartial(object.spotifySearchResult)
@@ -1470,6 +1517,12 @@ export const CommandResponse: MessageFns<CommandResponse> = {
     message.spotifyRateLimited = object.spotifyRateLimited ?? undefined;
     message.roleError = object.roleError ?? undefined;
     message.newUserJoined = object.newUserJoined ?? undefined;
+    message.spotifyPlaybackState = (object.spotifyPlaybackState !== undefined && object.spotifyPlaybackState !== null)
+      ? CommandResponse_SpotifyPlaybackState.fromPartial(object.spotifyPlaybackState)
+      : undefined;
+    message.spotifyTracksState = (object.spotifyTracksState !== undefined && object.spotifyTracksState !== null)
+      ? CommandResponse_SpotifyTracksState.fromPartial(object.spotifyTracksState)
+      : undefined;
     return message;
   },
 };
@@ -1590,12 +1643,12 @@ export const CommandResponse_Ban: MessageFns<CommandResponse_Ban> = {
   },
 };
 
-function createBaseCommandResponse_SpotifyPlaybackState(): CommandResponse_SpotifyPlaybackState {
+function createBaseCommandResponse_SpotifyAllState(): CommandResponse_SpotifyAllState {
   return { state: undefined, previousTracks: undefined, nextTracks: undefined };
 }
 
-export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_SpotifyPlaybackState> = {
-  encode(message: CommandResponse_SpotifyPlaybackState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const CommandResponse_SpotifyAllState: MessageFns<CommandResponse_SpotifyAllState> = {
+  encode(message: CommandResponse_SpotifyAllState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.state !== undefined) {
       PlaybackState.encode(message.state, writer.uint32(10).fork()).join();
     }
@@ -1608,10 +1661,10 @@ export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_Sp
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CommandResponse_SpotifyPlaybackState {
+  decode(input: BinaryReader | Uint8Array, length?: number): CommandResponse_SpotifyAllState {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCommandResponse_SpotifyPlaybackState();
+    const message = createBaseCommandResponse_SpotifyAllState();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1648,7 +1701,7 @@ export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_Sp
     return message;
   },
 
-  fromJSON(object: any): CommandResponse_SpotifyPlaybackState {
+  fromJSON(object: any): CommandResponse_SpotifyAllState {
     return {
       state: isSet(object.state) ? PlaybackState.fromJSON(object.state) : undefined,
       previousTracks: isSet(object.previousTracks) ? TrackArray.fromJSON(object.previousTracks) : undefined,
@@ -1656,7 +1709,7 @@ export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_Sp
     };
   },
 
-  toJSON(message: CommandResponse_SpotifyPlaybackState): unknown {
+  toJSON(message: CommandResponse_SpotifyAllState): unknown {
     const obj: any = {};
     if (message.state !== undefined) {
       obj.state = PlaybackState.toJSON(message.state);
@@ -1666,6 +1719,74 @@ export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_Sp
     }
     if (message.nextTracks !== undefined) {
       obj.nextTracks = TrackArray.toJSON(message.nextTracks);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CommandResponse_SpotifyAllState>, I>>(base?: I): CommandResponse_SpotifyAllState {
+    return CommandResponse_SpotifyAllState.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CommandResponse_SpotifyAllState>, I>>(
+    object: I,
+  ): CommandResponse_SpotifyAllState {
+    const message = createBaseCommandResponse_SpotifyAllState();
+    message.state = (object.state !== undefined && object.state !== null)
+      ? PlaybackState.fromPartial(object.state)
+      : undefined;
+    message.previousTracks = (object.previousTracks !== undefined && object.previousTracks !== null)
+      ? TrackArray.fromPartial(object.previousTracks)
+      : undefined;
+    message.nextTracks = (object.nextTracks !== undefined && object.nextTracks !== null)
+      ? TrackArray.fromPartial(object.nextTracks)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseCommandResponse_SpotifyPlaybackState(): CommandResponse_SpotifyPlaybackState {
+  return { state: undefined };
+}
+
+export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_SpotifyPlaybackState> = {
+  encode(message: CommandResponse_SpotifyPlaybackState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.state !== undefined) {
+      PlaybackState.encode(message.state, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CommandResponse_SpotifyPlaybackState {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommandResponse_SpotifyPlaybackState();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.state = PlaybackState.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CommandResponse_SpotifyPlaybackState {
+    return { state: isSet(object.state) ? PlaybackState.fromJSON(object.state) : undefined };
+  },
+
+  toJSON(message: CommandResponse_SpotifyPlaybackState): unknown {
+    const obj: any = {};
+    if (message.state !== undefined) {
+      obj.state = PlaybackState.toJSON(message.state);
     }
     return obj;
   },
@@ -1682,6 +1803,84 @@ export const CommandResponse_SpotifyPlaybackState: MessageFns<CommandResponse_Sp
     message.state = (object.state !== undefined && object.state !== null)
       ? PlaybackState.fromPartial(object.state)
       : undefined;
+    return message;
+  },
+};
+
+function createBaseCommandResponse_SpotifyTracksState(): CommandResponse_SpotifyTracksState {
+  return { previousTracks: undefined, nextTracks: undefined };
+}
+
+export const CommandResponse_SpotifyTracksState: MessageFns<CommandResponse_SpotifyTracksState> = {
+  encode(message: CommandResponse_SpotifyTracksState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.previousTracks !== undefined) {
+      TrackArray.encode(message.previousTracks, writer.uint32(10).fork()).join();
+    }
+    if (message.nextTracks !== undefined) {
+      TrackArray.encode(message.nextTracks, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CommandResponse_SpotifyTracksState {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCommandResponse_SpotifyTracksState();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.previousTracks = TrackArray.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.nextTracks = TrackArray.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CommandResponse_SpotifyTracksState {
+    return {
+      previousTracks: isSet(object.previousTracks) ? TrackArray.fromJSON(object.previousTracks) : undefined,
+      nextTracks: isSet(object.nextTracks) ? TrackArray.fromJSON(object.nextTracks) : undefined,
+    };
+  },
+
+  toJSON(message: CommandResponse_SpotifyTracksState): unknown {
+    const obj: any = {};
+    if (message.previousTracks !== undefined) {
+      obj.previousTracks = TrackArray.toJSON(message.previousTracks);
+    }
+    if (message.nextTracks !== undefined) {
+      obj.nextTracks = TrackArray.toJSON(message.nextTracks);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CommandResponse_SpotifyTracksState>, I>>(
+    base?: I,
+  ): CommandResponse_SpotifyTracksState {
+    return CommandResponse_SpotifyTracksState.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CommandResponse_SpotifyTracksState>, I>>(
+    object: I,
+  ): CommandResponse_SpotifyTracksState {
+    const message = createBaseCommandResponse_SpotifyTracksState();
     message.previousTracks = (object.previousTracks !== undefined && object.previousTracks !== null)
       ? TrackArray.fromPartial(object.previousTracks)
       : undefined;

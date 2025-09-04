@@ -98,7 +98,7 @@
 
             set_storage_value({ user: res_cmd.room.users[0], current_room: res_cmd.room });
 
-            toast(`Successfully created party ${res_cmd.room.name}!`);
+            toast(`Successfully created room ${res_cmd.room.name}!`);
 
             await goto(`/room/${bytes_to_uuid_str(res_cmd.room.id)}`);
         } catch (e: unknown) {
@@ -134,7 +134,7 @@
 						bind:value={room.room_name} />
 					{#if autoname}
 						<Button
-							class_extended="border-main-color bg-main-color-hover text-main-content"
+							class_extended="border-main bg-main-hover text-main-content"
 							onclick={async () => {
                                 autoname = false;
                                 await tick();
@@ -142,7 +142,7 @@
                             }}>Rename</Button>
 					{:else}
 						<Button
-							class_extended="border-main-color bg-main-color-hover text-main-content"
+							class_extended="border-main bg-main-hover text-main-content"
 							onclick={() => (autoname = true)}>Auto name</Button>
 					{/if}
 				</div>

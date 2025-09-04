@@ -11,7 +11,7 @@
 	import FancyButton from "$/components/fancy_button.svelte";
 	import Button from "$/components/button.svelte";
 	import Logo from "$/components/logo.svelte";
-	import Spotify from "$/lib/spotify";
+	import Spotify from "$lib/spotify";
 	import { leave_room_cmd } from "$lib/ws_impl";
 	import {
 		bytes_to_uuid_str,
@@ -23,8 +23,8 @@
 		write_to_clipboard,
 		type LocalStorage,
 	} from "$lib/utils";
-	import type { Room, RoomUser } from "$/lib/proto/room";
-	import type { Nullable } from "$/lib/types";
+	import type { Room, RoomUser } from "$lib/proto/room";
+	import type { Nullable } from "$lib/types";
 
 	const room_data: Writable<Nullable<Room>> = getContext("RoomData");
 
@@ -74,13 +74,13 @@
 		toast.success("Successfully logged out");
     }
 
-	function get_party_link() {
+	function get_room_link() {
 		return `${location.origin}/join/${bytes_to_uuid_str($room_data!.id)}/${$room_data!.password}`;
 	}
 
-	async function copy_party_link() {
+	async function copy_room_link() {
 		await write_to_clipboard(
-			get_party_link(),
+			get_room_link(),
 			() => {
 				toast("Room link copied successfully to your clipboard !");
 			},
@@ -124,15 +124,15 @@
             {#if $room_data !== null}
                 {#if show_link}
                     <div>
-                        <input readonly value={get_party_link()} />
+                        <span>{get_room_link()}</span>
                         <Button class_extended="eye rounded-3xl!" title="Hide link" onclick={() => (show_link = false)}>
                             <EyeOff class="stroke-main-content hover:cursor-pointer" />
                         </Button>
                     </div>
                 {:else}
                     <div>
-                        <FancyButton onclick={copy_party_link}>
-                            Copy party link
+                        <FancyButton onclick={copy_room_link}>
+                            Copy room link
                             <Link class="ml-2 w-5 stroke-main-content hover:cursor-pointer" />
                         </FancyButton>
                         <Button class_extended="rounded-3xl!" title="Show link" onclick={() => (show_link = true)}>

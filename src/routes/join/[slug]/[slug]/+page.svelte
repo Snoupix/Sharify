@@ -110,7 +110,7 @@
         {#if error != ""}
             <span class="text-red-500">{error}</span>
         {/if}
-        <Button onclick={join_room}>Join the party</Button>
+        <Button onclick={join_room}>Join the room</Button>
     </section>
 {/if}
 

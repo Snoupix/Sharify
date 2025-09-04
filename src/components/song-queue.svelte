@@ -2,13 +2,14 @@
 	import { getContext } from "svelte";
 	import type { Writable } from "svelte/store";
 	import { toast } from "svelte-sonner";
+	import { DropdownMenu } from "bits-ui";
+	import { EllipsisVertical, SquareArrowOutUpRight } from "lucide-svelte";
 
     import { Skeleton } from "$/components/ui/skeleton";
-	import CustomButton from "$/components/button.svelte";
-	import type { Nullable, SpotifyData } from "$/lib/types";
-	import type { Room, RoomTrack } from "$/lib/proto/room";
-	import { write_to_clipboard, zip_iter } from "$/lib/utils";
-	import { Track } from "$/lib/proto/spotify";
+	import type { Nullable, SpotifyData } from "$lib/types";
+	import type { Room, RoomTrack } from "$lib/proto/room";
+	import { click_link, write_to_clipboard, zip_iter } from "$lib/utils";
+	import { Track } from "$lib/proto/spotify";
 
 	const ETab = {
 		Next: 0,
@@ -84,26 +85,48 @@
                         </div>
                     </div>
                     <div class="right">
+                        {#if displayed_songs === ETab.Next}
                         <span
                             >{room_track?.trackId === track?.trackId
                                 ? `Added by: (${$room_data?.users.find((u) => u.id === room_track?.userId)?.username ?? "user not found"})`
                                 : "From owner's queue"}</span>
+                        {/if}
                         <div class="btns">
-                            <a href={`https://open.spotify.com/track/${track.trackId}`} target="_blank">
-                                <CustomButton class_extended="xl:text-sm hover:text-main-content"
-                                    >Spotify link</CustomButton>
-                            </a>
-                            <CustomButton
-                                title="Copy Spotify URI to clipboard"
-                                onclick={() =>
-                                    write_to_clipboard(
-                                        `spotify:track:${track.trackId}`,
-                                        () => {
-                                            toast("Spotify URI copied to clipboard!");
-                                        },
-                                        console.error,
-                                    )}
-                                class_extended="xl:text-sm hover:text-main-content">Spotify uri</CustomButton>
+                            <DropdownMenu.Root>
+                                <DropdownMenu.Trigger
+                                    class="round"
+                                >
+                                    <EllipsisVertical />
+                                </DropdownMenu.Trigger>
+                                <DropdownMenu.Portal>
+                                    <DropdownMenu.Content>
+                                        <DropdownMenu.Item>
+                                            <button class="flex flex-row justify-center items-center gap-2 h-8" onclick={click_link}>
+                                                <a
+                                                    class="xl:text-sm hover:text-main-content"
+                                                    href={`https://open.spotify.com/track/${track.trackId}`}
+                                                    target="_blank">
+                                                    Spotify link
+                                                </a>
+                                                <SquareArrowOutUpRight class="cursor-pointer w-5 stroke-main" />
+                                            </button>
+                                        </DropdownMenu.Item>
+                                        <DropdownMenu.Item>
+                                            <button
+                                                class="cursor-pointer xl:text-sm hover:text-main-content h-8"
+                                                title="Copy Spotify URI to clipboard"
+                                                onclick={() =>
+                                                    write_to_clipboard(
+                                                        `spotify:track:${track.trackId}`,
+                                                        () => {
+                                                            toast("Spotify URI copied to clipboard!");
+                                                        },
+                                                        console.error,
+                                                    )}>Spotify uri</button>
+                                        </DropdownMenu.Item>
+                                    </DropdownMenu.Content>
+                                </DropdownMenu.Portal>
+                            </DropdownMenu.Root>
                         </div>
                     </div>
 				</div>
@@ -177,7 +200,7 @@
                 }
 
                 .right {
-                    @apply flex flex-col justify-center items-end gap-2;
+                    @apply flex flex-row justify-end items-center gap-4;
 
                     .btns {
                         @apply flex flex-row items-center justify-start gap-2;

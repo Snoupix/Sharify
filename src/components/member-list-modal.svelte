@@ -6,8 +6,10 @@
     import Button from "$/components/button.svelte";
 	import { get_user_role, sum_bytes } from "$lib/utils";
 	import type { Room, RoomUser } from "$lib/proto/room";
-	import type { Nullable } from "$/lib/types";
-	import { can_user_moderate_user } from "$/lib/role_perms";
+	import type { Nullable } from "$lib/types";
+	import { can_user_moderate_user } from "$lib/role_perms";
+	import { send_ws_command } from "$lib/ws_impl";
+	import type { Command_Ban, Command_Kick } from "$lib/proto/cmd";
 
 	const room_data: Writable<Nullable<Room>> = getContext("RoomData");
 
@@ -18,6 +20,16 @@
         sorted_users: Array<RoomUser>;
         current_user: Nullable<RoomUser>;
     } = $props();
+
+    // TODO Impl reason
+    async function kick(user_id: Command_Kick["userId"], reason: Command_Kick["reason"] = "") {
+        await send_ws_command({ kick: { userId: user_id, reason }});
+    }
+
+    // TODO Impl reason
+    async function ban(user_id: Command_Ban["userId"], reason: Command_Ban["reason"] = "") {
+        await send_ws_command({ ban: { userId: user_id, reason }});
+    }
 </script>
 
 <div class="members">
@@ -56,8 +68,8 @@
                 </div>
                 <div class="right">
                     {#if current_user !== null && can_user_moderate_user($room_data, current_user, user)}
-                        <Button>Kick</Button>
-                        <Button>Ban</Button>
+                        <Button onclick={async () => await kick(user.id)}>Kick</Button>
+                        <Button onclick={async () => await ban(user.id)}>Ban</Button>
                     {/if}
                 </div>
             </div>

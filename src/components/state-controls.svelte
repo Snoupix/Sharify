@@ -128,8 +128,8 @@
     <div class="currently-playing">
         <img src={$spotify_data!.playback_state?.albumImageSrc} alt="album cover" />
         <div class="track">
-            <span class="main-color text-xl">{$spotify_data!.playback_state?.trackName}</span>
-            <span class="main-color text-lg">{$spotify_data!.playback_state?.artistName}</span>
+            <span class="main text-xl">{$spotify_data!.playback_state?.trackName}</span>
+            <span class="main text-lg">{$spotify_data!.playback_state?.artistName}</span>
         </div>
         <div class="spotify-links">
             <DropdownMenu.Root>
@@ -169,17 +169,18 @@
             </DropdownMenu.Root>
         </div>
     </div>
-    <span class="main-color italic"
+    <span class="italic"
         >{format_time(song_progress_ms, $spotify_data!.playback_state?.durationMs ?? song_progress_ms*2)}</span>
     {#key current_user}
+        <input
+            disabled={!get_user_role($room_data, current_user?.roleId)?.permissions?.canUseControls}
+            class="accent-main w-2/4 cursor-grab"
+            min={0}
+            max={$spotify_data!.playback_state?.durationMs}
+            value={song_progress_ms}
+            onchange={(e) => seek_debounce(parseInt(e.currentTarget.value))}
+            type="range" />
         {#if current_user !== null && get_user_role($room_data, current_user?.roleId)?.permissions?.canUseControls}
-            <input
-                class="accent-main w-2/4 cursor-grab"
-                min={0}
-                max={$spotify_data!.playback_state?.durationMs}
-                value={song_progress_ms}
-                onchange={(e) => seek_debounce(parseInt(e.currentTarget.value))}
-                type="range" />
             <div class="player-controls">
                 <CustomButton
                     class_extended="round"
@@ -213,7 +214,7 @@
                 </CustomButton>
                 {#if show_volume}
                     <input
-                        class="accent-main-color w-2/6 cursor-grab"
+                        class="accent-main w-2/6 cursor-grab"
                         min={0}
                         max={100}
                         value={$spotify_data!.playback_state?.deviceVolume}
@@ -231,7 +232,7 @@
     @reference "$/app.css";
 
     .state-controls {
-        @apply relative m-auto py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold !overflow-y-scroll;
+        @apply relative m-auto py-4 flex flex-col items-center justify-stretch gap-4 font-content font-bold;
 
         .title {
             @apply w-full h-2/12;
@@ -259,20 +260,6 @@
 
         .player-controls {
             @apply h-4/12 flex flex-row items-center justify-center gap-4;
-        }
-    }
-
-    :global(.round) {
-        @apply cursor-pointer border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
-
-        :global(svg) {
-            @apply w-full transition-all duration-500;
-        }
-
-        &:hover {
-            :global(svg) {
-                @apply stroke-main-content;
-            }
         }
     }
 </style>

@@ -18,7 +18,7 @@ export async function send_ws_command(command: Command, on_error_cb = async () =
         return await on_error_cb();
     }
 
-    console.log(`[DEBUG WS] Sending ${Object.keys(command).filter(k => !!k)[0]} Command`);
+    console.log(`[DEBUG WS] Sending "${Object.keys(command).filter(k => !!k)[0]}" Command`);
 
     const bytes = Command.encode(command).finish();
 

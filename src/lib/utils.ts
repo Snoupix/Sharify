@@ -279,16 +279,16 @@ export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | 
 }
 
 export function custom_promise() {
-    let resolve_ptr: (_: unknown) => void;
-    let reject_ptr: (reason: string) => void;
+    let resolve_ref: (_: unknown) => void;
+    let reject_ref: (reason: string) => void;
 
     const promise = new Promise((res, rej) => {
-        resolve_ptr = res;
-        reject_ptr = rej;
+        resolve_ref = res;
+        reject_ref = rej;
     });
 
-    // @ts-expect-error This is not beautiful, I know
-    return { promise, resolve_ptr, reject_ptr };
+    // @ts-expect-error They are gonna be used, fu ts_ls
+    return { promise, resolve_ref, reject_ref };
 }
 
 export function with_timeout<T>(promise: Promise<T>, timeout_error: string, ms: number) {

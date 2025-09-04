@@ -11,7 +11,7 @@
 	import { send_ws_command, leave_room_cmd } from "$/lib/ws_impl";
     import StateControls from "$/components/state-controls.svelte";
     import SongQueue from "$/components/song-queue.svelte";
-    import TrackSearch from "$/components/add-track.svelte";
+    import TrackSearch from "$/components/track-search.svelte";
     import MemberList from "$/components/member-list.svelte";
 	import CustomButton from "$/components/button.svelte";
 	import {
@@ -52,6 +52,8 @@
 	let current_user: RoomUser | null = $state(null);
 
 	onMount(async () => {
+        document.addEventListener("keydown", keydown_listener);
+
         data_is_ready_promise = custom_promise();
 
         toast.promise(
@@ -65,13 +67,13 @@
                 loading: "Waiting for server data...",
                 success: "Room loaded, have fun",
                 error: (error) => {
-                    if (typeof error === "string" && error.startsWith("Timeout")) {
+                    if (typeof error === "string" && (error.startsWith("Timeout") || error.startsWith("Dismissed"))) {
                         leave_room();
                         return error;
                     }
 
                     return error as string;
-                }
+                },
             }
         );
 
@@ -79,9 +81,9 @@
 
 		song_loop = setInterval(() => {
 			if (
-				$spotify_data == null ||
-				$spotify_data.playback_state == null ||
-				$spotify_data.playback_state.isPlaying == false ||
+				$spotify_data === null ||
+				$spotify_data.playback_state === null ||
+				$spotify_data.playback_state.isPlaying === false ||
 				song_progress_ms >= $spotify_data.playback_state.durationMs
 			)
 				return;
@@ -93,6 +95,8 @@
 	});
 
 	onDestroy(() => {
+        document.removeEventListener("keydown", keydown_listener);
+
 		$ws?.close();
         $ws = null;
 
@@ -102,6 +106,17 @@
 
 		$spotify_data = null;
 	});
+
+    function keydown_listener(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            if (data_is_ready_promise === null) {
+                return;
+            }
+
+            data_is_ready_promise.reject_ref("Dissmissed");
+            leave_room();
+        }
+    }
 
     async function connect_to_ws() {
         if (leaving || is_ws_connected) {
@@ -172,7 +187,7 @@
 
                 switch (key) {
                     case "room":
-                        $room_data = cmd.room ?? null;
+                        $room_data = cmd[key] ?? null;
                         // console.log($room_data);
                         if (current_user !== null && $room_data !== null) {
                             const user = $room_data.users.find((u) => u.id == current_user!.id)!;
@@ -204,12 +219,30 @@
                         );
                         break; */
                     case "spotifyPlaybackState":
+                        $spotify_data = {
+                            playback_state: cmd[key]?.state ?? $spotify_data?.playback_state ?? null,
+                            recent_tracks: $spotify_data?.recent_tracks ?? [],
+                            next_tracks: $spotify_data?.next_tracks ?? [],
+                        };
+                        console.log($spotify_data);
+
+                        process_new_playback_state();
+                        break;
+                    case "spotifyTracksState":
+                        $spotify_data = {
+                            playback_state: $spotify_data?.playback_state ?? null,
+                            recent_tracks: cmd[key]?.previousTracks?.tracks ?? $spotify_data?.recent_tracks ?? [],
+                            next_tracks: cmd[key]?.nextTracks?.tracks ?? $spotify_data?.next_tracks ?? [],
+                        };
+                        console.log($spotify_data);
+                        break;
+                    case "spotifyAllState":
                         // First playback recieved
                         if (data_is_ready_promise !== null) {
-                            if (cmd.spotifyPlaybackState?.state !== undefined) {
-                                data_is_ready_promise.resolve_ptr(null);
+                            if (cmd[key]?.state !== undefined) {
+                                data_is_ready_promise.resolve_ref(null);
                             } else {
-                                data_is_ready_promise.reject_ptr(
+                                data_is_ready_promise.reject_ref(
                                     "It looks like your Spotify isn't playing anything. Please use Spotify to play a song and wait a bit !"
                                 );
                             }
@@ -218,35 +251,29 @@
                         }
 
                         $spotify_data = {
-                            playback_state: cmd.spotifyPlaybackState?.state ?? $spotify_data?.playback_state ?? null,
-                            recent_tracks: cmd.spotifyPlaybackState?.previousTracks?.tracks ?? $spotify_data?.recent_tracks ?? [],
-                            next_tracks: cmd.spotifyPlaybackState?.nextTracks?.tracks ?? $spotify_data?.next_tracks ?? [],
+                            playback_state: cmd[key]?.state ?? $spotify_data?.playback_state ?? null,
+                            recent_tracks: cmd[key]?.previousTracks?.tracks ?? $spotify_data?.recent_tracks ?? [],
+                            next_tracks: cmd[key]?.nextTracks?.tracks ?? $spotify_data?.next_tracks ?? [],
                         };
                         console.log($spotify_data);
 
-                        if ($spotify_data?.playback_state?.progressMs) {
-                            if (Math.abs($spotify_data.playback_state.progressMs - song_progress_ms) > 1000) {
-                                song_progress_ms = $spotify_data.playback_state.progressMs;
-                            }
-                        }
-
-                        volume = $spotify_data?.playback_state?.deviceVolume ?? volume;
+                        process_new_playback_state();
                         break;
                     case "spotifySearchResult":
-                        search_results = cmd.spotifySearchResult?.tracks ?? [];
+                        search_results = cmd[key]?.tracks ?? [];
                         break;
                     case "kick":
-                        toast(`You have been kicked out of the room. Reason: ${cmd.kick?.reason}`);
+                        toast(`You have been kicked out of the room. Reason: ${cmd[key]?.reason}`);
                         leave_room();
                         break;
                     case "ban":
-                        toast(`You have been banned from the room. Reason: ${cmd.ban?.reason}`);
+                        toast(`You have been banned from the room. Reason: ${cmd[key]?.reason}`);
                         leave_room();
                         break;
                     case "roomError": {
                         let error_msg = "";
 
-                        switch (cmd.roomError) {
+                        switch (cmd[key]) {
                             case RoomError.ROOM_FULL:
                                 error_msg = "Room already full";
                                 break;
@@ -264,8 +291,7 @@
                                 break;
                             case RoomError.ROOM_NOT_FOUND:
                                 error_msg = "Unexpected error: Room not found";
-                                // TODO goto("/") ?
-                                // return await leave_room();
+                                await leave_room();
                                 break;
                             case RoomError.ROOM_USER_NOT_FOUND:
                                 error_msg = "Room user not found";
@@ -293,15 +319,15 @@
                         break;
                     }
                     case "spotifyRateLimited":
-                        toast.error(`Too much Spotify requests, wait ${cmd.spotifyRateLimited}s and try again`);
+                        toast.warning(`Too much Spotify requests, wait ${cmd[key]}s and try again`);
                         break;
                     case "genericError":
-                        console.error("Error on WS CommandResponse: ", cmd.genericError);
-                        toast.error(`Server error on WS Command ${cmd.genericError}`);
+                        console.error("Error on WS CommandResponse: ", cmd[key]);
+                        toast.error(`Server error on WS Command ${cmd[key]}`);
 
                         break;
                     case "newUserJoined":
-                        toast(`User "${cmd.newUserJoined}" joined the room !`);
+                        toast(`User "${cmd[key]}" joined the room !`);
                         break;
                     default:
                         console.error(`Unhandled case on WS CommandResponse "${key}": ${JSON.stringify(cmd)}`);
@@ -352,6 +378,16 @@
         return await leave_room_cmd();
     }
 
+    async function process_new_playback_state() {
+        if ($spotify_data?.playback_state?.progressMs) {
+            if (Math.abs($spotify_data.playback_state.progressMs - song_progress_ms) > 1000) {
+                song_progress_ms = $spotify_data.playback_state.progressMs;
+            }
+        }
+
+        volume = $spotify_data?.playback_state?.deviceVolume ?? volume;
+    }
+
 	$effect(() => {
 		if (search_input.trim() !== "") {
             send_ws_command({ search: search_input }, on_cmd_send_error);
@@ -377,9 +413,9 @@
     {#if leaving || !is_ws_connected}
 		<div class="loading">
 			{#if leaving}
-				<span class="main-color">Leaving the party...</span>
+				<span>Leaving the room...</span>
 			{:else}
-				<span class="main-color">Connecting to server...</span>
+				<span>Connecting to server...</span>
 			{/if}
 			<CustomButton disabled={true}>
 				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
@@ -460,7 +496,7 @@
             @apply flex flex-col gap-4;
 
             :global(> *) {
-                @apply w-full h-full border border-secondary rounded-xl overflow-hidden;
+                @apply w-full h-full border border-secondary rounded-xl overflow-x-hidden overflow-y-scroll;
             }
         }
     }

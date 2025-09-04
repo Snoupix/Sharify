@@ -43,8 +43,8 @@
 
 		const user = get_storage_value("user");
 
-		if (user == null) {
-			toast("Unexpected error: Unable to get your user data on local storage, please try again");
+		if (user === null) {
+			toast.error("Unexpected fatal error: Unable to get your room user data on local storage.");
             set_leaving(true);
 			return await leave_room_cmd();
 		}
@@ -73,10 +73,10 @@
 
 	function get_track_id_by_uri_url(s: string): string | null {
 		if (s.startsWith("spotify")) {
-			return s.split(":").pop() || null;
+			return s.split(":").pop() ?? null;
 		}
 
-		return s.split("/").pop()?.split("?").shift() || null;
+		return s.split("/").pop()?.split("?").shift() ?? null;
 	}
 </script>
 
@@ -95,7 +95,7 @@
 {:else}
 <div class="search-wrapper">
     <div class="title">
-        <h1><Plus class="fill-main" /> Add members</h1>
+        <h1><Plus class="fill-main" /> Add songs</h1>
     </div>
     {@render _search_input()}
     <hr />
@@ -138,7 +138,7 @@
     @reference "$/app.css";
 
     .search-wrapper {
-        @apply py-4 flex flex-col items-center justify-center gap-4;
+        @apply py-4 flex flex-col items-center justify-start gap-4;
 
         .title {
             @apply w-full h-4/12;

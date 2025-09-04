@@ -144,12 +144,28 @@
     color: var(--color-main);
 }
 
+/* Global style */
+
 .block-ruby {
     display: block ruby;
 }
 
 .input {
     @apply focus:outline-2 outline-main-hover bg-bg text-main-content border border-main-hover rounded-xl;
+}
+
+.round {
+    @apply cursor-pointer border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
+
+    svg {
+        @apply w-full transition-all duration-500;
+    }
+
+    &:hover {
+        svg {
+            @apply stroke-main-content;
+        }
+    }
 }
 
 .loader {

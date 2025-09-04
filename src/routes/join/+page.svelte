@@ -24,7 +24,7 @@
     {#if error !== ""}
         <span class="text-red-500">{error}</span>
     {/if}
-    <CustomButton onclick={join_room}>Join party</CustomButton>
+    <CustomButton onclick={join_room}>Join room</CustomButton>
 </section>
 
 <style lang="postcss">

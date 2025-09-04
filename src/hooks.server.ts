@@ -1,7 +1,7 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 
-import { handle as authentication_handle } from "$/lib/auth";
+import { handle as authentication_handle } from "$lib/auth";
 
 const protected_paths = ["/join", "/host"];
 

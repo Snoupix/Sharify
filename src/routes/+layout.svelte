@@ -15,6 +15,18 @@
     const toaster_props: ToasterProps = {
         closeButton: true,
         position: "top-center",
+        toastOptions: {
+            class: "bg-bg text-main border-main-content",
+            // TODO Fix
+            classes: {
+                toast: "bg-bg text-main border-main-content",
+                success: "bg-bg text-main border-main-content",
+                error: "bg-bg text-main border-main-content",
+                normal: "bg-bg text-main border-main-content",
+                info: "bg-bg text-main border-main-content",
+                warning: "bg-bg text-main border-main-content",
+            }
+        }
     };
 
     const dont_redirect_on_paths = [/\/room*/];
