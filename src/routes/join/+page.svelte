@@ -1,40 +1,40 @@
 <script lang="ts">
-    import Logo from "$/components/logo.svelte";
-    import CustomButton from "$/components/button.svelte";
-    import { goto } from "$app/navigation";
+	import Logo from "$/components/logo.svelte";
+	import CustomButton from "$/components/button.svelte";
+	import { goto } from "$app/navigation";
 
-    let room_id = $state("");
-    let room_password = $state("");
-    let error = $state("");
+	let room_id = $state("");
+	let room_password = $state("");
+	let error = $state("");
 
-    async function join_room() {
-        if (room_id.trim().length !== 0 || room_password.trim().length !== 0) {
-            error = "Room ID and Room password must not be empty";
-            return;
-        }
+	async function join_room() {
+		if (room_id.trim().length !== 0 || room_password.trim().length !== 0) {
+			error = "Room ID and Room password must not be empty";
+			return;
+		}
 
-        await goto(`/join/${room_id}/${room_password}`);
-    }
+		await goto(`/join/${room_id}/${room_password}`);
+	}
 </script>
 
 <section>
-    <Logo class_extension="mb-4" />
-    <input class="input" type="text" placeholder="Room ID" bind:value={room_id} />
-    <input class="input" type="text" placeholder="Room password" bind:value={room_password} />
-    {#if error !== ""}
-        <span class="text-red-500">{error}</span>
-    {/if}
-    <CustomButton onclick={join_room}>Join room</CustomButton>
+	<Logo class_extension="mb-4" />
+	<input class="input" type="text" placeholder="Room ID" bind:value={room_id} />
+	<input class="input" type="text" placeholder="Room password" bind:value={room_password} />
+	{#if error !== ""}
+		<span class="text-red-500">{error}</span>
+	{/if}
+	<CustomButton onclick={join_room}>Join room</CustomButton>
 </section>
 
 <style lang="postcss">
-    @reference "$/app.css";
+	@reference "$/app.css";
 
-    section {
-        @apply m-auto w-4/12 h-screen flex flex-col gap-6 justify-center items-center;
+	section {
+		@apply m-auto flex h-screen w-4/12 flex-col items-center justify-center gap-6;
 
-        input {
-            @apply font-content text-base placeholder:text-main-content text-main-content bg-main-hover ring-main border-none outline-none w-[25rem];
-        }
-    }
+		input {
+			@apply w-[25rem] border-none bg-main-hover font-content text-base text-main-content ring-main outline-none placeholder:text-main-content;
+		}
+	}
 </style>

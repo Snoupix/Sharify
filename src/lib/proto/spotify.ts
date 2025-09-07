@@ -11,580 +11,587 @@ import { Timestamp } from "./google/protobuf/timestamp";
 export const protobufPackage = "spotify";
 
 export interface Track {
-  trackId: string;
-  trackName: string;
-  artistName: string;
-  trackDuration: number;
+	trackId: string;
+	trackName: string;
+	artistName: string;
+	trackDuration: number;
 }
 
 export interface TrackArray {
-  tracks: Track[];
+	tracks: Track[];
 }
 
 export interface PlaybackState {
-  deviceId: string;
-  deviceVolume: number;
-  shuffle: boolean;
-  progressMs?: number | undefined;
-  durationMs: number;
-  isPlaying: boolean;
-  trackId: string;
-  trackName: string;
-  artistName: string;
-  albumImageSrc: string;
+	deviceId: string;
+	deviceVolume: number;
+	shuffle: boolean;
+	progressMs?: number | undefined;
+	durationMs: number;
+	isPlaying: boolean;
+	trackId: string;
+	trackName: string;
+	artistName: string;
+	albumImageSrc: string;
 }
 
 export interface SpotifyTokens {
-  accessToken: string;
-  refreshToken: string;
-  /** / In seconds - offset from created_at */
-  expiresIn: number;
-  createdAt: Date | undefined;
+	accessToken: string;
+	refreshToken: string;
+	/** / In seconds - offset from created_at */
+	expiresIn: number;
+	createdAt: Date | undefined;
 }
 
 function createBaseTrack(): Track {
-  return { trackId: "", trackName: "", artistName: "", trackDuration: 0 };
+	return { trackId: "", trackName: "", artistName: "", trackDuration: 0 };
 }
 
 export const Track: MessageFns<Track> = {
-  encode(message: Track, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.trackId !== "") {
-      writer.uint32(10).string(message.trackId);
-    }
-    if (message.trackName !== "") {
-      writer.uint32(18).string(message.trackName);
-    }
-    if (message.artistName !== "") {
-      writer.uint32(26).string(message.artistName);
-    }
-    if (message.trackDuration !== 0) {
-      writer.uint32(32).int64(message.trackDuration);
-    }
-    return writer;
-  },
+	encode(message: Track, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.trackId !== "") {
+			writer.uint32(10).string(message.trackId);
+		}
+		if (message.trackName !== "") {
+			writer.uint32(18).string(message.trackName);
+		}
+		if (message.artistName !== "") {
+			writer.uint32(26).string(message.artistName);
+		}
+		if (message.trackDuration !== 0) {
+			writer.uint32(32).int64(message.trackDuration);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Track {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTrack();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): Track {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseTrack();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.trackId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.trackId = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.trackName = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
+					message.trackName = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 26) {
+						break;
+					}
 
-          message.artistName = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
+					message.artistName = reader.string();
+					continue;
+				}
+				case 4: {
+					if (tag !== 32) {
+						break;
+					}
 
-          message.trackDuration = longToNumber(reader.int64());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.trackDuration = longToNumber(reader.int64());
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): Track {
-    return {
-      trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
-      trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
-      artistName: isSet(object.artistName) ? globalThis.String(object.artistName) : "",
-      trackDuration: isSet(object.trackDuration) ? globalThis.Number(object.trackDuration) : 0,
-    };
-  },
+	fromJSON(object: any): Track {
+		return {
+			trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+			trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
+			artistName: isSet(object.artistName) ? globalThis.String(object.artistName) : "",
+			trackDuration: isSet(object.trackDuration) ? globalThis.Number(object.trackDuration) : 0,
+		};
+	},
 
-  toJSON(message: Track): unknown {
-    const obj: any = {};
-    if (message.trackId !== "") {
-      obj.trackId = message.trackId;
-    }
-    if (message.trackName !== "") {
-      obj.trackName = message.trackName;
-    }
-    if (message.artistName !== "") {
-      obj.artistName = message.artistName;
-    }
-    if (message.trackDuration !== 0) {
-      obj.trackDuration = Math.round(message.trackDuration);
-    }
-    return obj;
-  },
+	toJSON(message: Track): unknown {
+		const obj: any = {};
+		if (message.trackId !== "") {
+			obj.trackId = message.trackId;
+		}
+		if (message.trackName !== "") {
+			obj.trackName = message.trackName;
+		}
+		if (message.artistName !== "") {
+			obj.artistName = message.artistName;
+		}
+		if (message.trackDuration !== 0) {
+			obj.trackDuration = Math.round(message.trackDuration);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<Track>, I>>(base?: I): Track {
-    return Track.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Track>, I>>(object: I): Track {
-    const message = createBaseTrack();
-    message.trackId = object.trackId ?? "";
-    message.trackName = object.trackName ?? "";
-    message.artistName = object.artistName ?? "";
-    message.trackDuration = object.trackDuration ?? 0;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<Track>, I>>(base?: I): Track {
+		return Track.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<Track>, I>>(object: I): Track {
+		const message = createBaseTrack();
+		message.trackId = object.trackId ?? "";
+		message.trackName = object.trackName ?? "";
+		message.artistName = object.artistName ?? "";
+		message.trackDuration = object.trackDuration ?? 0;
+		return message;
+	},
 };
 
 function createBaseTrackArray(): TrackArray {
-  return { tracks: [] };
+	return { tracks: [] };
 }
 
 export const TrackArray: MessageFns<TrackArray> = {
-  encode(message: TrackArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.tracks) {
-      Track.encode(v!, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
+	encode(message: TrackArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		for (const v of message.tracks) {
+			Track.encode(v!, writer.uint32(10).fork()).join();
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): TrackArray {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseTrackArray();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): TrackArray {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseTrackArray();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.tracks.push(Track.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.tracks.push(Track.decode(reader, reader.uint32()));
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): TrackArray {
-    return { tracks: globalThis.Array.isArray(object?.tracks) ? object.tracks.map((e: any) => Track.fromJSON(e)) : [] };
-  },
+	fromJSON(object: any): TrackArray {
+		return {
+			tracks: globalThis.Array.isArray(object?.tracks) ? object.tracks.map((e: any) => Track.fromJSON(e)) : [],
+		};
+	},
 
-  toJSON(message: TrackArray): unknown {
-    const obj: any = {};
-    if (message.tracks?.length) {
-      obj.tracks = message.tracks.map((e) => Track.toJSON(e));
-    }
-    return obj;
-  },
+	toJSON(message: TrackArray): unknown {
+		const obj: any = {};
+		if (message.tracks?.length) {
+			obj.tracks = message.tracks.map((e) => Track.toJSON(e));
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<TrackArray>, I>>(base?: I): TrackArray {
-    return TrackArray.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<TrackArray>, I>>(object: I): TrackArray {
-    const message = createBaseTrackArray();
-    message.tracks = object.tracks?.map((e) => Track.fromPartial(e)) || [];
-    return message;
-  },
+	create<I extends Exact<DeepPartial<TrackArray>, I>>(base?: I): TrackArray {
+		return TrackArray.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<TrackArray>, I>>(object: I): TrackArray {
+		const message = createBaseTrackArray();
+		message.tracks = object.tracks?.map((e) => Track.fromPartial(e)) || [];
+		return message;
+	},
 };
 
 function createBasePlaybackState(): PlaybackState {
-  return {
-    deviceId: "",
-    deviceVolume: 0,
-    shuffle: false,
-    progressMs: undefined,
-    durationMs: 0,
-    isPlaying: false,
-    trackId: "",
-    trackName: "",
-    artistName: "",
-    albumImageSrc: "",
-  };
+	return {
+		deviceId: "",
+		deviceVolume: 0,
+		shuffle: false,
+		progressMs: undefined,
+		durationMs: 0,
+		isPlaying: false,
+		trackId: "",
+		trackName: "",
+		artistName: "",
+		albumImageSrc: "",
+	};
 }
 
 export const PlaybackState: MessageFns<PlaybackState> = {
-  encode(message: PlaybackState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.deviceId !== "") {
-      writer.uint32(10).string(message.deviceId);
-    }
-    if (message.deviceVolume !== 0) {
-      writer.uint32(16).uint32(message.deviceVolume);
-    }
-    if (message.shuffle !== false) {
-      writer.uint32(24).bool(message.shuffle);
-    }
-    if (message.progressMs !== undefined) {
-      writer.uint32(32).uint64(message.progressMs);
-    }
-    if (message.durationMs !== 0) {
-      writer.uint32(40).uint64(message.durationMs);
-    }
-    if (message.isPlaying !== false) {
-      writer.uint32(48).bool(message.isPlaying);
-    }
-    if (message.trackId !== "") {
-      writer.uint32(58).string(message.trackId);
-    }
-    if (message.trackName !== "") {
-      writer.uint32(66).string(message.trackName);
-    }
-    if (message.artistName !== "") {
-      writer.uint32(74).string(message.artistName);
-    }
-    if (message.albumImageSrc !== "") {
-      writer.uint32(82).string(message.albumImageSrc);
-    }
-    return writer;
-  },
+	encode(message: PlaybackState, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.deviceId !== "") {
+			writer.uint32(10).string(message.deviceId);
+		}
+		if (message.deviceVolume !== 0) {
+			writer.uint32(16).uint32(message.deviceVolume);
+		}
+		if (message.shuffle !== false) {
+			writer.uint32(24).bool(message.shuffle);
+		}
+		if (message.progressMs !== undefined) {
+			writer.uint32(32).uint64(message.progressMs);
+		}
+		if (message.durationMs !== 0) {
+			writer.uint32(40).uint64(message.durationMs);
+		}
+		if (message.isPlaying !== false) {
+			writer.uint32(48).bool(message.isPlaying);
+		}
+		if (message.trackId !== "") {
+			writer.uint32(58).string(message.trackId);
+		}
+		if (message.trackName !== "") {
+			writer.uint32(66).string(message.trackName);
+		}
+		if (message.artistName !== "") {
+			writer.uint32(74).string(message.artistName);
+		}
+		if (message.albumImageSrc !== "") {
+			writer.uint32(82).string(message.albumImageSrc);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PlaybackState {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePlaybackState();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): PlaybackState {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBasePlaybackState();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.deviceId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
+					message.deviceId = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 16) {
+						break;
+					}
 
-          message.deviceVolume = reader.uint32();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
+					message.deviceVolume = reader.uint32();
+					continue;
+				}
+				case 3: {
+					if (tag !== 24) {
+						break;
+					}
 
-          message.shuffle = reader.bool();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
+					message.shuffle = reader.bool();
+					continue;
+				}
+				case 4: {
+					if (tag !== 32) {
+						break;
+					}
 
-          message.progressMs = longToNumber(reader.uint64());
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
+					message.progressMs = longToNumber(reader.uint64());
+					continue;
+				}
+				case 5: {
+					if (tag !== 40) {
+						break;
+					}
 
-          message.durationMs = longToNumber(reader.uint64());
-          continue;
-        }
-        case 6: {
-          if (tag !== 48) {
-            break;
-          }
+					message.durationMs = longToNumber(reader.uint64());
+					continue;
+				}
+				case 6: {
+					if (tag !== 48) {
+						break;
+					}
 
-          message.isPlaying = reader.bool();
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
+					message.isPlaying = reader.bool();
+					continue;
+				}
+				case 7: {
+					if (tag !== 58) {
+						break;
+					}
 
-          message.trackId = reader.string();
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
+					message.trackId = reader.string();
+					continue;
+				}
+				case 8: {
+					if (tag !== 66) {
+						break;
+					}
 
-          message.trackName = reader.string();
-          continue;
-        }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
+					message.trackName = reader.string();
+					continue;
+				}
+				case 9: {
+					if (tag !== 74) {
+						break;
+					}
 
-          message.artistName = reader.string();
-          continue;
-        }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
+					message.artistName = reader.string();
+					continue;
+				}
+				case 10: {
+					if (tag !== 82) {
+						break;
+					}
 
-          message.albumImageSrc = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.albumImageSrc = reader.string();
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): PlaybackState {
-    return {
-      deviceId: isSet(object.deviceId) ? globalThis.String(object.deviceId) : "",
-      deviceVolume: isSet(object.deviceVolume) ? globalThis.Number(object.deviceVolume) : 0,
-      shuffle: isSet(object.shuffle) ? globalThis.Boolean(object.shuffle) : false,
-      progressMs: isSet(object.progressMs) ? globalThis.Number(object.progressMs) : undefined,
-      durationMs: isSet(object.durationMs) ? globalThis.Number(object.durationMs) : 0,
-      isPlaying: isSet(object.isPlaying) ? globalThis.Boolean(object.isPlaying) : false,
-      trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
-      trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
-      artistName: isSet(object.artistName) ? globalThis.String(object.artistName) : "",
-      albumImageSrc: isSet(object.albumImageSrc) ? globalThis.String(object.albumImageSrc) : "",
-    };
-  },
+	fromJSON(object: any): PlaybackState {
+		return {
+			deviceId: isSet(object.deviceId) ? globalThis.String(object.deviceId) : "",
+			deviceVolume: isSet(object.deviceVolume) ? globalThis.Number(object.deviceVolume) : 0,
+			shuffle: isSet(object.shuffle) ? globalThis.Boolean(object.shuffle) : false,
+			progressMs: isSet(object.progressMs) ? globalThis.Number(object.progressMs) : undefined,
+			durationMs: isSet(object.durationMs) ? globalThis.Number(object.durationMs) : 0,
+			isPlaying: isSet(object.isPlaying) ? globalThis.Boolean(object.isPlaying) : false,
+			trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+			trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
+			artistName: isSet(object.artistName) ? globalThis.String(object.artistName) : "",
+			albumImageSrc: isSet(object.albumImageSrc) ? globalThis.String(object.albumImageSrc) : "",
+		};
+	},
 
-  toJSON(message: PlaybackState): unknown {
-    const obj: any = {};
-    if (message.deviceId !== "") {
-      obj.deviceId = message.deviceId;
-    }
-    if (message.deviceVolume !== 0) {
-      obj.deviceVolume = Math.round(message.deviceVolume);
-    }
-    if (message.shuffle !== false) {
-      obj.shuffle = message.shuffle;
-    }
-    if (message.progressMs !== undefined) {
-      obj.progressMs = Math.round(message.progressMs);
-    }
-    if (message.durationMs !== 0) {
-      obj.durationMs = Math.round(message.durationMs);
-    }
-    if (message.isPlaying !== false) {
-      obj.isPlaying = message.isPlaying;
-    }
-    if (message.trackId !== "") {
-      obj.trackId = message.trackId;
-    }
-    if (message.trackName !== "") {
-      obj.trackName = message.trackName;
-    }
-    if (message.artistName !== "") {
-      obj.artistName = message.artistName;
-    }
-    if (message.albumImageSrc !== "") {
-      obj.albumImageSrc = message.albumImageSrc;
-    }
-    return obj;
-  },
+	toJSON(message: PlaybackState): unknown {
+		const obj: any = {};
+		if (message.deviceId !== "") {
+			obj.deviceId = message.deviceId;
+		}
+		if (message.deviceVolume !== 0) {
+			obj.deviceVolume = Math.round(message.deviceVolume);
+		}
+		if (message.shuffle !== false) {
+			obj.shuffle = message.shuffle;
+		}
+		if (message.progressMs !== undefined) {
+			obj.progressMs = Math.round(message.progressMs);
+		}
+		if (message.durationMs !== 0) {
+			obj.durationMs = Math.round(message.durationMs);
+		}
+		if (message.isPlaying !== false) {
+			obj.isPlaying = message.isPlaying;
+		}
+		if (message.trackId !== "") {
+			obj.trackId = message.trackId;
+		}
+		if (message.trackName !== "") {
+			obj.trackName = message.trackName;
+		}
+		if (message.artistName !== "") {
+			obj.artistName = message.artistName;
+		}
+		if (message.albumImageSrc !== "") {
+			obj.albumImageSrc = message.albumImageSrc;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<PlaybackState>, I>>(base?: I): PlaybackState {
-    return PlaybackState.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<PlaybackState>, I>>(object: I): PlaybackState {
-    const message = createBasePlaybackState();
-    message.deviceId = object.deviceId ?? "";
-    message.deviceVolume = object.deviceVolume ?? 0;
-    message.shuffle = object.shuffle ?? false;
-    message.progressMs = object.progressMs ?? undefined;
-    message.durationMs = object.durationMs ?? 0;
-    message.isPlaying = object.isPlaying ?? false;
-    message.trackId = object.trackId ?? "";
-    message.trackName = object.trackName ?? "";
-    message.artistName = object.artistName ?? "";
-    message.albumImageSrc = object.albumImageSrc ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<PlaybackState>, I>>(base?: I): PlaybackState {
+		return PlaybackState.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<PlaybackState>, I>>(object: I): PlaybackState {
+		const message = createBasePlaybackState();
+		message.deviceId = object.deviceId ?? "";
+		message.deviceVolume = object.deviceVolume ?? 0;
+		message.shuffle = object.shuffle ?? false;
+		message.progressMs = object.progressMs ?? undefined;
+		message.durationMs = object.durationMs ?? 0;
+		message.isPlaying = object.isPlaying ?? false;
+		message.trackId = object.trackId ?? "";
+		message.trackName = object.trackName ?? "";
+		message.artistName = object.artistName ?? "";
+		message.albumImageSrc = object.albumImageSrc ?? "";
+		return message;
+	},
 };
 
 function createBaseSpotifyTokens(): SpotifyTokens {
-  return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: undefined };
+	return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: undefined };
 }
 
 export const SpotifyTokens: MessageFns<SpotifyTokens> = {
-  encode(message: SpotifyTokens, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
-    }
-    if (message.refreshToken !== "") {
-      writer.uint32(18).string(message.refreshToken);
-    }
-    if (message.expiresIn !== 0) {
-      writer.uint32(24).uint32(message.expiresIn);
-    }
-    if (message.createdAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
+	encode(message: SpotifyTokens, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.accessToken !== "") {
+			writer.uint32(10).string(message.accessToken);
+		}
+		if (message.refreshToken !== "") {
+			writer.uint32(18).string(message.refreshToken);
+		}
+		if (message.expiresIn !== 0) {
+			writer.uint32(24).uint32(message.expiresIn);
+		}
+		if (message.createdAt !== undefined) {
+			Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): SpotifyTokens {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseSpotifyTokens();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): SpotifyTokens {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseSpotifyTokens();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.accessToken = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.accessToken = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.refreshToken = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
+					message.refreshToken = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 24) {
+						break;
+					}
 
-          message.expiresIn = reader.uint32();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
+					message.expiresIn = reader.uint32();
+					continue;
+				}
+				case 4: {
+					if (tag !== 34) {
+						break;
+					}
 
-          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): SpotifyTokens {
-    return {
-      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
-      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
-      expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
-      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
-    };
-  },
+	fromJSON(object: any): SpotifyTokens {
+		return {
+			accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
+			refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
+			expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
+			createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+		};
+	},
 
-  toJSON(message: SpotifyTokens): unknown {
-    const obj: any = {};
-    if (message.accessToken !== "") {
-      obj.accessToken = message.accessToken;
-    }
-    if (message.refreshToken !== "") {
-      obj.refreshToken = message.refreshToken;
-    }
-    if (message.expiresIn !== 0) {
-      obj.expiresIn = Math.round(message.expiresIn);
-    }
-    if (message.createdAt !== undefined) {
-      obj.createdAt = message.createdAt.toISOString();
-    }
-    return obj;
-  },
+	toJSON(message: SpotifyTokens): unknown {
+		const obj: any = {};
+		if (message.accessToken !== "") {
+			obj.accessToken = message.accessToken;
+		}
+		if (message.refreshToken !== "") {
+			obj.refreshToken = message.refreshToken;
+		}
+		if (message.expiresIn !== 0) {
+			obj.expiresIn = Math.round(message.expiresIn);
+		}
+		if (message.createdAt !== undefined) {
+			obj.createdAt = message.createdAt.toISOString();
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<SpotifyTokens>, I>>(base?: I): SpotifyTokens {
-    return SpotifyTokens.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<SpotifyTokens>, I>>(object: I): SpotifyTokens {
-    const message = createBaseSpotifyTokens();
-    message.accessToken = object.accessToken ?? "";
-    message.refreshToken = object.refreshToken ?? "";
-    message.expiresIn = object.expiresIn ?? 0;
-    message.createdAt = object.createdAt ?? undefined;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<SpotifyTokens>, I>>(base?: I): SpotifyTokens {
+		return SpotifyTokens.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<SpotifyTokens>, I>>(object: I): SpotifyTokens {
+		const message = createBaseSpotifyTokens();
+		message.accessToken = object.accessToken ?? "";
+		message.refreshToken = object.refreshToken ?? "";
+		message.expiresIn = object.expiresIn ?? 0;
+		message.createdAt = object.createdAt ?? undefined;
+		return message;
+	},
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+	? T
+	: T extends globalThis.Array<infer U>
+		? globalThis.Array<DeepPartial<U>>
+		: T extends ReadonlyArray<infer U>
+			? ReadonlyArray<DeepPartial<U>>
+			: T extends {}
+				? { [K in keyof T]?: DeepPartial<T[K]> }
+				: Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+	? P
+	: P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
-  const seconds = Math.trunc(date.getTime() / 1_000);
-  const nanos = (date.getTime() % 1_000) * 1_000_000;
-  return { seconds, nanos };
+	const seconds = Math.trunc(date.getTime() / 1_000);
+	const nanos = (date.getTime() % 1_000) * 1_000_000;
+	return { seconds, nanos };
 }
 
 function fromTimestamp(t: Timestamp): Date {
-  let millis = (t.seconds || 0) * 1_000;
-  millis += (t.nanos || 0) / 1_000_000;
-  return new globalThis.Date(millis);
+	let millis = (t.seconds || 0) * 1_000;
+	millis += (t.nanos || 0) / 1_000_000;
+	return new globalThis.Date(millis);
 }
 
 function fromJsonTimestamp(o: any): Date {
-  if (o instanceof globalThis.Date) {
-    return o;
-  } else if (typeof o === "string") {
-    return new globalThis.Date(o);
-  } else {
-    return fromTimestamp(Timestamp.fromJSON(o));
-  }
+	if (o instanceof globalThis.Date) {
+		return o;
+	} else if (typeof o === "string") {
+		return new globalThis.Date(o);
+	} else {
+		return fromTimestamp(Timestamp.fromJSON(o));
+	}
 }
 
 function longToNumber(int64: { toString(): string }): number {
-  const num = globalThis.Number(int64.toString());
-  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
-  }
-  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
-  }
-  return num;
+	const num = globalThis.Number(int64.toString());
+	if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+		throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+	}
+	if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+		throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+	}
+	return num;
 }
 
 function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
+	return value !== null && value !== undefined;
 }
 
 export interface MessageFns<T> {
-  encode(message: T, writer?: BinaryWriter): BinaryWriter;
-  decode(input: BinaryReader | Uint8Array, length?: number): T;
-  fromJSON(object: any): T;
-  toJSON(message: T): unknown;
-  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+	encode(message: T, writer?: BinaryWriter): BinaryWriter;
+	decode(input: BinaryReader | Uint8Array, length?: number): T;
+	fromJSON(object: any): T;
+	toJSON(message: T): unknown;
+	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }

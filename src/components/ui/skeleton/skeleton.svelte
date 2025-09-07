@@ -9,9 +9,5 @@
 	}: WithoutChildren<WithElementRef<HTMLAttributes<HTMLDivElement>>> = $props();
 </script>
 
-<div
-	bind:this={ref}
-	data-slot="skeleton"
-	class={cn("bg-main/30 animate-pulse rounded-md", className)}
-	{...restProps}
-></div>
+<div bind:this={ref} data-slot="skeleton" class={cn("animate-pulse rounded-md bg-main/30", className)} {...restProps}>
+</div>

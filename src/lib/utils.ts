@@ -15,7 +15,7 @@ export interface LocalStorage {
 	user_id: Nullable<string>;
 	current_room: Nullable<Room>;
 	// purple is default whatever prefers-color-scheme
-	theme: Nullable<typeof themes[number]>; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
+	theme: Nullable<(typeof themes)[number]>; // null == window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
 export type SpotifyTokens = {
@@ -47,14 +47,14 @@ export function set_storage_value(value: Partial<LocalStorage>) {
 		return;
 	}
 
-    try {
-        const parsed_storage = JSON.parse(storage);
+	try {
+		const parsed_storage = JSON.parse(storage);
 
-        store.setItem("Sharify", JSON.stringify({ ...parsed_storage, ...value }));
-    } catch (e) {
-        console.error("Corrupted storage, wiping...", e);
-        store.clear();
-    }
+		store.setItem("Sharify", JSON.stringify({ ...parsed_storage, ...value }));
+	} catch (e) {
+		console.error("Corrupted storage, wiping...", e);
+		store.clear();
+	}
 
 	return;
 }
@@ -68,7 +68,7 @@ export function get_storage_value<T extends keyof LocalStorage, S extends Storag
 
 	const store_object = JSON.parse(store.getItem("Sharify") || "{}") as LocalStorage;
 
-	return store_object[value] as S ?? null;
+	return (store_object[value] as S) ?? null;
 }
 
 export function string_to_hex_uuid(email: string, uuid_len: number) {
@@ -158,19 +158,21 @@ export function bytes_to_uuid_str(bytes: Uint8Array<ArrayBufferLike>) {
 
 /// Most likely used to make UUIDs (RoleID, RoomID...) unique and compare them
 export function sum_bytes(arr: Uint8Array<ArrayBufferLike>) {
-    return arr.reduce((acc, byte) => acc + byte, 0);
+	return arr.reduce((acc, byte) => acc + byte, 0);
 }
 
 export function get_user_role(room_data: Nullable<Room>, user_role_id: RoomUser["roleId"]): Nullable<Role> {
-    if (!user_role_id) return null;
+	if (!user_role_id) return null;
 
-    return room_data?.roleManager?.roles.find((r) => {
-        if (typeof r.id?.reduce !== "function" || typeof user_role_id?.reduce !== "function") {
-            return false;
-        }
+	return (
+		room_data?.roleManager?.roles.find((r) => {
+			if (typeof r.id?.reduce !== "function" || typeof user_role_id?.reduce !== "function") {
+				return false;
+			}
 
-        return sum_bytes(r.id) === sum_bytes(user_role_id);
-    }) ?? null;
+			return sum_bytes(r.id) === sum_bytes(user_role_id);
+		}) ?? null
+	);
 }
 
 export function set_theme(theme: LocalStorage["theme"]) {
@@ -279,25 +281,25 @@ export function click_link(e: MouseEvent | { currentTarget: HTMLButtonElement | 
 }
 
 export function custom_promise() {
-    let resolve_ref: (_: unknown) => void;
-    let reject_ref: (reason: string) => void;
+	let resolve_ref: (_: unknown) => void;
+	let reject_ref: (reason: string) => void;
 
-    const promise = new Promise((res, rej) => {
-        resolve_ref = res;
-        reject_ref = rej;
-    });
+	const promise = new Promise((res, rej) => {
+		resolve_ref = res;
+		reject_ref = rej;
+	});
 
-    // @ts-expect-error They are gonna be used, fu ts_ls
-    return { promise, resolve_ref, reject_ref };
+	// @ts-expect-error They are gonna be used, fu ts_ls
+	return { promise, resolve_ref, reject_ref };
 }
 
 export function with_timeout<T>(promise: Promise<T>, timeout_error: string, ms: number) {
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(timeout_error), ms));
+	const timeout = new Promise((_, rej) => setTimeout(() => rej(timeout_error), ms));
 
-    return Promise.race([promise, timeout]);
+	return Promise.race([promise, timeout]);
 }
 
 export async function leave_room() {
-    set_storage_value({ current_room: null, user: null });
-    await goto("/");
+	set_storage_value({ current_room: null, user: null });
+	await goto("/");
 }

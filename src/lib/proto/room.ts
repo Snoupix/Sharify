@@ -12,848 +12,854 @@ import { RoleManager } from "./role";
 export const protobufPackage = "room";
 
 export enum RoomError {
-  ROOM_CREATION_FAIL = 0,
-  ROOM_NOT_FOUND = 1,
-  ROOM_USER_NOT_FOUND = 2,
-  ROLE_NOT_FOUND = 3,
-  UNAUTHORIZED = 4,
-  TRACK_NOT_FOUND = 5,
-  ROOM_FULL = 6,
-  USER_BANNED = 7,
-  USER_ID_EXISTS = 8,
-  UNREACHABLE = 9,
-  UNRECOGNIZED = -1,
+	ROOM_CREATION_FAIL = 0,
+	ROOM_NOT_FOUND = 1,
+	ROOM_USER_NOT_FOUND = 2,
+	ROLE_NOT_FOUND = 3,
+	UNAUTHORIZED = 4,
+	TRACK_NOT_FOUND = 5,
+	ROOM_FULL = 6,
+	USER_BANNED = 7,
+	USER_ID_EXISTS = 8,
+	UNREACHABLE = 9,
+	UNRECOGNIZED = -1,
 }
 
 export function roomErrorFromJSON(object: any): RoomError {
-  switch (object) {
-    case 0:
-    case "ROOM_CREATION_FAIL":
-      return RoomError.ROOM_CREATION_FAIL;
-    case 1:
-    case "ROOM_NOT_FOUND":
-      return RoomError.ROOM_NOT_FOUND;
-    case 2:
-    case "ROOM_USER_NOT_FOUND":
-      return RoomError.ROOM_USER_NOT_FOUND;
-    case 3:
-    case "ROLE_NOT_FOUND":
-      return RoomError.ROLE_NOT_FOUND;
-    case 4:
-    case "UNAUTHORIZED":
-      return RoomError.UNAUTHORIZED;
-    case 5:
-    case "TRACK_NOT_FOUND":
-      return RoomError.TRACK_NOT_FOUND;
-    case 6:
-    case "ROOM_FULL":
-      return RoomError.ROOM_FULL;
-    case 7:
-    case "USER_BANNED":
-      return RoomError.USER_BANNED;
-    case 8:
-    case "USER_ID_EXISTS":
-      return RoomError.USER_ID_EXISTS;
-    case 9:
-    case "UNREACHABLE":
-      return RoomError.UNREACHABLE;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return RoomError.UNRECOGNIZED;
-  }
+	switch (object) {
+		case 0:
+		case "ROOM_CREATION_FAIL":
+			return RoomError.ROOM_CREATION_FAIL;
+		case 1:
+		case "ROOM_NOT_FOUND":
+			return RoomError.ROOM_NOT_FOUND;
+		case 2:
+		case "ROOM_USER_NOT_FOUND":
+			return RoomError.ROOM_USER_NOT_FOUND;
+		case 3:
+		case "ROLE_NOT_FOUND":
+			return RoomError.ROLE_NOT_FOUND;
+		case 4:
+		case "UNAUTHORIZED":
+			return RoomError.UNAUTHORIZED;
+		case 5:
+		case "TRACK_NOT_FOUND":
+			return RoomError.TRACK_NOT_FOUND;
+		case 6:
+		case "ROOM_FULL":
+			return RoomError.ROOM_FULL;
+		case 7:
+		case "USER_BANNED":
+			return RoomError.USER_BANNED;
+		case 8:
+		case "USER_ID_EXISTS":
+			return RoomError.USER_ID_EXISTS;
+		case 9:
+		case "UNREACHABLE":
+			return RoomError.UNREACHABLE;
+		case -1:
+		case "UNRECOGNIZED":
+		default:
+			return RoomError.UNRECOGNIZED;
+	}
 }
 
 export function roomErrorToJSON(object: RoomError): string {
-  switch (object) {
-    case RoomError.ROOM_CREATION_FAIL:
-      return "ROOM_CREATION_FAIL";
-    case RoomError.ROOM_NOT_FOUND:
-      return "ROOM_NOT_FOUND";
-    case RoomError.ROOM_USER_NOT_FOUND:
-      return "ROOM_USER_NOT_FOUND";
-    case RoomError.ROLE_NOT_FOUND:
-      return "ROLE_NOT_FOUND";
-    case RoomError.UNAUTHORIZED:
-      return "UNAUTHORIZED";
-    case RoomError.TRACK_NOT_FOUND:
-      return "TRACK_NOT_FOUND";
-    case RoomError.ROOM_FULL:
-      return "ROOM_FULL";
-    case RoomError.USER_BANNED:
-      return "USER_BANNED";
-    case RoomError.USER_ID_EXISTS:
-      return "USER_ID_EXISTS";
-    case RoomError.UNREACHABLE:
-      return "UNREACHABLE";
-    case RoomError.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
+	switch (object) {
+		case RoomError.ROOM_CREATION_FAIL:
+			return "ROOM_CREATION_FAIL";
+		case RoomError.ROOM_NOT_FOUND:
+			return "ROOM_NOT_FOUND";
+		case RoomError.ROOM_USER_NOT_FOUND:
+			return "ROOM_USER_NOT_FOUND";
+		case RoomError.ROLE_NOT_FOUND:
+			return "ROLE_NOT_FOUND";
+		case RoomError.UNAUTHORIZED:
+			return "UNAUTHORIZED";
+		case RoomError.TRACK_NOT_FOUND:
+			return "TRACK_NOT_FOUND";
+		case RoomError.ROOM_FULL:
+			return "ROOM_FULL";
+		case RoomError.USER_BANNED:
+			return "USER_BANNED";
+		case RoomError.USER_ID_EXISTS:
+			return "USER_ID_EXISTS";
+		case RoomError.UNREACHABLE:
+			return "UNREACHABLE";
+		case RoomError.UNRECOGNIZED:
+		default:
+			return "UNRECOGNIZED";
+	}
 }
 
 export enum LogType {
-  OTHER = 0,
-  KICK = 1,
-  BAN = 2,
-  UNRECOGNIZED = -1,
+	OTHER = 0,
+	KICK = 1,
+	BAN = 2,
+	UNRECOGNIZED = -1,
 }
 
 export function logTypeFromJSON(object: any): LogType {
-  switch (object) {
-    case 0:
-    case "OTHER":
-      return LogType.OTHER;
-    case 1:
-    case "KICK":
-      return LogType.KICK;
-    case 2:
-    case "BAN":
-      return LogType.BAN;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return LogType.UNRECOGNIZED;
-  }
+	switch (object) {
+		case 0:
+		case "OTHER":
+			return LogType.OTHER;
+		case 1:
+		case "KICK":
+			return LogType.KICK;
+		case 2:
+		case "BAN":
+			return LogType.BAN;
+		case -1:
+		case "UNRECOGNIZED":
+		default:
+			return LogType.UNRECOGNIZED;
+	}
 }
 
 export function logTypeToJSON(object: LogType): string {
-  switch (object) {
-    case LogType.OTHER:
-      return "OTHER";
-    case LogType.KICK:
-      return "KICK";
-    case LogType.BAN:
-      return "BAN";
-    case LogType.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
+	switch (object) {
+		case LogType.OTHER:
+			return "OTHER";
+		case LogType.KICK:
+			return "KICK";
+		case LogType.BAN:
+			return "BAN";
+		case LogType.UNRECOGNIZED:
+		default:
+			return "UNRECOGNIZED";
+	}
 }
 
 export interface Room {
-  /** UUID */
-  id: Uint8Array;
-  name: string;
-  password: string;
-  users: RoomUser[];
-  bannedUsers: string[];
-  roleManager: RoleManager | undefined;
-  tracksQueue: RoomTrack[];
-  logs: Log[];
-  maxUsers: number;
+	/** UUID */
+	id: Uint8Array;
+	name: string;
+	password: string;
+	users: RoomUser[];
+	bannedUsers: string[];
+	roleManager: RoleManager | undefined;
+	tracksQueue: RoomTrack[];
+	logs: Log[];
+	maxUsers: number;
 }
 
 export interface CredentialsInput {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  createdAt: Date | undefined;
+	accessToken: string;
+	refreshToken: string;
+	expiresIn: number;
+	createdAt: Date | undefined;
 }
 
 export interface RoomTrack {
-  userId: string;
-  trackId: string;
-  trackName: string;
-  trackDuration: number;
+	userId: string;
+	trackId: string;
+	trackName: string;
+	trackDuration: number;
 }
 
 export interface RoomUser {
-  id: string;
-  username: string;
-  /** UUID */
-  roleId: Uint8Array;
-  isConnected: boolean;
+	id: string;
+	username: string;
+	/** UUID */
+	roleId: Uint8Array;
+	isConnected: boolean;
 }
 
 export interface Log {
-  type: LogType;
-  details: string;
+	type: LogType;
+	details: string;
 }
 
 function createBaseRoom(): Room {
-  return {
-    id: new Uint8Array(0),
-    name: "",
-    password: "",
-    users: [],
-    bannedUsers: [],
-    roleManager: undefined,
-    tracksQueue: [],
-    logs: [],
-    maxUsers: 0,
-  };
+	return {
+		id: new Uint8Array(0),
+		name: "",
+		password: "",
+		users: [],
+		bannedUsers: [],
+		roleManager: undefined,
+		tracksQueue: [],
+		logs: [],
+		maxUsers: 0,
+	};
 }
 
 export const Room: MessageFns<Room> = {
-  encode(message: Room, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id.length !== 0) {
-      writer.uint32(10).bytes(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.password !== "") {
-      writer.uint32(26).string(message.password);
-    }
-    for (const v of message.users) {
-      RoomUser.encode(v!, writer.uint32(34).fork()).join();
-    }
-    for (const v of message.bannedUsers) {
-      writer.uint32(42).string(v!);
-    }
-    if (message.roleManager !== undefined) {
-      RoleManager.encode(message.roleManager, writer.uint32(50).fork()).join();
-    }
-    for (const v of message.tracksQueue) {
-      RoomTrack.encode(v!, writer.uint32(58).fork()).join();
-    }
-    for (const v of message.logs) {
-      Log.encode(v!, writer.uint32(66).fork()).join();
-    }
-    if (message.maxUsers !== 0) {
-      writer.uint32(72).uint64(message.maxUsers);
-    }
-    return writer;
-  },
+	encode(message: Room, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.id.length !== 0) {
+			writer.uint32(10).bytes(message.id);
+		}
+		if (message.name !== "") {
+			writer.uint32(18).string(message.name);
+		}
+		if (message.password !== "") {
+			writer.uint32(26).string(message.password);
+		}
+		for (const v of message.users) {
+			RoomUser.encode(v!, writer.uint32(34).fork()).join();
+		}
+		for (const v of message.bannedUsers) {
+			writer.uint32(42).string(v!);
+		}
+		if (message.roleManager !== undefined) {
+			RoleManager.encode(message.roleManager, writer.uint32(50).fork()).join();
+		}
+		for (const v of message.tracksQueue) {
+			RoomTrack.encode(v!, writer.uint32(58).fork()).join();
+		}
+		for (const v of message.logs) {
+			Log.encode(v!, writer.uint32(66).fork()).join();
+		}
+		if (message.maxUsers !== 0) {
+			writer.uint32(72).uint64(message.maxUsers);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Room {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoom();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): Room {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRoom();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.id = reader.bytes();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.id = reader.bytes();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
+					message.name = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 26) {
+						break;
+					}
 
-          message.password = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
+					message.password = reader.string();
+					continue;
+				}
+				case 4: {
+					if (tag !== 34) {
+						break;
+					}
 
-          message.users.push(RoomUser.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
+					message.users.push(RoomUser.decode(reader, reader.uint32()));
+					continue;
+				}
+				case 5: {
+					if (tag !== 42) {
+						break;
+					}
 
-          message.bannedUsers.push(reader.string());
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
+					message.bannedUsers.push(reader.string());
+					continue;
+				}
+				case 6: {
+					if (tag !== 50) {
+						break;
+					}
 
-          message.roleManager = RoleManager.decode(reader, reader.uint32());
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
+					message.roleManager = RoleManager.decode(reader, reader.uint32());
+					continue;
+				}
+				case 7: {
+					if (tag !== 58) {
+						break;
+					}
 
-          message.tracksQueue.push(RoomTrack.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
+					message.tracksQueue.push(RoomTrack.decode(reader, reader.uint32()));
+					continue;
+				}
+				case 8: {
+					if (tag !== 66) {
+						break;
+					}
 
-          message.logs.push(Log.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 9: {
-          if (tag !== 72) {
-            break;
-          }
+					message.logs.push(Log.decode(reader, reader.uint32()));
+					continue;
+				}
+				case 9: {
+					if (tag !== 72) {
+						break;
+					}
 
-          message.maxUsers = longToNumber(reader.uint64());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.maxUsers = longToNumber(reader.uint64());
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): Room {
-    return {
-      id: isSet(object.id) ? bytesFromBase64(object.id) : new Uint8Array(0),
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
-      password: isSet(object.password) ? globalThis.String(object.password) : "",
-      users: globalThis.Array.isArray(object?.users) ? object.users.map((e: any) => RoomUser.fromJSON(e)) : [],
-      bannedUsers: globalThis.Array.isArray(object?.bannedUsers)
-        ? object.bannedUsers.map((e: any) => globalThis.String(e))
-        : [],
-      roleManager: isSet(object.roleManager) ? RoleManager.fromJSON(object.roleManager) : undefined,
-      tracksQueue: globalThis.Array.isArray(object?.tracksQueue)
-        ? object.tracksQueue.map((e: any) => RoomTrack.fromJSON(e))
-        : [],
-      logs: globalThis.Array.isArray(object?.logs) ? object.logs.map((e: any) => Log.fromJSON(e)) : [],
-      maxUsers: isSet(object.maxUsers) ? globalThis.Number(object.maxUsers) : 0,
-    };
-  },
+	fromJSON(object: any): Room {
+		return {
+			id: isSet(object.id) ? bytesFromBase64(object.id) : new Uint8Array(0),
+			name: isSet(object.name) ? globalThis.String(object.name) : "",
+			password: isSet(object.password) ? globalThis.String(object.password) : "",
+			users: globalThis.Array.isArray(object?.users) ? object.users.map((e: any) => RoomUser.fromJSON(e)) : [],
+			bannedUsers: globalThis.Array.isArray(object?.bannedUsers)
+				? object.bannedUsers.map((e: any) => globalThis.String(e))
+				: [],
+			roleManager: isSet(object.roleManager) ? RoleManager.fromJSON(object.roleManager) : undefined,
+			tracksQueue: globalThis.Array.isArray(object?.tracksQueue)
+				? object.tracksQueue.map((e: any) => RoomTrack.fromJSON(e))
+				: [],
+			logs: globalThis.Array.isArray(object?.logs) ? object.logs.map((e: any) => Log.fromJSON(e)) : [],
+			maxUsers: isSet(object.maxUsers) ? globalThis.Number(object.maxUsers) : 0,
+		};
+	},
 
-  toJSON(message: Room): unknown {
-    const obj: any = {};
-    if (message.id.length !== 0) {
-      obj.id = base64FromBytes(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.password !== "") {
-      obj.password = message.password;
-    }
-    if (message.users?.length) {
-      obj.users = message.users.map((e) => RoomUser.toJSON(e));
-    }
-    if (message.bannedUsers?.length) {
-      obj.bannedUsers = message.bannedUsers;
-    }
-    if (message.roleManager !== undefined) {
-      obj.roleManager = RoleManager.toJSON(message.roleManager);
-    }
-    if (message.tracksQueue?.length) {
-      obj.tracksQueue = message.tracksQueue.map((e) => RoomTrack.toJSON(e));
-    }
-    if (message.logs?.length) {
-      obj.logs = message.logs.map((e) => Log.toJSON(e));
-    }
-    if (message.maxUsers !== 0) {
-      obj.maxUsers = Math.round(message.maxUsers);
-    }
-    return obj;
-  },
+	toJSON(message: Room): unknown {
+		const obj: any = {};
+		if (message.id.length !== 0) {
+			obj.id = base64FromBytes(message.id);
+		}
+		if (message.name !== "") {
+			obj.name = message.name;
+		}
+		if (message.password !== "") {
+			obj.password = message.password;
+		}
+		if (message.users?.length) {
+			obj.users = message.users.map((e) => RoomUser.toJSON(e));
+		}
+		if (message.bannedUsers?.length) {
+			obj.bannedUsers = message.bannedUsers;
+		}
+		if (message.roleManager !== undefined) {
+			obj.roleManager = RoleManager.toJSON(message.roleManager);
+		}
+		if (message.tracksQueue?.length) {
+			obj.tracksQueue = message.tracksQueue.map((e) => RoomTrack.toJSON(e));
+		}
+		if (message.logs?.length) {
+			obj.logs = message.logs.map((e) => Log.toJSON(e));
+		}
+		if (message.maxUsers !== 0) {
+			obj.maxUsers = Math.round(message.maxUsers);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<Room>, I>>(base?: I): Room {
-    return Room.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Room>, I>>(object: I): Room {
-    const message = createBaseRoom();
-    message.id = object.id ?? new Uint8Array(0);
-    message.name = object.name ?? "";
-    message.password = object.password ?? "";
-    message.users = object.users?.map((e) => RoomUser.fromPartial(e)) || [];
-    message.bannedUsers = object.bannedUsers?.map((e) => e) || [];
-    message.roleManager = (object.roleManager !== undefined && object.roleManager !== null)
-      ? RoleManager.fromPartial(object.roleManager)
-      : undefined;
-    message.tracksQueue = object.tracksQueue?.map((e) => RoomTrack.fromPartial(e)) || [];
-    message.logs = object.logs?.map((e) => Log.fromPartial(e)) || [];
-    message.maxUsers = object.maxUsers ?? 0;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<Room>, I>>(base?: I): Room {
+		return Room.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<Room>, I>>(object: I): Room {
+		const message = createBaseRoom();
+		message.id = object.id ?? new Uint8Array(0);
+		message.name = object.name ?? "";
+		message.password = object.password ?? "";
+		message.users = object.users?.map((e) => RoomUser.fromPartial(e)) || [];
+		message.bannedUsers = object.bannedUsers?.map((e) => e) || [];
+		message.roleManager =
+			object.roleManager !== undefined && object.roleManager !== null
+				? RoleManager.fromPartial(object.roleManager)
+				: undefined;
+		message.tracksQueue = object.tracksQueue?.map((e) => RoomTrack.fromPartial(e)) || [];
+		message.logs = object.logs?.map((e) => Log.fromPartial(e)) || [];
+		message.maxUsers = object.maxUsers ?? 0;
+		return message;
+	},
 };
 
 function createBaseCredentialsInput(): CredentialsInput {
-  return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: undefined };
+	return { accessToken: "", refreshToken: "", expiresIn: 0, createdAt: undefined };
 }
 
 export const CredentialsInput: MessageFns<CredentialsInput> = {
-  encode(message: CredentialsInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== "") {
-      writer.uint32(10).string(message.accessToken);
-    }
-    if (message.refreshToken !== "") {
-      writer.uint32(18).string(message.refreshToken);
-    }
-    if (message.expiresIn !== 0) {
-      writer.uint32(24).uint32(message.expiresIn);
-    }
-    if (message.createdAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
-    }
-    return writer;
-  },
+	encode(message: CredentialsInput, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.accessToken !== "") {
+			writer.uint32(10).string(message.accessToken);
+		}
+		if (message.refreshToken !== "") {
+			writer.uint32(18).string(message.refreshToken);
+		}
+		if (message.expiresIn !== 0) {
+			writer.uint32(24).uint32(message.expiresIn);
+		}
+		if (message.createdAt !== undefined) {
+			Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(34).fork()).join();
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CredentialsInput {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCredentialsInput();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): CredentialsInput {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseCredentialsInput();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.accessToken = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.accessToken = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.refreshToken = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
+					message.refreshToken = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 24) {
+						break;
+					}
 
-          message.expiresIn = reader.uint32();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
+					message.expiresIn = reader.uint32();
+					continue;
+				}
+				case 4: {
+					if (tag !== 34) {
+						break;
+					}
 
-          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): CredentialsInput {
-    return {
-      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
-      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
-      expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
-      createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
-    };
-  },
+	fromJSON(object: any): CredentialsInput {
+		return {
+			accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
+			refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
+			expiresIn: isSet(object.expiresIn) ? globalThis.Number(object.expiresIn) : 0,
+			createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
+		};
+	},
 
-  toJSON(message: CredentialsInput): unknown {
-    const obj: any = {};
-    if (message.accessToken !== "") {
-      obj.accessToken = message.accessToken;
-    }
-    if (message.refreshToken !== "") {
-      obj.refreshToken = message.refreshToken;
-    }
-    if (message.expiresIn !== 0) {
-      obj.expiresIn = Math.round(message.expiresIn);
-    }
-    if (message.createdAt !== undefined) {
-      obj.createdAt = message.createdAt.toISOString();
-    }
-    return obj;
-  },
+	toJSON(message: CredentialsInput): unknown {
+		const obj: any = {};
+		if (message.accessToken !== "") {
+			obj.accessToken = message.accessToken;
+		}
+		if (message.refreshToken !== "") {
+			obj.refreshToken = message.refreshToken;
+		}
+		if (message.expiresIn !== 0) {
+			obj.expiresIn = Math.round(message.expiresIn);
+		}
+		if (message.createdAt !== undefined) {
+			obj.createdAt = message.createdAt.toISOString();
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<CredentialsInput>, I>>(base?: I): CredentialsInput {
-    return CredentialsInput.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<CredentialsInput>, I>>(object: I): CredentialsInput {
-    const message = createBaseCredentialsInput();
-    message.accessToken = object.accessToken ?? "";
-    message.refreshToken = object.refreshToken ?? "";
-    message.expiresIn = object.expiresIn ?? 0;
-    message.createdAt = object.createdAt ?? undefined;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<CredentialsInput>, I>>(base?: I): CredentialsInput {
+		return CredentialsInput.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<CredentialsInput>, I>>(object: I): CredentialsInput {
+		const message = createBaseCredentialsInput();
+		message.accessToken = object.accessToken ?? "";
+		message.refreshToken = object.refreshToken ?? "";
+		message.expiresIn = object.expiresIn ?? 0;
+		message.createdAt = object.createdAt ?? undefined;
+		return message;
+	},
 };
 
 function createBaseRoomTrack(): RoomTrack {
-  return { userId: "", trackId: "", trackName: "", trackDuration: 0 };
+	return { userId: "", trackId: "", trackName: "", trackDuration: 0 };
 }
 
 export const RoomTrack: MessageFns<RoomTrack> = {
-  encode(message: RoomTrack, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== "") {
-      writer.uint32(10).string(message.userId);
-    }
-    if (message.trackId !== "") {
-      writer.uint32(18).string(message.trackId);
-    }
-    if (message.trackName !== "") {
-      writer.uint32(26).string(message.trackName);
-    }
-    if (message.trackDuration !== 0) {
-      writer.uint32(32).uint32(message.trackDuration);
-    }
-    return writer;
-  },
+	encode(message: RoomTrack, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.userId !== "") {
+			writer.uint32(10).string(message.userId);
+		}
+		if (message.trackId !== "") {
+			writer.uint32(18).string(message.trackId);
+		}
+		if (message.trackName !== "") {
+			writer.uint32(26).string(message.trackName);
+		}
+		if (message.trackDuration !== 0) {
+			writer.uint32(32).uint32(message.trackDuration);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RoomTrack {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoomTrack();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): RoomTrack {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRoomTrack();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.userId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.userId = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.trackId = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
+					message.trackId = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 26) {
+						break;
+					}
 
-          message.trackName = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
+					message.trackName = reader.string();
+					continue;
+				}
+				case 4: {
+					if (tag !== 32) {
+						break;
+					}
 
-          message.trackDuration = reader.uint32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.trackDuration = reader.uint32();
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): RoomTrack {
-    return {
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
-      trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
-      trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
-      trackDuration: isSet(object.trackDuration) ? globalThis.Number(object.trackDuration) : 0,
-    };
-  },
+	fromJSON(object: any): RoomTrack {
+		return {
+			userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+			trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+			trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
+			trackDuration: isSet(object.trackDuration) ? globalThis.Number(object.trackDuration) : 0,
+		};
+	},
 
-  toJSON(message: RoomTrack): unknown {
-    const obj: any = {};
-    if (message.userId !== "") {
-      obj.userId = message.userId;
-    }
-    if (message.trackId !== "") {
-      obj.trackId = message.trackId;
-    }
-    if (message.trackName !== "") {
-      obj.trackName = message.trackName;
-    }
-    if (message.trackDuration !== 0) {
-      obj.trackDuration = Math.round(message.trackDuration);
-    }
-    return obj;
-  },
+	toJSON(message: RoomTrack): unknown {
+		const obj: any = {};
+		if (message.userId !== "") {
+			obj.userId = message.userId;
+		}
+		if (message.trackId !== "") {
+			obj.trackId = message.trackId;
+		}
+		if (message.trackName !== "") {
+			obj.trackName = message.trackName;
+		}
+		if (message.trackDuration !== 0) {
+			obj.trackDuration = Math.round(message.trackDuration);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<RoomTrack>, I>>(base?: I): RoomTrack {
-    return RoomTrack.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<RoomTrack>, I>>(object: I): RoomTrack {
-    const message = createBaseRoomTrack();
-    message.userId = object.userId ?? "";
-    message.trackId = object.trackId ?? "";
-    message.trackName = object.trackName ?? "";
-    message.trackDuration = object.trackDuration ?? 0;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<RoomTrack>, I>>(base?: I): RoomTrack {
+		return RoomTrack.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<RoomTrack>, I>>(object: I): RoomTrack {
+		const message = createBaseRoomTrack();
+		message.userId = object.userId ?? "";
+		message.trackId = object.trackId ?? "";
+		message.trackName = object.trackName ?? "";
+		message.trackDuration = object.trackDuration ?? 0;
+		return message;
+	},
 };
 
 function createBaseRoomUser(): RoomUser {
-  return { id: "", username: "", roleId: new Uint8Array(0), isConnected: false };
+	return { id: "", username: "", roleId: new Uint8Array(0), isConnected: false };
 }
 
 export const RoomUser: MessageFns<RoomUser> = {
-  encode(message: RoomUser, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.username !== "") {
-      writer.uint32(18).string(message.username);
-    }
-    if (message.roleId.length !== 0) {
-      writer.uint32(26).bytes(message.roleId);
-    }
-    if (message.isConnected !== false) {
-      writer.uint32(32).bool(message.isConnected);
-    }
-    return writer;
-  },
+	encode(message: RoomUser, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.id !== "") {
+			writer.uint32(10).string(message.id);
+		}
+		if (message.username !== "") {
+			writer.uint32(18).string(message.username);
+		}
+		if (message.roleId.length !== 0) {
+			writer.uint32(26).bytes(message.roleId);
+		}
+		if (message.isConnected !== false) {
+			writer.uint32(32).bool(message.isConnected);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RoomUser {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoomUser();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): RoomUser {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRoomUser();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.id = reader.string();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.username = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
+					message.username = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 26) {
+						break;
+					}
 
-          message.roleId = reader.bytes();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
+					message.roleId = reader.bytes();
+					continue;
+				}
+				case 4: {
+					if (tag !== 32) {
+						break;
+					}
 
-          message.isConnected = reader.bool();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.isConnected = reader.bool();
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): RoomUser {
-    return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
-      username: isSet(object.username) ? globalThis.String(object.username) : "",
-      roleId: isSet(object.roleId) ? bytesFromBase64(object.roleId) : new Uint8Array(0),
-      isConnected: isSet(object.isConnected) ? globalThis.Boolean(object.isConnected) : false,
-    };
-  },
+	fromJSON(object: any): RoomUser {
+		return {
+			id: isSet(object.id) ? globalThis.String(object.id) : "",
+			username: isSet(object.username) ? globalThis.String(object.username) : "",
+			roleId: isSet(object.roleId) ? bytesFromBase64(object.roleId) : new Uint8Array(0),
+			isConnected: isSet(object.isConnected) ? globalThis.Boolean(object.isConnected) : false,
+		};
+	},
 
-  toJSON(message: RoomUser): unknown {
-    const obj: any = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.username !== "") {
-      obj.username = message.username;
-    }
-    if (message.roleId.length !== 0) {
-      obj.roleId = base64FromBytes(message.roleId);
-    }
-    if (message.isConnected !== false) {
-      obj.isConnected = message.isConnected;
-    }
-    return obj;
-  },
+	toJSON(message: RoomUser): unknown {
+		const obj: any = {};
+		if (message.id !== "") {
+			obj.id = message.id;
+		}
+		if (message.username !== "") {
+			obj.username = message.username;
+		}
+		if (message.roleId.length !== 0) {
+			obj.roleId = base64FromBytes(message.roleId);
+		}
+		if (message.isConnected !== false) {
+			obj.isConnected = message.isConnected;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<RoomUser>, I>>(base?: I): RoomUser {
-    return RoomUser.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<RoomUser>, I>>(object: I): RoomUser {
-    const message = createBaseRoomUser();
-    message.id = object.id ?? "";
-    message.username = object.username ?? "";
-    message.roleId = object.roleId ?? new Uint8Array(0);
-    message.isConnected = object.isConnected ?? false;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<RoomUser>, I>>(base?: I): RoomUser {
+		return RoomUser.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<RoomUser>, I>>(object: I): RoomUser {
+		const message = createBaseRoomUser();
+		message.id = object.id ?? "";
+		message.username = object.username ?? "";
+		message.roleId = object.roleId ?? new Uint8Array(0);
+		message.isConnected = object.isConnected ?? false;
+		return message;
+	},
 };
 
 function createBaseLog(): Log {
-  return { type: 0, details: "" };
+	return { type: 0, details: "" };
 }
 
 export const Log: MessageFns<Log> = {
-  encode(message: Log, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
-    }
-    if (message.details !== "") {
-      writer.uint32(18).string(message.details);
-    }
-    return writer;
-  },
+	encode(message: Log, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.type !== 0) {
+			writer.uint32(8).int32(message.type);
+		}
+		if (message.details !== "") {
+			writer.uint32(18).string(message.details);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Log {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseLog();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): Log {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseLog();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 8) {
+						break;
+					}
 
-          message.type = reader.int32() as any;
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.type = reader.int32() as any;
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.details = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.details = reader.string();
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): Log {
-    return {
-      type: isSet(object.type) ? logTypeFromJSON(object.type) : 0,
-      details: isSet(object.details) ? globalThis.String(object.details) : "",
-    };
-  },
+	fromJSON(object: any): Log {
+		return {
+			type: isSet(object.type) ? logTypeFromJSON(object.type) : 0,
+			details: isSet(object.details) ? globalThis.String(object.details) : "",
+		};
+	},
 
-  toJSON(message: Log): unknown {
-    const obj: any = {};
-    if (message.type !== 0) {
-      obj.type = logTypeToJSON(message.type);
-    }
-    if (message.details !== "") {
-      obj.details = message.details;
-    }
-    return obj;
-  },
+	toJSON(message: Log): unknown {
+		const obj: any = {};
+		if (message.type !== 0) {
+			obj.type = logTypeToJSON(message.type);
+		}
+		if (message.details !== "") {
+			obj.details = message.details;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<Log>, I>>(base?: I): Log {
-    return Log.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Log>, I>>(object: I): Log {
-    const message = createBaseLog();
-    message.type = object.type ?? 0;
-    message.details = object.details ?? "";
-    return message;
-  },
+	create<I extends Exact<DeepPartial<Log>, I>>(base?: I): Log {
+		return Log.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<Log>, I>>(object: I): Log {
+		const message = createBaseLog();
+		message.type = object.type ?? 0;
+		message.details = object.details ?? "";
+		return message;
+	},
 };
 
 function bytesFromBase64(b64: string): Uint8Array {
-  if ((globalThis as any).Buffer) {
-    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
-  } else {
-    const bin = globalThis.atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; ++i) {
-      arr[i] = bin.charCodeAt(i);
-    }
-    return arr;
-  }
+	if ((globalThis as any).Buffer) {
+		return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
+	} else {
+		const bin = globalThis.atob(b64);
+		const arr = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; ++i) {
+			arr[i] = bin.charCodeAt(i);
+		}
+		return arr;
+	}
 }
 
 function base64FromBytes(arr: Uint8Array): string {
-  if ((globalThis as any).Buffer) {
-    return globalThis.Buffer.from(arr).toString("base64");
-  } else {
-    const bin: string[] = [];
-    arr.forEach((byte) => {
-      bin.push(globalThis.String.fromCharCode(byte));
-    });
-    return globalThis.btoa(bin.join(""));
-  }
+	if ((globalThis as any).Buffer) {
+		return globalThis.Buffer.from(arr).toString("base64");
+	} else {
+		const bin: string[] = [];
+		arr.forEach((byte) => {
+			bin.push(globalThis.String.fromCharCode(byte));
+		});
+		return globalThis.btoa(bin.join(""));
+	}
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+	? T
+	: T extends globalThis.Array<infer U>
+		? globalThis.Array<DeepPartial<U>>
+		: T extends ReadonlyArray<infer U>
+			? ReadonlyArray<DeepPartial<U>>
+			: T extends {}
+				? { [K in keyof T]?: DeepPartial<T[K]> }
+				: Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+	? P
+	: P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
-  const seconds = Math.trunc(date.getTime() / 1_000);
-  const nanos = (date.getTime() % 1_000) * 1_000_000;
-  return { seconds, nanos };
+	const seconds = Math.trunc(date.getTime() / 1_000);
+	const nanos = (date.getTime() % 1_000) * 1_000_000;
+	return { seconds, nanos };
 }
 
 function fromTimestamp(t: Timestamp): Date {
-  let millis = (t.seconds || 0) * 1_000;
-  millis += (t.nanos || 0) / 1_000_000;
-  return new globalThis.Date(millis);
+	let millis = (t.seconds || 0) * 1_000;
+	millis += (t.nanos || 0) / 1_000_000;
+	return new globalThis.Date(millis);
 }
 
 function fromJsonTimestamp(o: any): Date {
-  if (o instanceof globalThis.Date) {
-    return o;
-  } else if (typeof o === "string") {
-    return new globalThis.Date(o);
-  } else {
-    return fromTimestamp(Timestamp.fromJSON(o));
-  }
+	if (o instanceof globalThis.Date) {
+		return o;
+	} else if (typeof o === "string") {
+		return new globalThis.Date(o);
+	} else {
+		return fromTimestamp(Timestamp.fromJSON(o));
+	}
 }
 
 function longToNumber(int64: { toString(): string }): number {
-  const num = globalThis.Number(int64.toString());
-  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
-  }
-  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
-  }
-  return num;
+	const num = globalThis.Number(int64.toString());
+	if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+		throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+	}
+	if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+		throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+	}
+	return num;
 }
 
 function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
+	return value !== null && value !== undefined;
 }
 
 export interface MessageFns<T> {
-  encode(message: T, writer?: BinaryWriter): BinaryWriter;
-  decode(input: BinaryReader | Uint8Array, length?: number): T;
-  fromJSON(object: any): T;
-  toJSON(message: T): unknown;
-  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+	encode(message: T, writer?: BinaryWriter): BinaryWriter;
+	decode(input: BinaryReader | Uint8Array, length?: number): T;
+	fromJSON(object: any): T;
+	toJSON(message: T): unknown;
+	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }

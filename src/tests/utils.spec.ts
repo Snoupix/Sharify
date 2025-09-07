@@ -7,7 +7,7 @@ import {
 	zip_iter,
 	hex_uuid_to_valid_email,
 	email_contains_invalid_chars,
-    bytes_to_uuid_str,
+	bytes_to_uuid_str,
 } from "../lib/utils";
 
 const LENGTH = 15;
@@ -98,23 +98,23 @@ describe("Email & HEX UUID conversions", () => {
 
 describe("Bytes & UUID / string conversions", () => {
 	it("converts bytes to a valid UUID string", () => {
-        for (const bytes of DUMMY_UUID_BYTES) {
-            const str = bytes_to_uuid_str(bytes);
+		for (const bytes of DUMMY_UUID_BYTES) {
+			const str = bytes_to_uuid_str(bytes);
 
-            expect(uuid.validate(str)).toBe(true);
-        }
-    });
+			expect(uuid.validate(str)).toBe(true);
+		}
+	});
 
-    it("converts UUID string to bytes both ways", () => {
-        for (const uuid_str of DUMMY_UUID_STRS) {
-            expect(uuid.validate(uuid_str)).toBe(true);
+	it("converts UUID string to bytes both ways", () => {
+		for (const uuid_str of DUMMY_UUID_STRS) {
+			expect(uuid.validate(uuid_str)).toBe(true);
 
-            const bytes = uuid.parse(uuid_str);
-            const str = bytes_to_uuid_str(bytes);
+			const bytes = uuid.parse(uuid_str);
+			const str = bytes_to_uuid_str(bytes);
 
-            expect(uuid.validate(str)).toBe(true);
+			expect(uuid.validate(str)).toBe(true);
 
-            expect(uuid_str).toEqual(str);
-        }
-    });
+			expect(uuid_str).toEqual(str);
+		}
+	});
 });

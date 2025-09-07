@@ -1,215 +1,214 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @import "tw-animate-css";
 
 @theme {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+	--background: 0 0% 100%;
+	--foreground: 222.2 84% 4.9%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+	--muted: 210 40% 96.1%;
+	--muted-foreground: 215.4 16.3% 46.9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+	--popover: 0 0% 100%;
+	--popover-foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+	--card: 0 0% 100%;
+	--card-foreground: 222.2 84% 4.9%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+	--border: 214.3 31.8% 91.4%;
+	--input: 214.3 31.8% 91.4%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+	--primary: 222.2 47.4% 11.2%;
+	--primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+	--secondary: 210 40% 96.1%;
+	--secondary-foreground: 222.2 47.4% 11.2%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+	--accent: 210 40% 96.1%;
+	--accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 210 40% 98%;
+	--destructive: 0 72.2% 50.6%;
+	--destructive-foreground: 210 40% 98%;
 
-    --ring: 222.2 84% 4.9%;
+	--ring: 222.2 84% 4.9%;
 
-    --radius: var(--radius-lg);
+	--radius: var(--radius-lg);
 
-
-    --color-main: #7a007a;
-    --color-main-hover: #7a007aad;
-    --color-secondary: #591060;
-    --color-main-content: var(--color-neutral-200);
-    --color-main-clear: #970197;
-    --color-bg: #24004C;
-    /* "main-color": "#ad00ad", */
-    /* "main-color-hover": "#8e278ead", */
-    /* "secondary-color": "#56285b", */
-    /* "main-content": colors.neutral[100], */
-    /* "main-color-clear": "#8e2c8e", */
-    /* "bg-color": "#450093", */
-    --shadow-back-right: 8px 8px 10px;
-    --shadow-around: 0 0 25px;
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-    --font-kaushan: Kaushan Script, Montserrat, cursive, sans-serif;
-    --font-content: Sriracha, Montserrat, cursive, sans-serif;
-    --font-montserrat: Montserrat, cursive, sans-serif;
+	--color-main: #7a007a;
+	--color-main-hover: #7a007aad;
+	--color-secondary: #591060;
+	--color-main-content: var(--color-neutral-200);
+	--color-main-clear: #970197;
+	--color-bg: #24004c;
+	/* "main-color": "#ad00ad", */
+	/* "main-color-hover": "#8e278ead", */
+	/* "secondary-color": "#56285b", */
+	/* "main-content": colors.neutral[100], */
+	/* "main-color-clear": "#8e2c8e", */
+	/* "bg-color": "#450093", */
+	--shadow-back-right: 8px 8px 10px;
+	--shadow-around: 0 0 25px;
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) - 4px);
+	--font-kaushan: Kaushan Script, Montserrat, cursive, sans-serif;
+	--font-content: Sriracha, Montserrat, cursive, sans-serif;
+	--font-montserrat: Montserrat, cursive, sans-serif;
 }
 
 @layer base {
-    * {
-        @apply border-main-clear;
-    }
+	* {
+		@apply border-main-clear;
+	}
 
-    body {
-        @apply bg-bg text-secondary;
-    }
+	body {
+		@apply bg-bg text-secondary;
+	}
 
-    /* TODO: Impl proper colors and theme:values specifics */
-    .neon * {
-        --color-main: #27CEEE;
-        --color-main-hover: #EC4899;
-        --color-secondary: #22C55E;
-        --color-main-content: ##5D5965;
-        --color-main-clear: #EC4899;
-        --color-bg: #000000;
-    }
+	/* TODO: Impl proper colors and theme:values specifics */
+	.neon * {
+		--color-main: #27ceee;
+		--color-main-hover: #ec4899;
+		--color-secondary: #22c55e;
+		--color-main-content: ##5d5965;
+		--color-main-clear: #ec4899;
+		--color-bg: #000000;
+	}
 
-    .light * {
-        --color-main: #450093;
-        --color-main-hover: #407EF5;
-        --color-secondary: #38965b;
-        --color-main-content: #4d5665;
-        --color-main-clear: #071221;
-        --color-bg: #f3f8fe;
-    }
+	.light * {
+		--color-main: #450093;
+		--color-main-hover: #407ef5;
+		--color-secondary: #38965b;
+		--color-main-content: #4d5665;
+		--color-main-clear: #071221;
+		--color-bg: #f3f8fe;
+	}
 
-    .dark * {
-        --color-main: #ad00ad;
-        --color-main-hover: #8e278ead;
-        --color-secondary: #56285b;
-        --color-main-content: var(--color-neutral-100);
-        --color-main-clear: #8e2c8e;
-        --color-bg: #450093;
-    }
+	.dark * {
+		--color-main: #ad00ad;
+		--color-main-hover: #8e278ead;
+		--color-secondary: #56285b;
+		--color-main-content: var(--color-neutral-100);
+		--color-main-clear: #8e2c8e;
+		--color-bg: #450093;
+	}
 }
 
 ::-webkit-scrollbar {
-    background: none;
-    border: none;
-    margin: 0;
-    padding: 0;
-    width: 10px;
+	background: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
-    -webkit-border-radius: 10px;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.5);
+	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	background-color: rgba(255, 255, 255, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-    transition: all 1s;
-    background-color: rgba(199, 199, 199, 0.8);
-    -webkit-border-radius: 12px;
-    -moz-border-radius: 12px;
-    border-radius: 12px;
+	transition: all 1s;
+	background-color: rgba(199, 199, 199, 0.8);
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(140, 141, 143, 0.973);
+	background-color: rgba(140, 141, 143, 0.973);
 }
 
 ::-webkit-input-placeholder {
-    text-align: center;
-    color: var(--color-main);
+	text-align: center;
+	color: var(--color-main);
 }
 
 :-moz-placeholder {
-    /* Firefox 18- */
-    text-align: center;
-    color: var(--color-main);
+	/* Firefox 18- */
+	text-align: center;
+	color: var(--color-main);
 }
 
 ::-moz-placeholder {
-    /* Firefox 19+ */
-    text-align: center;
-    color: var(--color-main);
+	/* Firefox 19+ */
+	text-align: center;
+	color: var(--color-main);
 }
 
 :-ms-input-placeholder {
-    text-align: center;
-    color: var(--color-main);
+	text-align: center;
+	color: var(--color-main);
 }
 
 /* Global style */
 
 .block-ruby {
-    display: block ruby;
+	display: block ruby;
 }
 
 .input {
-    @apply focus:outline-2 outline-main-hover bg-bg text-main-content border border-main-hover rounded-xl;
+	@apply rounded-xl border border-main-hover bg-bg text-main-content outline-main-hover focus:outline-2;
 }
 
 .round {
-    @apply cursor-pointer border-main hover:bg-main-hover m-0 h-10 w-10 rounded-full border bg-transparent p-0 transition-all duration-300 hover:border-none;
+	@apply m-0 h-10 w-10 cursor-pointer rounded-full border border-main bg-transparent p-0 transition-all duration-300 hover:border-none hover:bg-main-hover;
 
-    svg {
-        @apply w-full transition-all duration-500;
-    }
+	svg {
+		@apply w-full transition-all duration-500;
+	}
 
-    &:hover {
-        svg {
-            @apply stroke-main-content;
-        }
-    }
+	&:hover {
+		svg {
+			@apply stroke-main-content;
+		}
+	}
 }
 
 .loader {
-    background: currentcolor;
-    position: relative;
-    animation: loader 1s ease-in-out infinite;
-    animation-delay: 0.4s;
-    width: 0.5em;
-    height: 1.25em;
-    margin: 1em;
+	background: currentcolor;
+	position: relative;
+	animation: loader 1s ease-in-out infinite;
+	animation-delay: 0.4s;
+	width: 0.5em;
+	height: 1.25em;
+	margin: 1em;
 }
 
 .loader::before,
 .loader::after {
-    content: "";
-    position: absolute;
-    width: inherit;
-    height: inherit;
-    background: inherit;
-    animation: inherit;
+	content: "";
+	position: absolute;
+	width: inherit;
+	height: inherit;
+	background: inherit;
+	animation: inherit;
 }
 
 .loader::before {
-    right: 0.75em;
-    animation-delay: 0.2s;
+	right: 0.75em;
+	animation-delay: 0.2s;
 }
 
 .loader::after {
-    left: 0.75em;
-    animation-delay: 0.6s;
+	left: 0.75em;
+	animation-delay: 0.6s;
 }
 
 @keyframes loader {
-    0%,
-    100% {
-        box-shadow:
-            0 0 0 currentcolor,
-            0 0 0 currentcolor;
-    }
-    50% {
-        box-shadow:
-            0 -0.5em 0 currentcolor,
-            0 0.5em 0 currentcolor;
-    }
+	0%,
+	100% {
+		box-shadow:
+			0 0 0 currentcolor,
+			0 0 0 currentcolor;
+	}
+	50% {
+		box-shadow:
+			0 -0.5em 0 currentcolor,
+			0 0.5em 0 currentcolor;
+	}
 }
 
 /* purple is default and implicit whatever prefers-color-scheme */

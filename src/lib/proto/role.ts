@@ -10,382 +10,388 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 export const protobufPackage = "role";
 
 export enum RoleError {
-  NAME_ALREADY_EXISTS = 0,
-  UNRECOGNIZED = -1,
+	NAME_ALREADY_EXISTS = 0,
+	UNRECOGNIZED = -1,
 }
 
 export function roleErrorFromJSON(object: any): RoleError {
-  switch (object) {
-    case 0:
-    case "NAME_ALREADY_EXISTS":
-      return RoleError.NAME_ALREADY_EXISTS;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return RoleError.UNRECOGNIZED;
-  }
+	switch (object) {
+		case 0:
+		case "NAME_ALREADY_EXISTS":
+			return RoleError.NAME_ALREADY_EXISTS;
+		case -1:
+		case "UNRECOGNIZED":
+		default:
+			return RoleError.UNRECOGNIZED;
+	}
 }
 
 export function roleErrorToJSON(object: RoleError): string {
-  switch (object) {
-    case RoleError.NAME_ALREADY_EXISTS:
-      return "NAME_ALREADY_EXISTS";
-    case RoleError.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
+	switch (object) {
+		case RoleError.NAME_ALREADY_EXISTS:
+			return "NAME_ALREADY_EXISTS";
+		case RoleError.UNRECOGNIZED:
+		default:
+			return "UNRECOGNIZED";
+	}
 }
 
 export interface RolePermission {
-  canUseControls: boolean;
-  /** Only users below */
-  canManageUsers: boolean;
-  canAddSong: boolean;
-  /** Moderator manager / Admin */
-  canAddModerator: boolean;
-  /** Owner(s) */
-  canManageRoom: boolean;
+	canUseControls: boolean;
+	/** Only users below */
+	canManageUsers: boolean;
+	canAddSong: boolean;
+	/** Moderator manager / Admin */
+	canAddModerator: boolean;
+	/** Owner(s) */
+	canManageRoom: boolean;
 }
 
 export interface Role {
-  /** UUID */
-  id: Uint8Array;
-  name: string;
-  permissions: RolePermission | undefined;
+	/** UUID */
+	id: Uint8Array;
+	name: string;
+	permissions: RolePermission | undefined;
 }
 
 export interface RoleManager {
-  roles: Role[];
+	roles: Role[];
 }
 
 function createBaseRolePermission(): RolePermission {
-  return {
-    canUseControls: false,
-    canManageUsers: false,
-    canAddSong: false,
-    canAddModerator: false,
-    canManageRoom: false,
-  };
+	return {
+		canUseControls: false,
+		canManageUsers: false,
+		canAddSong: false,
+		canAddModerator: false,
+		canManageRoom: false,
+	};
 }
 
 export const RolePermission: MessageFns<RolePermission> = {
-  encode(message: RolePermission, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.canUseControls !== false) {
-      writer.uint32(8).bool(message.canUseControls);
-    }
-    if (message.canManageUsers !== false) {
-      writer.uint32(16).bool(message.canManageUsers);
-    }
-    if (message.canAddSong !== false) {
-      writer.uint32(24).bool(message.canAddSong);
-    }
-    if (message.canAddModerator !== false) {
-      writer.uint32(32).bool(message.canAddModerator);
-    }
-    if (message.canManageRoom !== false) {
-      writer.uint32(40).bool(message.canManageRoom);
-    }
-    return writer;
-  },
+	encode(message: RolePermission, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.canUseControls !== false) {
+			writer.uint32(8).bool(message.canUseControls);
+		}
+		if (message.canManageUsers !== false) {
+			writer.uint32(16).bool(message.canManageUsers);
+		}
+		if (message.canAddSong !== false) {
+			writer.uint32(24).bool(message.canAddSong);
+		}
+		if (message.canAddModerator !== false) {
+			writer.uint32(32).bool(message.canAddModerator);
+		}
+		if (message.canManageRoom !== false) {
+			writer.uint32(40).bool(message.canManageRoom);
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RolePermission {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRolePermission();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): RolePermission {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRolePermission();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 8) {
+						break;
+					}
 
-          message.canUseControls = reader.bool();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
+					message.canUseControls = reader.bool();
+					continue;
+				}
+				case 2: {
+					if (tag !== 16) {
+						break;
+					}
 
-          message.canManageUsers = reader.bool();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
+					message.canManageUsers = reader.bool();
+					continue;
+				}
+				case 3: {
+					if (tag !== 24) {
+						break;
+					}
 
-          message.canAddSong = reader.bool();
-          continue;
-        }
-        case 4: {
-          if (tag !== 32) {
-            break;
-          }
+					message.canAddSong = reader.bool();
+					continue;
+				}
+				case 4: {
+					if (tag !== 32) {
+						break;
+					}
 
-          message.canAddModerator = reader.bool();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
+					message.canAddModerator = reader.bool();
+					continue;
+				}
+				case 5: {
+					if (tag !== 40) {
+						break;
+					}
 
-          message.canManageRoom = reader.bool();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.canManageRoom = reader.bool();
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): RolePermission {
-    return {
-      canUseControls: isSet(object.canUseControls) ? globalThis.Boolean(object.canUseControls) : false,
-      canManageUsers: isSet(object.canManageUsers) ? globalThis.Boolean(object.canManageUsers) : false,
-      canAddSong: isSet(object.canAddSong) ? globalThis.Boolean(object.canAddSong) : false,
-      canAddModerator: isSet(object.canAddModerator) ? globalThis.Boolean(object.canAddModerator) : false,
-      canManageRoom: isSet(object.canManageRoom) ? globalThis.Boolean(object.canManageRoom) : false,
-    };
-  },
+	fromJSON(object: any): RolePermission {
+		return {
+			canUseControls: isSet(object.canUseControls) ? globalThis.Boolean(object.canUseControls) : false,
+			canManageUsers: isSet(object.canManageUsers) ? globalThis.Boolean(object.canManageUsers) : false,
+			canAddSong: isSet(object.canAddSong) ? globalThis.Boolean(object.canAddSong) : false,
+			canAddModerator: isSet(object.canAddModerator) ? globalThis.Boolean(object.canAddModerator) : false,
+			canManageRoom: isSet(object.canManageRoom) ? globalThis.Boolean(object.canManageRoom) : false,
+		};
+	},
 
-  toJSON(message: RolePermission): unknown {
-    const obj: any = {};
-    if (message.canUseControls !== false) {
-      obj.canUseControls = message.canUseControls;
-    }
-    if (message.canManageUsers !== false) {
-      obj.canManageUsers = message.canManageUsers;
-    }
-    if (message.canAddSong !== false) {
-      obj.canAddSong = message.canAddSong;
-    }
-    if (message.canAddModerator !== false) {
-      obj.canAddModerator = message.canAddModerator;
-    }
-    if (message.canManageRoom !== false) {
-      obj.canManageRoom = message.canManageRoom;
-    }
-    return obj;
-  },
+	toJSON(message: RolePermission): unknown {
+		const obj: any = {};
+		if (message.canUseControls !== false) {
+			obj.canUseControls = message.canUseControls;
+		}
+		if (message.canManageUsers !== false) {
+			obj.canManageUsers = message.canManageUsers;
+		}
+		if (message.canAddSong !== false) {
+			obj.canAddSong = message.canAddSong;
+		}
+		if (message.canAddModerator !== false) {
+			obj.canAddModerator = message.canAddModerator;
+		}
+		if (message.canManageRoom !== false) {
+			obj.canManageRoom = message.canManageRoom;
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<RolePermission>, I>>(base?: I): RolePermission {
-    return RolePermission.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<RolePermission>, I>>(object: I): RolePermission {
-    const message = createBaseRolePermission();
-    message.canUseControls = object.canUseControls ?? false;
-    message.canManageUsers = object.canManageUsers ?? false;
-    message.canAddSong = object.canAddSong ?? false;
-    message.canAddModerator = object.canAddModerator ?? false;
-    message.canManageRoom = object.canManageRoom ?? false;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<RolePermission>, I>>(base?: I): RolePermission {
+		return RolePermission.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<RolePermission>, I>>(object: I): RolePermission {
+		const message = createBaseRolePermission();
+		message.canUseControls = object.canUseControls ?? false;
+		message.canManageUsers = object.canManageUsers ?? false;
+		message.canAddSong = object.canAddSong ?? false;
+		message.canAddModerator = object.canAddModerator ?? false;
+		message.canManageRoom = object.canManageRoom ?? false;
+		return message;
+	},
 };
 
 function createBaseRole(): Role {
-  return { id: new Uint8Array(0), name: "", permissions: undefined };
+	return { id: new Uint8Array(0), name: "", permissions: undefined };
 }
 
 export const Role: MessageFns<Role> = {
-  encode(message: Role, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id.length !== 0) {
-      writer.uint32(10).bytes(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.permissions !== undefined) {
-      RolePermission.encode(message.permissions, writer.uint32(26).fork()).join();
-    }
-    return writer;
-  },
+	encode(message: Role, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.id.length !== 0) {
+			writer.uint32(10).bytes(message.id);
+		}
+		if (message.name !== "") {
+			writer.uint32(18).string(message.name);
+		}
+		if (message.permissions !== undefined) {
+			RolePermission.encode(message.permissions, writer.uint32(26).fork()).join();
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Role {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRole();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): Role {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRole();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.id = reader.bytes();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
+					message.id = reader.bytes();
+					continue;
+				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
 
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
+					message.name = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 26) {
+						break;
+					}
 
-          message.permissions = RolePermission.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.permissions = RolePermission.decode(reader, reader.uint32());
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): Role {
-    return {
-      id: isSet(object.id) ? bytesFromBase64(object.id) : new Uint8Array(0),
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
-      permissions: isSet(object.permissions) ? RolePermission.fromJSON(object.permissions) : undefined,
-    };
-  },
+	fromJSON(object: any): Role {
+		return {
+			id: isSet(object.id) ? bytesFromBase64(object.id) : new Uint8Array(0),
+			name: isSet(object.name) ? globalThis.String(object.name) : "",
+			permissions: isSet(object.permissions) ? RolePermission.fromJSON(object.permissions) : undefined,
+		};
+	},
 
-  toJSON(message: Role): unknown {
-    const obj: any = {};
-    if (message.id.length !== 0) {
-      obj.id = base64FromBytes(message.id);
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.permissions !== undefined) {
-      obj.permissions = RolePermission.toJSON(message.permissions);
-    }
-    return obj;
-  },
+	toJSON(message: Role): unknown {
+		const obj: any = {};
+		if (message.id.length !== 0) {
+			obj.id = base64FromBytes(message.id);
+		}
+		if (message.name !== "") {
+			obj.name = message.name;
+		}
+		if (message.permissions !== undefined) {
+			obj.permissions = RolePermission.toJSON(message.permissions);
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<Role>, I>>(base?: I): Role {
-    return Role.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<Role>, I>>(object: I): Role {
-    const message = createBaseRole();
-    message.id = object.id ?? new Uint8Array(0);
-    message.name = object.name ?? "";
-    message.permissions = (object.permissions !== undefined && object.permissions !== null)
-      ? RolePermission.fromPartial(object.permissions)
-      : undefined;
-    return message;
-  },
+	create<I extends Exact<DeepPartial<Role>, I>>(base?: I): Role {
+		return Role.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<Role>, I>>(object: I): Role {
+		const message = createBaseRole();
+		message.id = object.id ?? new Uint8Array(0);
+		message.name = object.name ?? "";
+		message.permissions =
+			object.permissions !== undefined && object.permissions !== null
+				? RolePermission.fromPartial(object.permissions)
+				: undefined;
+		return message;
+	},
 };
 
 function createBaseRoleManager(): RoleManager {
-  return { roles: [] };
+	return { roles: [] };
 }
 
 export const RoleManager: MessageFns<RoleManager> = {
-  encode(message: RoleManager, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.roles) {
-      Role.encode(v!, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
+	encode(message: RoleManager, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		for (const v of message.roles) {
+			Role.encode(v!, writer.uint32(10).fork()).join();
+		}
+		return writer;
+	},
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RoleManager {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoleManager();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
+	decode(input: BinaryReader | Uint8Array, length?: number): RoleManager {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+		const end = length === undefined ? reader.len : reader.pos + length;
+		const message = createBaseRoleManager();
+		while (reader.pos < end) {
+			const tag = reader.uint32();
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break;
+					}
 
-          message.roles.push(Role.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+					message.roles.push(Role.decode(reader, reader.uint32()));
+					continue;
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break;
+			}
+			reader.skip(tag & 7);
+		}
+		return message;
+	},
 
-  fromJSON(object: any): RoleManager {
-    return { roles: globalThis.Array.isArray(object?.roles) ? object.roles.map((e: any) => Role.fromJSON(e)) : [] };
-  },
+	fromJSON(object: any): RoleManager {
+		return { roles: globalThis.Array.isArray(object?.roles) ? object.roles.map((e: any) => Role.fromJSON(e)) : [] };
+	},
 
-  toJSON(message: RoleManager): unknown {
-    const obj: any = {};
-    if (message.roles?.length) {
-      obj.roles = message.roles.map((e) => Role.toJSON(e));
-    }
-    return obj;
-  },
+	toJSON(message: RoleManager): unknown {
+		const obj: any = {};
+		if (message.roles?.length) {
+			obj.roles = message.roles.map((e) => Role.toJSON(e));
+		}
+		return obj;
+	},
 
-  create<I extends Exact<DeepPartial<RoleManager>, I>>(base?: I): RoleManager {
-    return RoleManager.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<RoleManager>, I>>(object: I): RoleManager {
-    const message = createBaseRoleManager();
-    message.roles = object.roles?.map((e) => Role.fromPartial(e)) || [];
-    return message;
-  },
+	create<I extends Exact<DeepPartial<RoleManager>, I>>(base?: I): RoleManager {
+		return RoleManager.fromPartial(base ?? ({} as any));
+	},
+	fromPartial<I extends Exact<DeepPartial<RoleManager>, I>>(object: I): RoleManager {
+		const message = createBaseRoleManager();
+		message.roles = object.roles?.map((e) => Role.fromPartial(e)) || [];
+		return message;
+	},
 };
 
 function bytesFromBase64(b64: string): Uint8Array {
-  if ((globalThis as any).Buffer) {
-    return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
-  } else {
-    const bin = globalThis.atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; ++i) {
-      arr[i] = bin.charCodeAt(i);
-    }
-    return arr;
-  }
+	if ((globalThis as any).Buffer) {
+		return Uint8Array.from(globalThis.Buffer.from(b64, "base64"));
+	} else {
+		const bin = globalThis.atob(b64);
+		const arr = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; ++i) {
+			arr[i] = bin.charCodeAt(i);
+		}
+		return arr;
+	}
 }
 
 function base64FromBytes(arr: Uint8Array): string {
-  if ((globalThis as any).Buffer) {
-    return globalThis.Buffer.from(arr).toString("base64");
-  } else {
-    const bin: string[] = [];
-    arr.forEach((byte) => {
-      bin.push(globalThis.String.fromCharCode(byte));
-    });
-    return globalThis.btoa(bin.join(""));
-  }
+	if ((globalThis as any).Buffer) {
+		return globalThis.Buffer.from(arr).toString("base64");
+	} else {
+		const bin: string[] = [];
+		arr.forEach((byte) => {
+			bin.push(globalThis.String.fromCharCode(byte));
+		});
+		return globalThis.btoa(bin.join(""));
+	}
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+	? T
+	: T extends globalThis.Array<infer U>
+		? globalThis.Array<DeepPartial<U>>
+		: T extends ReadonlyArray<infer U>
+			? ReadonlyArray<DeepPartial<U>>
+			: T extends {}
+				? { [K in keyof T]?: DeepPartial<T[K]> }
+				: Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+	? P
+	: P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
-  return value !== null && value !== undefined;
+	return value !== null && value !== undefined;
 }
 
 export interface MessageFns<T> {
-  encode(message: T, writer?: BinaryWriter): BinaryWriter;
-  decode(input: BinaryReader | Uint8Array, length?: number): T;
-  fromJSON(object: any): T;
-  toJSON(message: T): unknown;
-  create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
-  fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
+	encode(message: T, writer?: BinaryWriter): BinaryWriter;
+	decode(input: BinaryReader | Uint8Array, length?: number): T;
+	fromJSON(object: any): T;
+	toJSON(message: T): unknown;
+	create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
+	fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }
