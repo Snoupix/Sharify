@@ -3,11 +3,11 @@
 	import { afterNavigate, goto } from "$app/navigation";
 	import { Toaster, toast, type ToasterProps } from "svelte-sonner";
 
-	import Spotify from "$/lib/spotify";
-	import { room_data, spotify_data } from "$/lib/ws_impl";
-	import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$/lib/utils";
+	import Spotify from "$lib/spotify";
+	import { room_data, spotify_data } from "$lib/ws_impl";
+	import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$lib/utils";
 	import Navbar from "$/components/navbar.svelte";
-	import type { Nullable } from "$/lib/types";
+	import type { Nullable } from "$lib/types";
 	import type { LayoutProps } from "./$types";
 
 	import "$/app.css";

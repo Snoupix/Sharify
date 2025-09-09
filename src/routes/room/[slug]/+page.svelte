@@ -157,7 +157,12 @@
 		console.log("[DEBUG WS] Closed", close_event);
 
 		if (close_event.reason?.length !== 0) {
-			toast.error(close_event.reason);
+			if (data_is_ready_promise !== null) {
+				data_is_ready_promise.reject_ref(close_event.reason);
+			} else {
+				toast.error(close_event.reason);
+			}
+
 			return await leave_room();
 		}
 
@@ -495,6 +500,7 @@
 
 			:global(> *) {
 				@apply h-full w-full overflow-x-hidden overflow-y-scroll rounded-xl border border-secondary;
+				@apply neon:shadow-main neon:transition-shadow neon:duration-300 neon:hover:shadow-around;
 			}
 		}
 	}

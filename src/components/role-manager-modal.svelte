@@ -213,6 +213,8 @@
 								</Button>
 							{/if}
 							<Button onclick={() => delete_role(role.id)}>Delete</Button>
+						{:else}
+							<span class="text-main-content">You cannot manage this role</span>
 						{/if}
 					</div>
 				</div>

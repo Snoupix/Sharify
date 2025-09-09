@@ -117,7 +117,7 @@
 			<div>
 				<label for="username">Username</label>
 				<input
-					class="input border-main px-2 !text-main placeholder:text-main"
+					class="input h-10 border-main px-2 !text-main placeholder:text-main"
 					type="text"
 					id="username"
 					placeholder="Username"
@@ -125,10 +125,10 @@
 			</div>
 			<div>
 				<label for="room-name">Room name</label>
-				<div class="flex w-full flex-row gap-4">
+				<div class="flex w-full flex-row items-center justify-start gap-4">
 					<input
 						bind:this={room_name_el}
-						class="input border-main px-2 !text-main placeholder:text-main"
+						class="input h-10 border-main px-2 !text-main placeholder:text-main"
 						disabled={autoname}
 						type="text"
 						id="room-name"

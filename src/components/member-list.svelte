@@ -142,11 +142,11 @@
 		@apply flex flex-col items-start justify-start gap-4 px-4;
 
 		.title {
-			@apply h-2/12 w-full;
+			@apply w-full pb-4;
 
 			h1,
 			:global(.h1) {
-				@apply mt-4 ml-2 flex flex-row items-center justify-start gap-4 font-bold uppercase;
+				@apply mt-6 flex flex-row items-center justify-start gap-4 font-bold uppercase;
 			}
 		}
 
@@ -182,11 +182,11 @@
 				@apply relative h-9/12 w-5/12 overflow-y-scroll rounded-xl border border-main bg-bg px-6;
 
 				.refresh-btn {
-					@apply sticky top-4 left-4 float-left cursor-pointer;
+					@apply sticky top-4 left-0 float-left cursor-pointer;
 				}
 
 				.close-btn {
-					@apply sticky top-4 right-4 float-right cursor-pointer;
+					@apply sticky top-4 right-0 float-right cursor-pointer;
 				}
 
 				.layout {

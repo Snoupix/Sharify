@@ -105,7 +105,7 @@
 	</div>
 {:else}
 	<div class="search-wrapper">
-		<div class="title mb-2">
+		<div class="title">
 			<h1><Plus class="fill-main" /> Add songs</h1>
 		</div>
 		{@render _search_input()}

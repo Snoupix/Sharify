@@ -4,7 +4,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { DropdownMenu } from "bits-ui";
-	import { Check, Eye, EyeOff, Link, Settings, ChevronLeft, Bug } from "lucide-svelte";
+	import { Check, Eye, EyeOff, Link, Settings, ChevronLeft } from "lucide-svelte";
 	import type { Session } from "@auth/sveltekit";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { toast } from "svelte-sonner";
@@ -51,7 +51,11 @@
 		}
 	});
 
-	$effect(() => set_theme(theme ?? null));
+	$effect(() => {
+		if (theme === null) return;
+
+		set_theme(theme ?? null);
+	});
 
 	onMount(() => {
 		theme = get_storage_value("theme") ?? "purple";
@@ -117,7 +121,7 @@
 	{#if path.match(/\/room\/[0-9a-f]*/) !== null}
 		<div class="room-btns">
 			<FancyButton
-				class_extended="xl:text-base !text-red-500 font-montserrat border-red-500 hover:shadow-red-500 border-2"
+				class_extended="!text-red-500 border-red-500 hover:shadow-red-500 border-2"
 				onclick={() => leave_room_cmd()}>
 				{#if current_user && get_user_role($room_data, current_user?.roleId)?.permissions?.canManageRoom}
 					Close the room
@@ -127,22 +131,26 @@
 			</FancyButton>
 			{#if $room_data !== null}
 				{#if show_link}
-					<div>
-						<span>{get_room_link()}</span>
-						<Button class_extended="eye rounded-3xl!" title="Hide link" onclick={() => (show_link = false)}>
-							<EyeOff class="stroke-main-content hover:cursor-pointer" />
-						</Button>
-					</div>
+					<span>{get_room_link()}</span>
+					<FancyButton
+						class_extended="!rounded-3xl border-secondary !w-12 flex justify-center items-center hover:*:stroke-main"
+						title="Hide link"
+						onclick={() => (show_link = false)}>
+						<EyeOff class="stroke-secondary transition-colors hover:cursor-pointer" />
+					</FancyButton>
 				{:else}
-					<div>
-						<FancyButton onclick={copy_room_link}>
-							Copy room link
-							<Link class="ml-2 w-5 stroke-main-content hover:cursor-pointer" />
-						</FancyButton>
-						<Button class_extended="rounded-3xl!" title="Show link" onclick={() => (show_link = true)}>
-							<Eye class="stroke-main-content hover:cursor-pointer" />
-						</Button>
-					</div>
+					<FancyButton
+						onclick={copy_room_link}
+						class_extended="flex flex-row justify-center items-center gap-2 border-secondary">
+						Copy room link
+						<Link class="w-5 stroke-main-content hover:cursor-pointer" />
+					</FancyButton>
+					<FancyButton
+						class_extended="!rounded-3xl border-secondary !w-12 flex justify-center items-center hover:*:stroke-main"
+						title="Show link"
+						onclick={() => (show_link = true)}>
+						<Eye class="stroke-secondary transition-colors hover:cursor-pointer" />
+					</FancyButton>
 				{/if}
 			{/if}
 		</div>
@@ -150,7 +158,7 @@
 
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger>
-			<Settings class="cursor-pointer" />
+			<Settings class="transform cursor-pointer transition-transform duration-500 hover:rotate-180" />
 		</DropdownMenu.Trigger>
 		<DropdownMenu.Portal>
 			<DropdownMenu.Content class="mt-2 mr-2">
@@ -178,17 +186,6 @@
 						</DropdownMenu.SubContent>
 					</DropdownMenu.Portal>
 				</DropdownMenu.Sub>
-				{#if profile !== ""}
-					<DropdownMenu.Item>
-						<button onclick={disconnect} title={`Disconnect from ${profile}`}>
-							<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-								<path
-									d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-							</svg>
-							Disconnect from {profile}
-						</button>
-					</DropdownMenu.Item>
-				{/if}
 				<DropdownMenu.Item>
 					<button>How to</button>
 				</DropdownMenu.Item>
@@ -198,9 +195,23 @@
 				<DropdownMenu.Item>
 					<button onclick={() => goto("/report")}> Report </button>
 				</DropdownMenu.Item>
+				{#if profile !== ""}
+					<DropdownMenu.Item>
+						<button onclick={disconnect} title={`Disconnect from ${profile}`}>
+							<!-- For some reasons this div **needs** to exists. If not the button's flex is gonna make it have a 0px width -->
+							<div>
+								<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+									<path
+										d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+								</svg>
+							</div>
+							Logout
+						</button>
+					</DropdownMenu.Item>
+				{/if}
 				{#if is_logged_in}
 					<DropdownMenu.Item>
-						<button onclick={logout}>Logout</button>
+						<button title="Disconnect from your account" onclick={logout}>Logout</button>
 					</DropdownMenu.Item>
 				{:else}
 					<DropdownMenu.Sub>
@@ -301,22 +312,18 @@
 	@reference "$/app.css";
 
 	:global([data-dropdown-menu-item]) {
-		@apply z-15 w-full px-4 py-2;
+		@apply relative z-15 w-full px-4 py-2;
 	}
 
 	:global([data-dropdown-menu-content]) {
-		@apply z-14 flex max-w-40 flex-col items-center justify-center rounded-xl border border-main bg-bg;
+		@apply z-14 flex max-w-52 flex-col items-center justify-center overflow-hidden rounded-xl border border-main bg-bg text-nowrap text-ellipsis;
 
 		button {
-			@apply flex w-full cursor-pointer flex-row items-center justify-start gap-2 overflow-hidden text-nowrap text-ellipsis hover:scale-105 hover:text-shadow-lg hover:text-shadow-main;
+			@apply flex w-full cursor-pointer flex-row items-center justify-start gap-2 hover:scale-105 hover:text-shadow-lg hover:text-shadow-main;
 
 			svg {
 				@apply !h-6 !w-6 fill-main;
 			}
-		}
-
-		button:not(:last) {
-			@apply border-t border-main;
 		}
 	}
 
@@ -326,23 +333,12 @@
 		.room-btns {
 			@apply flex w-auto flex-row items-end justify-center gap-4 p-4;
 
-			> div {
-				@apply flex w-auto flex-row items-center justify-center gap-4;
+			:global(> button) {
+				@apply font-montserrat text-base text-main hover:border-bg;
 			}
 
-			> :last-child {
-				:global(> button) {
-					@apply bg-secondary font-montserrat text-base text-main-content;
-					display: block ruby; /* needed to align text & svg on "a" tag */
-				}
-
-				:global(> input) {
-					@apply w-[25rem] border-none bg-main-hover font-montserrat text-base text-main-content outline-none;
-				}
-
-				:global(> button:not(.eye)) {
-					@apply rounded-full;
-				}
+			:global(> span) {
+				@apply font-montserrat text-base text-main-content;
 			}
 		}
 	}

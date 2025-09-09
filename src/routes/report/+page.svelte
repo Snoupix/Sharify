@@ -99,7 +99,7 @@
 	@reference "$/app.css";
 
 	section {
-		@apply flex h-full w-full items-center justify-center py-24;
+		@apply flex h-10/12 w-full items-center justify-center;
 
 		form {
 			@apply flex w-2/6 flex-col items-center justify-stretch gap-8 rounded-xl border border-main p-4;
@@ -117,7 +117,7 @@
 			}
 
 			textarea {
-				@apply resize-y rounded-xl border border-main p-2 outline-none placeholder:text-left;
+				@apply resize-y rounded-xl border border-main p-2 text-main-content outline-none placeholder:text-left;
 			}
 		}
 	}
