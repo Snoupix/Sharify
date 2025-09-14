@@ -16,11 +16,12 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			const session: typeof s & { user_uuid: string | null } = { user_uuid: null, ...s };
 			const email = session.user.email;
 
-			if (session.user_uuid == null && email != null && email.trim() != "") {
+			if (session.user_uuid === null && email !== null && email.trim() !== "") {
 				session.user_uuid = string_to_hex_uuid(email, USER_ID_LEN);
 			}
 
 			return session;
 		},
 	},
+	trustHost: true,
 });
