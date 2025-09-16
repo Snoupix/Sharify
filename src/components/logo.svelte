@@ -9,7 +9,10 @@
 <div class:top-left={top_left} class:pad-tr={!top_left && show_badge}>
 	<button
 		type="button"
-		onclick={async () => await goto("/")}
+		onclick={async () => {
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
+			await goto("/");
+		}}
 		onanimationend={() => (show_badge = true)}
 		data-cy="home-btn"
 		class:neon={animate}
