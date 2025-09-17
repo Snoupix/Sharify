@@ -18,7 +18,7 @@ export class SpotifyHandler {
 	private sdk: SpotifyApi | null = null;
 	private tokens = TOKENS_DEFAULT;
 	private client_id = "";
-	private redirectURI = env.PUBLIC_SPOTIFY_REDIRECT;
+	private redirectURI = `${location.origin}/auth_spotify`;
 	private scopes = [
 		"user-read-private",
 		"user-read-email",
