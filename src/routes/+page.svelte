@@ -97,7 +97,7 @@
 	@reference "$/app.css";
 
 	section {
-		@apply m-auto flex h-[calc(11/12*100vh)] w-2/12 flex-col items-center justify-center gap-8;
+		@apply m-auto flex h-[calc(100vh-var(--nav-h))] w-2/12 flex-col items-center justify-center gap-8;
 
 		:global(> :first-child) {
 			@apply mb-10;

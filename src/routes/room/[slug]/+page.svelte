@@ -467,7 +467,7 @@
 	@reference "$/app.css";
 
 	.layout-wrapper {
-		@apply flex h-[calc(11/12*100vh)] w-full flex-row items-stretch justify-stretch gap-4 p-6;
+		@apply flex h-[calc(100vh-var(--nav-h))] w-full flex-row items-stretch justify-stretch gap-4 p-6;
 
 		/* Left col */
 		> :first-child {

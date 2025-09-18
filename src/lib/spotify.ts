@@ -18,7 +18,7 @@ export class SpotifyHandler {
 	private sdk: SpotifyApi | null = null;
 	private tokens = TOKENS_DEFAULT;
 	private client_id = "";
-	private redirectURI = `${location.origin}/auth_spotify`;
+	private redirect_path = "/auth_spotify";
 	private scopes = [
 		"user-read-private",
 		"user-read-email",
@@ -80,7 +80,7 @@ export class SpotifyHandler {
 			url.search = new URLSearchParams({
 				client_id: this.client_id,
 				response_type: "code",
-				redirect_uri: encodeURI(this.redirectURI),
+				redirect_uri: encodeURI(`${location.origin}${this.redirect_path}`),
 				show_dialog: "true",
 				scope: this.scopes.join(" "),
 				code_challenge_method: "S256",
@@ -159,7 +159,7 @@ export class SpotifyHandler {
 			client_id: this.client_id,
 			grant_type: "authorization_code",
 			code: code,
-			redirect_uri: encodeURI(this.redirectURI),
+			redirect_uri: encodeURI(`${location.origin}${this.redirect_path}`),
 			code_verifier: code_verifier,
 		});
 

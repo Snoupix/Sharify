@@ -328,7 +328,7 @@
 	}
 
 	nav {
-		@apply relative z-10 flex h-[calc(1/12*100vh)] w-full flex-row items-center justify-end px-2;
+		@apply relative z-10 flex h-[var(--nav-h)] w-full flex-row items-center justify-end px-4;
 
 		.room-btns {
 			@apply flex w-auto flex-row items-end justify-center gap-4 p-4;

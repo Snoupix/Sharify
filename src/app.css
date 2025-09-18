@@ -53,6 +53,7 @@
 	--font-kaushan: Kaushan Script, Montserrat, cursive, sans-serif;
 	--font-content: Sriracha, Montserrat, cursive, sans-serif;
 	--font-montserrat: Montserrat, cursive, sans-serif;
+	--nav-h: 65px;
 }
 
 @layer base {

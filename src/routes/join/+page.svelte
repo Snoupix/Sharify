@@ -8,7 +8,7 @@
 	let error = $state("");
 
 	async function join_room() {
-		if (room_id.trim().length !== 0 || room_password.trim().length !== 0) {
+		if (room_id.trim().length === 0 || room_password.trim().length === 0) {
 			error = "Room ID and Room password must not be empty";
 			return;
 		}
@@ -31,7 +31,7 @@
 	@reference "$/app.css";
 
 	section {
-		@apply m-auto flex h-screen w-4/12 flex-col items-center justify-center gap-6;
+		@apply m-auto flex h-[calc(100vh-var(--nav-h))] w-4/12 flex-col items-center justify-center gap-6;
 
 		input {
 			@apply w-[25rem] border-none bg-main-hover font-content text-base text-main-content ring-main outline-none placeholder:text-main-content;

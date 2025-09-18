@@ -133,6 +133,11 @@
 			for (const perm of Object.keys(perm_obj_ref) as Array<keyof RolePermission>) {
 				perm_obj_ref[perm] = selected_perms.includes(perm);
 			}
+		}}
+		onOpenChange={async (open) => {
+			if (open) return;
+
+			await set_role_perms();
 		}}>
 		<Select.Trigger>
 			{@render trigger_snippet()}
@@ -194,7 +199,6 @@
 								<Button onclick={rename_role}>Confirm</Button>
 							{:else}
 								{@render manage_role_perms(role_perms_trigger, sorted_roles[i].permissions!)}
-								<Button onclick={set_role_perms}>Save Perms</Button>
 								<Button
 									onclick={() => {
 										role_rename.i = i;
@@ -214,7 +218,7 @@
 							{/if}
 							<Button onclick={() => delete_role(role.id)}>Delete</Button>
 						{:else}
-							<span class="text-main-content">You cannot manage this role</span>
+							<span class="!text-main-content">You cannot manage this role</span>
 						{/if}
 					</div>
 				</div>

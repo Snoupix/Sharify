@@ -128,6 +128,6 @@
 	}
 
 	main {
-		@apply relative h-screen w-screen bg-bg;
+		@apply relative h-screen w-screen overflow-y-scroll bg-bg;
 	}
 </style>

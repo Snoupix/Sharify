@@ -99,7 +99,7 @@
 	@reference "$/app.css";
 
 	section {
-		@apply flex h-10/12 w-full items-center justify-center;
+		@apply flex h-[calc(100vh-var(--nav-h))] w-full items-center justify-center;
 
 		form {
 			@apply flex w-2/6 flex-col items-center justify-stretch gap-8 rounded-xl border border-main p-4;

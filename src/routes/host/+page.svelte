@@ -179,7 +179,7 @@
 	@reference "$/app.css";
 
 	section {
-		@apply h-[calc(10/12*100vh)] w-full;
+		@apply h-[calc(100vh-var(--nav-h))] w-full;
 
 		form {
 			@apply m-auto flex h-full w-3/12 flex-col items-center justify-center gap-8;
