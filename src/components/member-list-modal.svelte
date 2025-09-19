@@ -40,7 +40,7 @@
 <div class="members">
 	<ul>
 		{#each sorted_users as user, i (user.id)}
-			{@const previous_user = sorted_users.at(i - 2)}
+			{@const previous_user = i - 1 >= 0 ? sorted_users.at(i - 1) : undefined}
 			<li>
 				{#if previous_user === undefined || sum_bytes(previous_user.roleId) !== sum_bytes(user.roleId)}
 					<div class="role-name">
@@ -56,7 +56,7 @@
 						{:else}
 							<Circle fill="#a20000" color="#a20000" class="w-4" />
 						{/if}
-						<span>{user.username} </span>
+						<span>{user.username}</span>
 						{#if get_user_role($room_data, user.roleId)?.permissions?.canManageRoom ?? false}
 							<span title="Owner">
 								<Crown class="w-4 stroke-main-content" />
@@ -94,12 +94,20 @@
 			@apply list-none;
 		}
 
+		ul {
+			@apply flex flex-col gap-2;
+		}
+
 		.user {
 			@apply flex flex-row items-center justify-between gap-4 rounded-md border border-main-hover bg-secondary/40 px-4 py-2 transition-colors duration-300;
 
 			.left,
 			.right {
 				@apply flex flex-row gap-4 text-main-content;
+			}
+
+			span {
+				@apply !text-main-content;
 			}
 		}
 

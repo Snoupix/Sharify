@@ -3,8 +3,8 @@ import * as uuid from "uuid";
 
 import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
 import { CommandResponse, HttpCommand } from "$lib/proto/cmd";
-import type { PageServerLoad } from "./$types";
 import { bytes_to_uuid_str } from "$/lib/utils";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ url: { pathname } }) => {
 	const pathname_split = pathname.split("/");

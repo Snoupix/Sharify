@@ -139,7 +139,7 @@
 	@reference "$/app.css";
 
 	.users {
-		@apply flex flex-col items-start justify-start gap-4 px-4;
+		@apply flex flex-col items-start justify-start gap-3 px-4;
 
 		.title {
 			@apply w-full pb-4;
@@ -151,7 +151,7 @@
 		}
 
 		.user {
-			@apply flex w-[-moz-available] flex-row items-center justify-start gap-4 rounded-md border border-main-hover bg-secondary/40 px-4 py-2 transition-colors duration-300;
+			@apply flex w-[-moz-available] flex-row items-center justify-start gap-6 rounded-md border border-main-hover bg-secondary/40 px-4 py-2 transition-colors duration-300;
 
 			.col {
 				@apply flex flex-col items-start justify-start gap-2;

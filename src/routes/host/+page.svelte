@@ -110,6 +110,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Sharify</title>
+</svelte:head>
+
 <section>
 	{#if $Spotify !== null && $Spotify.is_ready}
 		<form onsubmit={create_room}>

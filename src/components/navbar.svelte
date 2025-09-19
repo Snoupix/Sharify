@@ -10,7 +10,6 @@
 	import { toast } from "svelte-sonner";
 
 	import FancyButton from "$/components/fancy_button.svelte";
-	import Button from "$/components/button.svelte";
 	import Logo from "$/components/logo.svelte";
 	import Spotify from "$lib/spotify";
 	import { leave_room_cmd } from "$lib/ws_impl";
@@ -132,10 +131,7 @@
 			{#if $room_data !== null}
 				{#if show_link}
 					<span>{get_room_link()}</span>
-					<FancyButton
-						class_extended="!rounded-3xl border-secondary !w-12 flex justify-center items-center hover:*:stroke-main"
-						title="Hide link"
-						onclick={() => (show_link = false)}>
+					<FancyButton class_extended="eye" title="Hide link" onclick={() => (show_link = false)}>
 						<EyeOff class="stroke-secondary transition-colors hover:cursor-pointer" />
 					</FancyButton>
 				{:else}
@@ -145,10 +141,7 @@
 						Copy room link
 						<Link class="w-5 stroke-main-content hover:cursor-pointer" />
 					</FancyButton>
-					<FancyButton
-						class_extended="!rounded-3xl border-secondary !w-12 flex justify-center items-center hover:*:stroke-main"
-						title="Show link"
-						onclick={() => (show_link = true)}>
+					<FancyButton class_extended="eye" title="Show link" onclick={() => (show_link = true)}>
 						<Eye class="stroke-secondary transition-colors hover:cursor-pointer" />
 					</FancyButton>
 				{/if}
@@ -331,10 +324,14 @@
 		@apply relative z-10 flex h-[var(--nav-h)] w-full flex-row items-center justify-end px-4;
 
 		.room-btns {
-			@apply flex w-auto flex-row items-end justify-center gap-4 p-4;
+			@apply flex w-auto flex-row items-center justify-end gap-4 p-4;
 
 			:global(> button) {
-				@apply font-montserrat text-base text-main hover:border-bg;
+				@apply !w-auto px-4 font-montserrat text-base text-nowrap text-main hover:border-bg;
+			}
+
+			:global(> button.eye) {
+				@apply flex !w-12 items-center justify-center !rounded-3xl border-secondary hover:*:stroke-main;
 			}
 
 			:global(> span) {

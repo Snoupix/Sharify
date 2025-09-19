@@ -17,6 +17,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Sharify</title>
+</svelte:head>
+
 <section>
 	<Logo class_extension="mb-4" />
 	<input class="input" type="text" placeholder="Room ID" bind:value={room_id} />

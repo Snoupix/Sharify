@@ -70,6 +70,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Sharify</title>
+</svelte:head>
+
 <section>
 	<Logo />
 	{#if !server_loaded || server_timed_out}

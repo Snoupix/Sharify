@@ -97,6 +97,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Sharify</title>
+</svelte:head>
+
 {#if data && data.room}
 	<section>
 		<span>What's your username ?</span>
@@ -123,6 +127,6 @@
 	@reference "$/app.css";
 
 	section {
-		@apply m-auto flex h-screen w-2/12 flex-col items-center justify-center gap-6;
+		@apply m-auto flex h-[calc(100vh-var(--nav-h))] w-2/12 flex-col items-center justify-center gap-6;
 	}
 </style>
