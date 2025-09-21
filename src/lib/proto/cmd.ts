@@ -79,6 +79,8 @@ export interface Command_Ban {
 
 export interface Command_AddTrackToQueue {
 	trackId: string;
+	trackName: string;
+	trackDuration: number;
 }
 
 export interface Command_CreateRole {
@@ -1063,13 +1065,19 @@ export const Command_Ban: MessageFns<Command_Ban> = {
 };
 
 function createBaseCommand_AddTrackToQueue(): Command_AddTrackToQueue {
-	return { trackId: "" };
+	return { trackId: "", trackName: "", trackDuration: 0 };
 }
 
 export const Command_AddTrackToQueue: MessageFns<Command_AddTrackToQueue> = {
 	encode(message: Command_AddTrackToQueue, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
 		if (message.trackId !== "") {
 			writer.uint32(10).string(message.trackId);
+		}
+		if (message.trackName !== "") {
+			writer.uint32(18).string(message.trackName);
+		}
+		if (message.trackDuration !== 0) {
+			writer.uint32(24).uint32(message.trackDuration);
 		}
 		return writer;
 	},
@@ -1089,6 +1097,22 @@ export const Command_AddTrackToQueue: MessageFns<Command_AddTrackToQueue> = {
 					message.trackId = reader.string();
 					continue;
 				}
+				case 2: {
+					if (tag !== 18) {
+						break;
+					}
+
+					message.trackName = reader.string();
+					continue;
+				}
+				case 3: {
+					if (tag !== 24) {
+						break;
+					}
+
+					message.trackDuration = reader.uint32();
+					continue;
+				}
 			}
 			if ((tag & 7) === 4 || tag === 0) {
 				break;
@@ -1099,13 +1123,23 @@ export const Command_AddTrackToQueue: MessageFns<Command_AddTrackToQueue> = {
 	},
 
 	fromJSON(object: any): Command_AddTrackToQueue {
-		return { trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "" };
+		return {
+			trackId: isSet(object.trackId) ? globalThis.String(object.trackId) : "",
+			trackName: isSet(object.trackName) ? globalThis.String(object.trackName) : "",
+			trackDuration: isSet(object.trackDuration) ? globalThis.Number(object.trackDuration) : 0,
+		};
 	},
 
 	toJSON(message: Command_AddTrackToQueue): unknown {
 		const obj: any = {};
 		if (message.trackId !== "") {
 			obj.trackId = message.trackId;
+		}
+		if (message.trackName !== "") {
+			obj.trackName = message.trackName;
+		}
+		if (message.trackDuration !== 0) {
+			obj.trackDuration = Math.round(message.trackDuration);
 		}
 		return obj;
 	},
@@ -1116,6 +1150,8 @@ export const Command_AddTrackToQueue: MessageFns<Command_AddTrackToQueue> = {
 	fromPartial<I extends Exact<DeepPartial<Command_AddTrackToQueue>, I>>(object: I): Command_AddTrackToQueue {
 		const message = createBaseCommand_AddTrackToQueue();
 		message.trackId = object.trackId ?? "";
+		message.trackName = object.trackName ?? "";
+		message.trackDuration = object.trackDuration ?? 0;
 		return message;
 	},
 };

@@ -84,7 +84,7 @@
 						{#if displayed_songs === ETab.Next}
 							<span
 								>{room_track?.trackId === track?.trackId
-									? `Added by: (${$room_data?.users.find((u) => u.id === room_track?.userId)?.username ?? "user not found"})`
+									? `Added by "${$room_data?.users.find((u) => u.id === room_track?.userId)?.username ?? "user not found"}"`
 									: "From owner's queue"}</span>
 						{/if}
 						<div class="btns">

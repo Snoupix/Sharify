@@ -96,6 +96,10 @@ export enum LogType {
 	OTHER = 0,
 	KICK = 1,
 	BAN = 2,
+	ADD_TRACK = 3,
+	JOIN_ROOM = 4,
+	LEAVE_ROOM = 5,
+	USERNAME_CHANGE = 6,
 	UNRECOGNIZED = -1,
 }
 
@@ -110,6 +114,18 @@ export function logTypeFromJSON(object: any): LogType {
 		case 2:
 		case "BAN":
 			return LogType.BAN;
+		case 3:
+		case "ADD_TRACK":
+			return LogType.ADD_TRACK;
+		case 4:
+		case "JOIN_ROOM":
+			return LogType.JOIN_ROOM;
+		case 5:
+		case "LEAVE_ROOM":
+			return LogType.LEAVE_ROOM;
+		case 6:
+		case "USERNAME_CHANGE":
+			return LogType.USERNAME_CHANGE;
 		case -1:
 		case "UNRECOGNIZED":
 		default:
@@ -125,6 +141,14 @@ export function logTypeToJSON(object: LogType): string {
 			return "KICK";
 		case LogType.BAN:
 			return "BAN";
+		case LogType.ADD_TRACK:
+			return "ADD_TRACK";
+		case LogType.JOIN_ROOM:
+			return "JOIN_ROOM";
+		case LogType.LEAVE_ROOM:
+			return "LEAVE_ROOM";
+		case LogType.USERNAME_CHANGE:
+			return "USERNAME_CHANGE";
 		case LogType.UNRECOGNIZED:
 		default:
 			return "UNRECOGNIZED";

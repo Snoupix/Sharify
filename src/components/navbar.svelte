@@ -326,12 +326,12 @@
 		.room-btns {
 			@apply flex w-auto flex-row items-center justify-end gap-4 p-4;
 
-			:global(> button) {
-				@apply !w-auto px-4 font-montserrat text-base text-nowrap text-main hover:border-bg;
+			:global(> .eye) {
+				@apply flex items-center justify-center !rounded-3xl border-secondary hover:*:stroke-main;
 			}
 
-			:global(> button.eye) {
-				@apply flex !w-12 items-center justify-center !rounded-3xl border-secondary hover:*:stroke-main;
+			:global(> button) {
+				@apply !w-auto px-4 font-montserrat text-base text-nowrap text-main hover:border-bg;
 			}
 
 			:global(> span) {

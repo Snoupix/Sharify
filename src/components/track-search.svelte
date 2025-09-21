@@ -39,7 +39,7 @@
 		}, delay);
 	}
 
-	async function add_track_to_queue(track_id: Track["trackId"]) {
+	async function add_track_to_queue_by_track(track: Track) {
 		set_search_input("");
 
 		const user = get_storage_value("user");
@@ -50,26 +50,26 @@
 			return await leave_room_cmd();
 		}
 
-		send_ws_command({ addToQueue: { trackId: track_id } }, on_cmd_send_error);
+		send_ws_command(
+			{ addToQueue: { trackId: track.trackId, trackName: track.trackName, trackDuration: track.trackDuration } },
+			on_cmd_send_error,
+		);
 
 		toast(`Track added to the owner's queue`);
 	}
 
-	async function add_track_to_queue_by_track(track: Track) {
-		return await add_track_to_queue(track.trackId);
-	}
-
 	async function add_track_to_queue_by_id(uri_url: string) {
-		const result = get_track_id_by_uri_url(uri_url);
+		// TODO impl a command to add to queue by ID only and sv side,
+		// process track the same as the addToQueue cmd
+		const track_id = get_track_id_by_uri_url(uri_url);
 
-		console.log(uri_url, result);
-
-		if (result == null) {
+		if (track_id === null) {
+			console.debug(uri_url);
 			toast("Error: Cannot parse URL/Spotify URI to track ID");
 			return;
 		}
 
-		return await add_track_to_queue(result);
+		// TODO
 	}
 
 	function get_track_id_by_uri_url(s: string): string | null {
