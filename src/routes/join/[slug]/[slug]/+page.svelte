@@ -1,94 +1,132 @@
 <script lang="ts">
-    import { onMount, hasContext, getContext } from "svelte";
-    import { goto } from "$app/navigation";
-    import { toast } from "@zerodevx/svelte-toast";
-    import { Button } from "$/components/ui/button";
-    import { LoaderCircle } from "lucide-svelte";
-    import type { Writable } from "svelte/store";
-    import type { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+	import { toast } from "svelte-sonner";
+	import Button from "$/components/button.svelte";
+	import { LoaderCircle } from "lucide-svelte";
 
-    import type { PageData } from "./$types";
-    import { Input } from "$/components/ui/input";
-    import CustomButton from "$/components/button.svelte";
-    import { JOIN_PARTY } from "$/lib/queries";
-    import type { Party } from "$/lib/types";
+	import { PUBLIC_SERVER_ADDR_DEV } from "$env/static/public";
+	import type { PageProps } from "./$types";
+	import { bytes_to_uuid_str, get_storage_value, leave_room, set_storage_value } from "$lib/utils";
+	import { CommandResponse, HttpCommand } from "$lib/proto/cmd";
+	import { roomErrorFromJSON, roomErrorToJSON } from "$lib/proto/room";
 
-    if (!hasContext("GQL_Client")) {
-        throw new Error("Unexpected error: Unable to get GraphQL client on context, please contact Snoupix");
-    }
+	const { data }: PageProps = $props();
 
-    const client: Writable<ApolloClient<NormalizedCacheObject> | null> = getContext("GQL_Client");
+	let username = $state("");
+	let is_loading = $state(false);
+	let error = $state("");
 
-    if ($client == null) {
-        throw new Error("Unexpected error: Unable to initiate GraphQL client, please contact Snoupix");
-    }
+	onMount(async () => {
+		if (!data || !data.room) {
+			console.log(data);
+			toast.error("Error: Room not found");
+			return await leave_room();
+		}
 
-    export let data: PageData;
+		if (data.session?.user?.name) {
+			username = data.session.user.name;
+		}
+	});
 
-    let username = "";
-    let is_loading = false;
-    let error = "";
+	async function join_room() {
+		is_loading = true;
 
-    onMount(async () => {
-        if (!data || !data.party) {
-            toast.push("Error: Party not found");
-            return await goto("/");
-        }
-    });
+		if (username.trim().length === 0) {
+			error = "Your username must be filled";
+			is_loading = false;
+			return;
+		}
 
-    async function join_party() {
-        is_loading = true;
+		const user_id = get_storage_value("user_id");
 
-        if (username.trim() == "") {
-            error = "Your username must be filled";
-            is_loading = false;
-            return;
-        }
+		if (user_id === null) {
+			toast("Unexpected error: You're not logged in");
+			return await leave_room();
+		}
 
-        const result = await $client?.mutate({ mutation: JOIN_PARTY, variables: { id: data.party.id, username } });
-        const party: (Party & { __typename: "Party" }) | { __typename: "PartyError"; error: string } | undefined =
-            result?.data?.joinParty;
+		const command: HttpCommand = {
+			joinRoom: {
+				roomId: data.room.id,
+				username,
+				userId: user_id,
+			},
+		};
 
-        if (!party || party.__typename == "PartyError") {
-            error = `There was an error joining the party (${party?.error ?? "Unknown error"})`;
-            console.error(result);
-            is_loading = false;
-            return;
-        }
+		const bytes = HttpCommand.encode(command).finish();
 
-        const party_client = party.clients.find(c => c.username == username);
+		const res = await fetch(`${PUBLIC_SERVER_ADDR_DEV}/v1`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/protobuf",
+			},
+			body: bytes as BodyInit,
+		});
 
-        if (party_client == undefined) {
-            error = "Username not found on party clients, check the console for more details"; // TODO: Do better too
-            console.error(result);
-            is_loading = false;
-            return;
-        }
+		if (res.status !== 200 || res.body === null) {
+			console.error(res);
+		}
 
-        toast.push(`You successfully joined room "${party.name}"!`);
-        await goto(`/room/${party.id}/${party_client.id}`);
-    }
+		const res_bytes = await res.bytes();
+
+		try {
+			let res_cmd = CommandResponse.decode(res_bytes);
+
+			if (res_cmd.room === undefined) {
+				console.error(res_cmd);
+				// TODO: Switch on FromJSON for proper string error
+				toast.error(
+					`An error occured while joining the room. ${res_cmd.genericError ?? roomErrorToJSON(roomErrorFromJSON(res_cmd.roomError))}`,
+				);
+				return;
+			}
+
+			set_storage_value({
+				user: res_cmd.room.users.find((u) => u.username === username)!,
+				current_room: res_cmd.room,
+			});
+
+			toast(`You successfully joined room "${res_cmd.room.name}"!`);
+
+			await goto(`/room/${bytes_to_uuid_str(res_cmd.room.id)}`);
+		} catch (e: unknown) {
+			console.error(e);
+			toast.error(`An error occured while joining the room. ${e}`);
+			is_loading = false;
+		}
+	}
 </script>
 
-{#if data && data.party}
-    <section>
-        <span>What's your username ?</span>
-        <Input type="text" disabled={is_loading} placeholder="username" bind:value={username} />
-        {#if is_loading}
-            <Button disabled>
-                <LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
-                Please wait
-            </Button>
-        {/if}
-        {#if error != ""}
-            <span class="text-red-500">{error}</span>
-        {/if}
-        <CustomButton on:click={join_party}>Join the party</CustomButton>
-    </section>
+<svelte:head>
+	<title>Sharify</title>
+</svelte:head>
+
+{#if data && data.room}
+	<section>
+		<span>What's your username ?</span>
+		<input
+			onkeydown={(k) => k.key === "Enter" && join_room()}
+			type="text"
+			disabled={is_loading}
+			placeholder="username"
+			bind:value={username} />
+		{#if is_loading}
+			<Button disabled>
+				<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />
+				Please wait
+			</Button>
+		{/if}
+		{#if error != ""}
+			<span class="text-red-500">{error}</span>
+		{/if}
+		<Button onclick={join_room}>Join the room</Button>
+	</section>
 {/if}
 
 <style lang="postcss">
-    section {
-        @apply w-2/12 h-screen m-auto flex flex-col justify-center items-center gap-6;
-    }
+	@reference "$/app.css";
+
+	section {
+		@apply m-auto flex h-[calc(100vh-var(--nav-h))] w-2/12 flex-col items-center justify-center gap-6;
+	}
 </style>

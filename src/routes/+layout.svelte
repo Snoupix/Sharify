@@ -1,135 +1,133 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
-    import { afterNavigate, goto } from "$app/navigation";
-    import { writable } from "svelte/store";
-    import { env } from "$env/dynamic/public";
-    import { ApolloClient, InMemoryCache, type NormalizedCacheObject } from "@apollo/client/core";
-    import { SvelteToast } from "@zerodevx/svelte-toast";
-    import colors from "tailwindcss/colors";
+	import { onMount, setContext } from "svelte";
+	import { afterNavigate, goto } from "$app/navigation";
+	import { Toaster, toast, type ToasterProps } from "svelte-sonner";
 
-    import Spotify from "$/lib/spotify";
-    import { GetStorageValue, SetStorageValue } from "$/lib/utils";
-    import Navbar from "$/components/navbar.svelte";
-    import type { Party, SpotifyData } from "$/lib/types";
+	import Spotify from "$lib/spotify";
+	import { room_data, spotify_data } from "$lib/ws_impl";
+	import { bytes_to_uuid_str, get_storage_value, set_storage_value, set_theme } from "$lib/utils";
+	import Navbar from "$/components/navbar.svelte";
+	import type { Nullable } from "$lib/types";
+	import type { LayoutProps } from "./$types";
 
-    import "$/style.css";
+	import "$/app.css";
 
-    const dont_redirect_on_paths = [/\/room*/];
+	const toaster_props: ToasterProps = {
+		closeButton: true,
+		position: "top-center",
+		toastOptions: {
+			class: "bg-bg text-main border-main-content",
+			// TODO Fix
+			classes: {
+				toast: "bg-bg text-main border-main-content",
+				success: "bg-bg text-main border-main-content",
+				error: "bg-bg text-main border-main-content",
+				normal: "bg-bg text-main border-main-content",
+				info: "bg-bg text-main border-main-content",
+				warning: "bg-bg text-main border-main-content",
+			},
+		},
+	};
 
-    // https://github.com/zerodevx/svelte-toast?tab=readme-ov-file#toast-options
-    const toast_default_options = {
-        pausable: true,
-        dismissable: true,
-        duration: 5000,
-        theme: {
-            "--toastContainerTop": "auto",
-            "--toastContainerBottom": "1.5rem",
-            "--toastBorderRadius": "0.25rem",
-            "--toastWidth": "18rem",
-            "--toastPadding": "0.25rem 1.25rem",
-            "--toastColor": colors.neutral[200],
-            "--toastBackground": colors.purple[400],
-            "--toastBarBackground": colors.purple[200],
-        },
-    };
+	const dont_redirect_on_paths = [/\/room*/];
+	const unauthorized_paths = [/\/host*/, /\/join*/];
 
-    const apollo_store = writable<ApolloClient<NormalizedCacheObject> | null>();
-    apollo_store.update(x => {
-        if (x != null) return x;
+	setContext("RoomData", room_data);
+	setContext("SpotifyData", spotify_data);
 
-        return new ApolloClient({
-            cache: new InMemoryCache(),
-            uri: `${env.PUBLIC_LOCAL_SERVER_ADDR}/sharify`, // TODO: Handle public addr on prod
-            name: "sharify-apollo-web-client",
-            queryDeduplication: true, // TODO: Be carefull using that, it may break my gql logic sv side
-            defaultOptions: {
-                watchQuery: {
-                    fetchPolicy: "cache-and-network",
-                },
-                query: {
-                    errorPolicy: "all",
-                },
-                mutate: {
-                    errorPolicy: "all",
-                },
-            },
-        });
-    });
-    setContext("GQL_Client", apollo_store);
+	const { data, children }: LayoutProps = $props();
+	const session = data.session;
 
-    const room_data_store = writable<Party | null>(null);
-    setContext("RoomData", room_data_store);
+	let user_id: Nullable<string> = $state(null);
 
-    const spotify_data_store = writable<SpotifyData | null>(null);
-    setContext("SpotifyData", spotify_data_store);
+	onMount(() => {
+		set_theme(get_storage_value("theme") ?? "purple");
 
-    onMount(() => {
-        const tokens = GetStorageValue("st");
-        if ($Spotify == null || $Spotify.is_ready || tokens == null) return;
+		$Spotify?.SetTokens();
+	});
 
-        $Spotify.ProcessTokens({
-            access_token: tokens.at,
-            refresh_token: tokens.rt,
-            expires_in: tokens.ein,
-            created_at: tokens.date,
-        });
-    });
+	afterNavigate(async (navigate) => {
+		if (session?.user_uuid) {
+			user_id = session.user_uuid;
+			set_storage_value({ user_id });
+		} else {
+			set_storage_value({ user_id: null });
+		}
 
-    afterNavigate(async navigate => {
-        // This avoids the redirects and cleans the cache on server redirect
-        if (navigate.to && navigate.to.route.id == "/" && navigate.type == "goto") {
-            SetStorageValue({ current_room: null, user: null });
+		if (session === null && unauthorized_paths.find((r) => navigate.to?.url.pathname.match(r))) {
+			toast("You need to be connected to do that, please log in first");
+			return await goto("/");
+		}
 
-            return;
-        }
+		// This avoids the redirects and cleans the cache on server redirect
+		if (navigate.to?.route?.id === "/" && navigate.type === "goto") {
+			set_storage_value({ current_room: null, user: null });
 
-        // This triggers on every route changes so I have to filter it to deny checks when already in a room for example
-        if (dont_redirect_on_paths.find(r => navigate.to?.url.pathname.match(r)) != undefined) {
-            console.log("path", navigate.to?.url.pathname, "is in", dont_redirect_on_paths);
-            return;
-        }
-        const party = GetStorageValue("current_room");
-        if (party == null) return;
+			return;
+		}
 
-        const client = GetStorageValue("user");
-        if (client == null) return SetStorageValue({ current_room: null });
+		// This triggers on every route changes so I have to filter it to deny checks when already in a room for example
+		if (dont_redirect_on_paths.find((r) => navigate.to?.url.pathname.match(r)) != undefined) {
+			console.log("path", navigate.to?.url.pathname, "is in", dont_redirect_on_paths);
+			return;
+		}
+		const room = get_storage_value("current_room");
+		if (room === null) return;
 
-        const client_id = party.clients.find(c => c.id == client.id);
-        if (!client_id) return SetStorageValue({ current_room: null, user: null });
+		const user = get_storage_value("user");
+		if (user === null) return set_storage_value({ current_room: null });
 
-        await goto(`/room/${party.id}/${client_id.id}`);
-    });
+		const room_user = room.users.find((u) => u.id === user.id);
+		if (!room_user) return set_storage_value({ current_room: null, user: null });
+
+		console.log(room);
+
+		await goto(`/room/${bytes_to_uuid_str(room.id)}`);
+	});
 </script>
 
 <main>
-    <Navbar />
-    <slot />
-    <SvelteToast options={toast_default_options} />
+	<Navbar {session} />
+	{@render children?.()}
+	<Toaster {...toaster_props} />
 </main>
 
 <style lang="postcss">
-    :global(:root) {
-        /* TODO: Delete */
-        --toastify-font-family: "Montserrat", sans-serif;
-        --toastify-color-progress-light: linear-gradient(
-            to right,
-            theme("colors.bg-color"),
-            theme("colors.main-color")
-        );
-    }
+	@reference "$/app.css";
 
-    :global(html) {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+	:global(:root) {
+		/* TODO: Delete */
+		--toastify-font-family: "Montserrat", sans-serif;
+		--toastify-color-progress-light: linear-gradient(to right, var(--color-bg), var(--color-main));
+		--toastContainerTop: 2vh;
+		--toastContainerRight: auto;
+		--toastContainerLeft: 0.5vw;
 
-    :global(*) {
-        color: theme("colors.main-color");
-        font-family: theme("fontFamily.montserrat");
-    }
+		--toastBorderRadius: 0.5rem;
+		--toastWidth: 25vw;
+		--toastPadding: 0.25rem 1.25rem;
+		--toastColor: var(--color-neutral-200);
+		--toastBackground: var(--color-purple-400);
+		--toastBarBackground: var(--color-purple-200);
+	}
 
-    main {
-        @apply relative min-h-screen w-screen bg-[#24004C];
-    }
+	:global(._toastContainer) {
+		border: 1px solid black;
+		border-radius: 5rem;
+	}
+
+	:global(html) {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	:global(*) {
+		color: var(--color-main);
+		font-family: var(--font-montserrat);
+	}
+
+	main {
+		@apply relative h-screen w-screen overflow-y-scroll bg-bg;
+	}
 </style>

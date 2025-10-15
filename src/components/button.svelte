@@ -1,21 +1,38 @@
 <script lang="ts">
-    export let class_extended = "";
-    export let type: "button" | "submit" | "reset" | null = "button";
-    export let title = "";
+	import { Button } from "bits-ui";
+
+	import type { Snippet } from "svelte";
+	import type { ClassValue, MouseEventHandler } from "svelte/elements";
+
+	let {
+		class_extended = "",
+		type = "button",
+		title = "",
+		onclick = () => {},
+		children,
+		disabled = false,
+	}: {
+		class_extended?: ClassValue;
+		type?: "button" | "submit" | "reset" | null;
+		title?: string;
+		onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+		children?: Snippet | undefined;
+		disabled?: boolean;
+	} = $props();
 </script>
 
 <!-- prettier-ignore -->
-<button
+<Button.Root
     class={
-        `transition-all font-content text-base w-32 xl:text-2xl xl:w-52 duration-300
-        bg-bg-color border-solid border-[3px] border-main-color-hover
-        rounded-3xl py-1 decoration-0 text-center hover:shadow-around
-        hover:shadow-main-color hover:border-bg-color
-        hover:font-bold custom_btn ${class_extended}`
+        `custom_btn rounded-md bg-secondary px-4 py-2
+        text-center font-content text-base !text-main-content
+        decoration-0 transition-all duration-300 not-disabled:cursor-pointer hover:shadow-main
+        xl:text-lg ${class_extended}`
     }
     {type}
     {title}
-    on:click
+    {onclick}
+    {disabled}
 >
-	<slot />
-</button>
+	{@render children?.()}
+</Button.Root>

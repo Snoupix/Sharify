@@ -1,13 +1,29 @@
-.DS_Store
 node_modules
-/build
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
 /.svelte-kit
-/package
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+*.vim
+.ignore
+
+# Env
 .env
 .env.*
 !.env.example
+!.env.test
+
+# Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# clone of the legacy_remix branch to locally reproduce changes
-remix_clone/
+# Git worktrees of the legacy branches for rewrite purposes
+remix/
+svelte4/
