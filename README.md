@@ -13,7 +13,7 @@ Since then, Spotify released two *features* that are basically restraining my fu
 - september 2023: Spotify releases [Jam](https://newsroom.spotify.com/2023-09-26/spotify-jam-personalized-collaborative-listening-session-free-premium-users/) ([docs](https://support.spotify.com/us/article/jam/)).
   - This pretty much is the equivalent of Sharify with less features but integrated in the Official Spotify app and only Premium users can start a Jam.
 - april 2025: Spotify removes the possibility to extend quota usage/access to their Web API for individual users ([link](https://developer.spotify.com/blog/2025-04-15-updating-the-criteria-for-web-api-extended-access)).
-  - Because of that, since I do not own a company, Sharify will be a self-hosting product (deployement in WIP on the [backend](https://github.com/Snoupix/sharify-be)) because the default limitations for their Web API access is 25 users and that means that only the registered 25 users are gonna be able to create a Room.
+  - Because of that, since I do not own a company, Sharify will be a self-hosting product (deployement in WIP on the [backend](https://github.com/Snoupix/sharify-be)) because the default limitations for their Web API access is 25 users and that means that only the 25 registered users are gonna be able to create a Room.
 
 ## Features
 
